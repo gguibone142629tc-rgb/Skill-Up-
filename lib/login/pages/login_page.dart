@@ -1,14 +1,14 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart'; 
+import 'package:cloud_firestore/cloud_firestore.dart'; 
 
-// --- IMPORTS ---
+// --- YOUR PROJECT IMPORTS ---
 import 'package:finaproj/common/auth_text_field.dart';
 import 'package:finaproj/common/primary_button.dart';
 import 'package:finaproj/mentor_sign/pages/mentor_signup_page.dart';
 import 'package:finaproj/student_sign/pages/signup_page.dart';
 import 'package:finaproj/services/auth_service.dart';
-
-// ⚠️ IMPORTANT: Import your Home Page here so we can navigate to it directly
 import 'package:finaproj/home_page/pages/home_page.dart';
 
 import '../widgets/login/login_logo.dart';
@@ -38,43 +38,76 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
+  // Helper to show the popup
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        title: const Row(
+          children: [
+            Icon(Icons.error_outline, color: Colors.red),
+            SizedBox(width: 10),
+            Text("Login Failed"),
+          ],
+        ),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text("Try Again", style: TextStyle(color: Color(0xFF2D6A65))),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _handleLogin() async {
-    // 1. Validate Input
     if (_emailController.text.trim().isEmpty || _passwordController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter email and password")),
-      );
+      _showErrorDialog("Please enter both email and password.");
       return;
     }
 
     setState(() => _isLoading = true);
 
     try {
-      // 2. Perform Login
-      await _authService.login(
+      // 1. Authenticate
+      UserCredential? userCredential = await _authService.login(
         _emailController.text.trim(),
         _passwordController.text.trim(),
       );
 
       if (mounted) {
-        // 3. SUCCESS! Navigate to Home Page Directly
-        // We use MaterialPageRoute instead of '/home' to avoid "Route Not Found" errors.
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const HomePage()), 
-          (route) => false,
-        );
+        // 2. Fetch the user's document
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .get();
+
+        if (!userDoc.exists) {
+          throw "User profile not found.";
+        }
+
+        String actualRole = userDoc.data()?['role'] ?? "";
+        // Mapping UI selection: 0 is student (mentee), 1 is mentor
+        String selectedRoleString = _selectedRole == 0 ? "student" : "mentor";
+
+        // 3. Compare Roles (using lowercase to avoid mismatch)
+        if (actualRole.toLowerCase() == selectedRoleString.toLowerCase()) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const HomePage()),
+            (route) => false,
+          );
+        } else {
+          // Wrong Role: Must sign out immediately
+          await _authService.signOut();
+          _showErrorDialog("Access Denied: You are registered as a $actualRole. Please select the correct role above.");
+        }
       }
-      
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Login Failed: ${e.toString()}"),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      // Catching Firebase Auth errors (wrong password, etc.)
+      _showErrorDialog("Incorrect credentials. Please check your email and password.");
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -108,7 +141,7 @@ class _LoginPageState extends State<LoginPage> {
                   AuthTextField(
                     label: 'Email',
                     controller: _emailController,
-                    hintText: 'emanmartos@gmail.com',
+                    hintText: 'user@example.com',
                     keyboardType: TextInputType.emailAddress,
                   ),
                   const SizedBox(height: 16),
@@ -128,62 +161,43 @@ class _LoginPageState extends State<LoginPage> {
                     onForgot: () {},
                   ),
 
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 20),
+                  _isLoading 
+                    ? const Center(child: CircularProgressIndicator(color: accent))
+                    : PrimaryButton(
+                        label: 'Login', 
+                        onPressed: _handleLogin,
+                      ),
+                  
+                  const SizedBox(height: 24),
                   Center(
                     child: RichText(
+                      textAlign: TextAlign.center,
                       text: TextSpan(
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: Colors.black87,
-                        ),
+                        style: theme.textTheme.bodyMedium?.copyWith(color: Colors.black87),
                         children: [
                           const TextSpan(text: "Don't have an account?\n"),
                           TextSpan(
                             text: 'Sign up as mentee',
-                            style: const TextStyle(
-                              color: accent,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: const TextStyle(color: accent, fontWeight: FontWeight.w600),
                             recognizer: TapGestureRecognizer()
                               ..onTap = () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const SignUpPage(),
-                                  ),
-                                );
+                                Navigator.push(context, MaterialPageRoute(builder: (context) => const SignUpPage()));
                               },
                           ),
                           const TextSpan(text: '  or  '),
                           TextSpan(
                             text: 'Apply to be a mentor',
-                            style: const TextStyle(
-                              color: accent,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: const TextStyle(color: accent, fontWeight: FontWeight.w600),
                             recognizer: TapGestureRecognizer()
                               ..onTap = () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const MentorSignUpPage(),
-                                  ),
-                                );
+                                Navigator.push(context, MaterialPageRoute(builder: (context) => const MentorSignUpPage()));
                               },
                           ),
                         ],
                       ),
-                      textAlign: TextAlign.center,
                     ),
                   ),
-
-                  const SizedBox(height: 20),
-                  _isLoading 
-                    ? const Center(child: CircularProgressIndicator())
-                    : PrimaryButton(
-                        label: 'Login', 
-                        onPressed: _handleLogin,
-                      ),
                 ],
               ),
             ),
