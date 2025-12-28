@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "308416020714",
+    "project_id": "skillup-59422",
+    "storage_bucket": "skillup-59422.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:308416020714:android:027b03cc71157d6c111793",
+        "android_client_info": {
+          "package_name": "com.example.finaproj"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBjNQ1RQq3rIL3melnI2SNaw8HqEKhRz3s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

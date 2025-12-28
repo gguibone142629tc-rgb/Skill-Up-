@@ -1,0 +1,37 @@
+name: finaproj
+description: "A new Flutter project."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Third Party Packages
+  cloudinary_public: # Removed version to auto-resolve
+  cupertino_icons: 
+  flutter_svg: 
+  http: ^1.2.0  # <--- ADD THIS LINE
+  image_picker: ^1.0.7
+
+  # Firebase Packages
+  firebase_core: 
+  firebase_auth: 
+  cloud_firestore: ^6.1.1 
+  firebase_storage: ^13.0.5 
+  intl: ^0.20.2
+  
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: 
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/icons/
+    - assets/images/
