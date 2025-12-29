@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:finaproj/app_settings/page/edit_profile_page.dart';
+import 'package:finaproj/SavedMentors/saved_mentors_page.dart';
 // ⚠️ Check these imports match your folder structure
 import 'package:finaproj/login/pages/login_page.dart';
 import 'package:finaproj/home_page/pages/home_page.dart';
+import 'package:finaproj/FindMentor/page/find_mentor_page.dart';
+import 'package:finaproj/Message/page/messages_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -85,7 +88,14 @@ class _ProfilePageState extends State<ProfilePage> {
               _buildMenuOption(
                 icon: Icons.favorite_border, // Heart icon
                 label: "Saved Mentors",
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SavedMentorsPage(),
+                    ),
+                  );
+                },
               ),
 
               _buildMenuOption(
@@ -147,13 +157,31 @@ class _ProfilePageState extends State<ProfilePage> {
         showUnselectedLabels: true,
         elevation: 0, // Flat look like screenshot
         onTap: (index) {
-          if (index == 0) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const HomePage()),
-            );
+          if (index == 3) return; // Already on Profile
+          
+          Widget nextPage;
+          switch (index) {
+            case 0:
+              nextPage = const HomePage();
+              break;
+            case 1:
+              nextPage = const FindMentorPage();
+              break;
+            case 2:
+              nextPage = const MessagesPage();
+              break;
+            default:
+              return;
           }
-          // Add Search/Messages logic here
+          
+          Navigator.pushReplacement(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (context, anim1, anim2) => nextPage,
+              transitionDuration: Duration.zero,
+              reverseTransitionDuration: Duration.zero,
+            ),
+          );
         },
         items: const [
           BottomNavigationBarItem(

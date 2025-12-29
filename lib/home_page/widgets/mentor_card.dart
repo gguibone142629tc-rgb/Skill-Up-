@@ -1,11 +1,90 @@
 import 'package:finaproj/home_page/model/mentor_model.dart';
 import 'package:finaproj/Profile_page/pages/pofile_page.dart';
+import 'package:finaproj/services/database_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-class MentorCard extends StatelessWidget {
+class MentorCard extends StatefulWidget {
   final Mentor mentor;
 
   const MentorCard({super.key, required this.mentor});
+
+  @override
+  State<MentorCard> createState() => _MentorCardState();
+}
+
+class _MentorCardState extends State<MentorCard> {
+  final DatabaseService _dbService = DatabaseService();
+  bool _isSaved = false;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkSavedStatus();
+  }
+
+  Future<void> _checkSavedStatus() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId != null) {
+      final saved = await _dbService.isMentorSaved(userId, widget.mentor.id);
+      setState(() {
+        _isSaved = saved;
+        _isLoading = false;
+      });
+    } else {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _toggleSaved() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please log in to save mentors')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSaved = !_isSaved;
+    });
+
+    try {
+      if (_isSaved) {
+        await _dbService.saveMentor(userId, widget.mentor.id);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Mentor saved!'),
+              duration: Duration(seconds: 1),
+            ),
+          );
+        }
+      } else {
+        await _dbService.unsaveMentor(userId, widget.mentor.id);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Mentor removed from saved'),
+              duration: Duration(seconds: 1),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      setState(() {
+        _isSaved = !_isSaved;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error saving mentor')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,12 +110,12 @@ class MentorCard extends StatelessWidget {
               CircleAvatar(
                 radius: 32,
                 backgroundColor: Colors.grey[200],
-                backgroundImage: mentor.image.startsWith('http')
-                    ? NetworkImage(mentor.image)
-                    : (mentor.image.isNotEmpty
-                        ? AssetImage(mentor.image)
+                backgroundImage: widget.mentor.image.startsWith('http')
+                    ? NetworkImage(widget.mentor.image)
+                    : (widget.mentor.image.isNotEmpty
+                        ? AssetImage(widget.mentor.image)
                         : null) as ImageProvider?,
-                child: mentor.image.isEmpty
+                child: widget.mentor.image.isEmpty
                     ? const Icon(Icons.person, size: 30, color: Colors.grey)
                     : null,
               ),
@@ -46,7 +125,7 @@ class MentorCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      mentor.name,
+                      widget.mentor.name,
                       style: const TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
@@ -61,7 +140,7 @@ class MentorCard extends StatelessWidget {
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            mentor.jobTitle,
+                            widget.mentor.jobTitle,
                             style: TextStyle(
                               fontSize: 13,
                               color: Colors.grey[600],
@@ -74,15 +153,47 @@ class MentorCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Row(
+              Column(
                 children: [
-                  const Icon(Icons.star, size: 16, color: Colors.amber),
-                  const SizedBox(width: 4),
-                  Text(
-                    mentor.rating.toString(),
-                    style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w600),
+                  Row(
+                    children: [
+                      const Icon(Icons.star, size: 16, color: Colors.amber),
+                      const SizedBox(width: 4),
+                      Text(
+                        widget.mentor.rating.toString(),
+                        style: const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w600),
+                      ),
+                    ],
                   ),
+                  const SizedBox(height: 8),
+                  // Save/Bookmark Button
+                  _isLoading
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : InkWell(
+                          onTap: _toggleSaved,
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: _isSaved
+                                  ? const Color(0xFF2D6A65).withOpacity(0.1)
+                                  : Colors.grey[100],
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Icon(
+                              _isSaved ? Icons.bookmark : Icons.bookmark_border,
+                              size: 20,
+                              color: _isSaved
+                                  ? const Color(0xFF2D6A65)
+                                  : Colors.grey[600],
+                            ),
+                          ),
+                        ),
                 ],
               ),
             ],
@@ -91,7 +202,7 @@ class MentorCard extends StatelessWidget {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: mentor.skills
+            children: widget.mentor.skills
                 .map((skill) => Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 7),
@@ -119,9 +230,9 @@ class MentorCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                mentor.pricePerMonth == 'Free'
+                widget.mentor.pricePerMonth == 'Free'
                     ? 'Starting at ₱1200/mo'
-                    : mentor.pricePerMonth,
+                    : widget.mentor.pricePerMonth,
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
@@ -135,16 +246,16 @@ class MentorCard extends StatelessWidget {
                     MaterialPageRoute(
                       builder: (context) => ProfileScreen(
                         mentorData: {
-                          'uid': mentor.id, // CRITICAL: This was missing!
-                          'firstName': mentor.name.split(' ')[0],
-                          'lastName': mentor.name.contains(' ')
-                              ? mentor.name.split(' ')[1]
+                          'uid': widget.mentor.id,
+                          'firstName': widget.mentor.name.split(' ')[0],
+                          'lastName': widget.mentor.name.contains(' ')
+                              ? widget.mentor.name.split(' ')[1]
                               : '',
-                          'jobTitle': mentor.jobTitle,
-                          'profileImageUrl': mentor.image,
-                          'rating': mentor.rating,
-                          'skills': mentor.skills,
-                          'price': mentor.pricePerMonth,
+                          'jobTitle': widget.mentor.jobTitle,
+                          'profileImageUrl': widget.mentor.image,
+                          'rating': widget.mentor.rating,
+                          'skills': widget.mentor.skills,
+                          'price': widget.mentor.pricePerMonth,
                         },
                       ),
                     ),

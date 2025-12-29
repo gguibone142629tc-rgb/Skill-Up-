@@ -129,7 +129,8 @@ class DatabaseService {
 
   Future<Map<String, dynamic>?> getUserData(String userId) async {
     try {
-      DocumentSnapshot userDoc = await _db.collection('users').doc(userId).get();
+      DocumentSnapshot userDoc =
+          await _db.collection('users').doc(userId).get();
       if (userDoc.exists) {
         return userDoc.data() as Map<String, dynamic>;
       }
@@ -141,7 +142,10 @@ class DatabaseService {
   }
 
   Stream<QuerySnapshot> getMentors() {
-    return _db.collection('users').where('role', isEqualTo: 'mentor').snapshots();
+    return _db
+        .collection('users')
+        .where('role', isEqualTo: 'mentor')
+        .snapshots();
   }
 
   // --- 3. MESSAGING LOGIC ---
@@ -159,7 +163,8 @@ class DatabaseService {
     return chatRoomId;
   }
 
-  Future<void> sendMessage(String chatRoomId, String senderId, String text) async {
+  Future<void> sendMessage(
+      String chatRoomId, String senderId, String text) async {
     if (text.trim().isEmpty) return;
 
     try {
@@ -219,11 +224,94 @@ class DatabaseService {
     }
   }
 
+  // --- 5. SAVED MENTORS ---
+
+  /// Save a mentor to user's saved list
+  Future<void> saveMentor(String userId, String mentorId) async {
+    try {
+      await _db
+          .collection('users')
+          .doc(userId)
+          .collection('savedMentors')
+          .doc(mentorId)
+          .set({
+        'mentorId': mentorId,
+        'savedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      debugPrint("Error saving mentor: $e");
+      rethrow;
+    }
+  }
+
+  /// Remove a mentor from user's saved list
+  Future<void> unsaveMentor(String userId, String mentorId) async {
+    try {
+      await _db
+          .collection('users')
+          .doc(userId)
+          .collection('savedMentors')
+          .doc(mentorId)
+          .delete();
+    } catch (e) {
+      debugPrint("Error unsaving mentor: $e");
+      rethrow;
+    }
+  }
+
+  /// Check if a mentor is saved by the user
+  Future<bool> isMentorSaved(String userId, String mentorId) async {
+    try {
+      final doc = await _db
+          .collection('users')
+          .doc(userId)
+          .collection('savedMentors')
+          .doc(mentorId)
+          .get();
+      return doc.exists;
+    } catch (e) {
+      debugPrint("Error checking saved status: $e");
+      return false;
+    }
+  }
+
+  /// Get stream of saved mentors for a user
+  Stream<QuerySnapshot> getSavedMentors(String userId) {
+    return _db
+        .collection('users')
+        .doc(userId)
+        .collection('savedMentors')
+        .orderBy('savedAt', descending: true)
+        .snapshots();
+  }
+
+  /// Get saved mentor details
+  Stream<List<Map<String, dynamic>>> getSavedMentorsDetails(
+      String userId) async* {
+    await for (var snapshot in getSavedMentors(userId)) {
+      List<Map<String, dynamic>> mentors = [];
+
+      for (var doc in snapshot.docs) {
+        String mentorId = doc['mentorId'];
+        var mentorDoc = await _db.collection('users').doc(mentorId).get();
+
+        if (mentorDoc.exists) {
+          var mentorData = mentorDoc.data() as Map<String, dynamic>;
+          mentorData['id'] = mentorId;
+          mentors.add(mentorData);
+        }
+      }
+
+      yield mentors;
+    }
+  }
+
   // --- 5. PRIVATE CLOUDINARY HELPER ---
 
   Future<String> _uploadToCloudinary(XFile image) async {
     try {
-      final url = Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/upload');
+      final url =
+          Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/upload');
       final request = http.MultipartRequest('POST', url)
         ..fields['upload_preset'] = uploadPreset;
 
