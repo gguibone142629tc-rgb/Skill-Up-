@@ -47,7 +47,8 @@ class AuthWrapper extends StatelessWidget {
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, authSnapshot) {
         if (authSnapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return const Scaffold(
+              body: Center(child: CircularProgressIndicator()));
         }
 
         // 2. If User is Logged In
@@ -63,36 +64,39 @@ class AuthWrapper extends StatelessWidget {
             builder: (context, docSnapshot) {
               // Waiting for database connection
               if (docSnapshot.connectionState == ConnectionState.waiting) {
-                return const Scaffold(body: Center(child: CircularProgressIndicator()));
+                return const Scaffold(
+                    body: Center(child: CircularProgressIndicator()));
               }
 
               // 4. Check if Document Exists
               if (docSnapshot.hasData && docSnapshot.data!.exists) {
-                 // User has a profile -> Go Home
+                // User has a profile -> Go Home
                 return const HomePage();
               }
-              
+
               // 5. User exists in Auth, but NO Profile in Database yet.
               // Check if the account is BRAND NEW (created < 30 seconds ago)
-              final creationTime = currentUser.metadata.creationTime ?? DateTime.now();
-              final isNewUser = DateTime.now().difference(creationTime).inSeconds < 30;
+              final creationTime =
+                  currentUser.metadata.creationTime ?? DateTime.now();
+              final isNewUser =
+                  DateTime.now().difference(creationTime).inSeconds < 30;
 
               if (isNewUser) {
-                 // ALLOW TIME: Shows a loading screen while `saveMentorProfile` finishes running
-                 return const Scaffold(
-                   body: Center(
-                     child: Column(
-                       mainAxisAlignment: MainAxisAlignment.center,
-                       children: [
-                         CircularProgressIndicator(),
-                         SizedBox(height: 20),
-                         Text("Setting up your profile..."),
-                       ],
-                     ),
-                   ),
-                 );
+                // ALLOW TIME: Shows a loading screen while `saveMentorProfile` finishes running
+                return const Scaffold(
+                  body: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 20),
+                        Text("Setting up your profile..."),
+                      ],
+                    ),
+                  ),
+                );
               } else {
-                // OLD Ghost Account: It's been > 30 seconds and still no data. 
+                // OLD Ghost Account: It's been > 30 seconds and still no data.
                 // Now we can safely log them out.
                 Future.microtask(() => FirebaseAuth.instance.signOut());
                 return const LoginPage();
@@ -143,7 +147,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
       showUnselectedLabels: true,
       onTap: (index) {
         if (index == selectedIndex) return;
-        
+
         // --- FIXED NAVIGATION LOGIC ---
         Widget nextPage;
         switch (index) {
@@ -154,7 +158,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
             nextPage = const FindMentorPage(); // Now connected!
             break;
           case 2:
-            nextPage = const MessagesPage();   // Now connected!
+            nextPage = const MessagesPage(); // Now connected!
             break;
           case 3:
             nextPage = const ProfilePage();
@@ -175,25 +179,21 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
       },
       items: const [
         BottomNavigationBarItem(
-          icon: Icon(Icons.home_outlined), 
-          activeIcon: Icon(Icons.home), 
-          label: 'Home'
-        ),
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home),
+            label: 'Home'),
         BottomNavigationBarItem(
-          icon: Icon(Icons.search), 
-          activeIcon: Icon(Icons.search, weight: 600), // Thicker when active
-          label: 'Search'
-        ),
+            icon: Icon(Icons.search),
+            activeIcon: Icon(Icons.search, weight: 600), // Thicker when active
+            label: 'Search'),
         BottomNavigationBarItem(
-          icon: Icon(Icons.message_outlined), 
-          activeIcon: Icon(Icons.message), 
-          label: 'Messages'
-        ),
+            icon: Icon(Icons.message_outlined),
+            activeIcon: Icon(Icons.message),
+            label: 'Messages'),
         BottomNavigationBarItem(
-          icon: Icon(Icons.person_outline), 
-          activeIcon: Icon(Icons.person), 
-          label: 'Profile'
-        ),
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: 'Profile'),
       ],
     );
   }

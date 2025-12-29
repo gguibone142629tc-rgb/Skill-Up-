@@ -11,8 +11,10 @@ class CustomAppBar extends StatelessWidget {
     final String? uid = FirebaseAuth.instance.currentUser?.uid;
 
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: const BoxDecoration(color: Color(0xFF4A8B85)),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+      decoration: const BoxDecoration(
+        color: Color(0xFF4A8B85),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -26,22 +28,27 @@ class CustomAppBar extends StatelessWidget {
                   const Text(
                     'Welcome back,',
                     style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w300,
+                      color: Colors.white70,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      letterSpacing: 0.3,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  
+
                   // FETCHING THE NAME FROM FIRESTORE
                   FutureBuilder<DocumentSnapshot>(
-                    future: FirebaseFirestore.instance.collection('users').doc(uid).get(),
+                    future: FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(uid)
+                        .get(),
                     builder: (context, snapshot) {
                       if (snapshot.hasData && snapshot.data!.exists) {
-                        var userData = snapshot.data!.data() as Map<String, dynamic>;
+                        var userData =
+                            snapshot.data!.data() as Map<String, dynamic>;
                         String firstName = userData['firstName'] ?? 'User';
                         String lastName = userData['lastName'] ?? '';
-                        
+
                         return Text(
                           '$firstName $lastName',
                           style: const TextStyle(
@@ -51,15 +58,14 @@ class CustomAppBar extends StatelessWidget {
                           ),
                         );
                       }
-                      
+
                       // While loading or if data is missing, show placeholder
                       return const Text(
                         'Loading...',
                         style: TextStyle(
-                          color: Colors.white, 
-                          fontSize: 24, 
-                          fontWeight: FontWeight.bold
-                        ),
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold),
                       );
                     },
                   ),
@@ -80,13 +86,20 @@ class CustomAppBar extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
           // Search Bar
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(30),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Row(
               children: [

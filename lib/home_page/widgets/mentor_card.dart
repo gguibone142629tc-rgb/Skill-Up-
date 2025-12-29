@@ -1,5 +1,5 @@
 import 'package:finaproj/home_page/model/mentor_model.dart';
-import 'package:finaproj/Profile_page/pages/pofile_page.dart'; 
+import 'package:finaproj/Profile_page/pages/pofile_page.dart';
 import 'package:flutter/material.dart';
 
 class MentorCard extends StatelessWidget {
@@ -10,16 +10,16 @@ class MentorCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -29,11 +29,13 @@ class MentorCard extends StatelessWidget {
           Row(
             children: [
               CircleAvatar(
-                radius: 30,
-                backgroundColor: Colors.grey[300],
+                radius: 32,
+                backgroundColor: Colors.grey[200],
                 backgroundImage: mentor.image.startsWith('http')
                     ? NetworkImage(mentor.image)
-                    : (mentor.image.isNotEmpty ? AssetImage(mentor.image) : null) as ImageProvider?,
+                    : (mentor.image.isNotEmpty
+                        ? AssetImage(mentor.image)
+                        : null) as ImageProvider?,
                 child: mentor.image.isEmpty
                     ? const Icon(Icons.person, size: 30, color: Colors.grey)
                     : null,
@@ -45,15 +47,27 @@ class MentorCard extends StatelessWidget {
                   children: [
                     Text(
                       mentor.name,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
                     ),
+                    const SizedBox(height: 2),
                     Row(
                       children: [
-                        const Icon(Icons.work, size: 14, color: Colors.grey),
+                        Icon(Icons.work_outline,
+                            size: 14, color: Colors.grey[600]),
                         const SizedBox(width: 4),
-                        Text(
-                          mentor.jobTitle,
-                          style: const TextStyle(fontSize: 13, color: Colors.grey),
+                        Expanded(
+                          child: Text(
+                            mentor.jobTitle,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[600],
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ],
                     ),
@@ -66,40 +80,52 @@ class MentorCard extends StatelessWidget {
                   const SizedBox(width: 4),
                   Text(
                     mentor.rating.toString(),
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: mentor.skills
                 .map((skill) => Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 7),
                       decoration: BoxDecoration(
-                        color: Colors.grey[100],
+                        color: const Color(0xFFF5F5F5),
                         borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.grey[300]!,
+                          width: 0.5,
+                        ),
                       ),
                       child: Text(
                         skill,
-                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[700],
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ))
                 .toList(),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                mentor.pricePerMonth,
+                mentor.pricePerMonth == 'Free'
+                    ? 'Starting at ₱1200/mo'
+                    : mentor.pricePerMonth,
                 style: const TextStyle(
-                  fontSize: 14,
+                  fontSize: 15,
                   fontWeight: FontWeight.bold,
-                  color: Colors.amber,
+                  color: Color(0xFF2D6A65),
                 ),
               ),
               ElevatedButton(
@@ -111,7 +137,9 @@ class MentorCard extends StatelessWidget {
                         mentorData: {
                           'uid': mentor.id, // CRITICAL: This was missing!
                           'firstName': mentor.name.split(' ')[0],
-                          'lastName': mentor.name.contains(' ') ? mentor.name.split(' ')[1] : '',
+                          'lastName': mentor.name.contains(' ')
+                              ? mentor.name.split(' ')[1]
+                              : '',
                           'jobTitle': mentor.jobTitle,
                           'profileImageUrl': mentor.image,
                           'rating': mentor.rating,
@@ -124,9 +152,20 @@ class MentorCard extends StatelessWidget {
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2D6A65),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  elevation: 2,
                 ),
-                child: const Text("View Profile", style: TextStyle(color: Colors.white, fontSize: 12)),
+                child: const Text(
+                  "View Profile",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ],
           ),

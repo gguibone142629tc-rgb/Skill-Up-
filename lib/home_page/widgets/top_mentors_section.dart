@@ -12,13 +12,17 @@ class TopMentorsSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          padding: EdgeInsets.fromLTRB(20, 20, 20, 12),
           child: Text(
             'Top Mentors',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
           ),
         ),
-        
+
         // STREAMBUILDER: Pulls data from your "users" collection
         StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance
@@ -41,9 +45,7 @@ class TopMentorsSection extends StatelessWidget {
             // Convert Firestore documents into your Mentor model
             final mentors = snapshot.data!.docs.map((doc) {
               return Mentor.fromFirestore(
-                doc.data() as Map<String, dynamic>, 
-                doc.id
-              );
+                  doc.data() as Map<String, dynamic>, doc.id);
             }).toList();
 
             return ListView.builder(
