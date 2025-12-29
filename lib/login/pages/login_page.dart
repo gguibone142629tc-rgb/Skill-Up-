@@ -1,7 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart'; 
-import 'package:cloud_firestore/cloud_firestore.dart'; 
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 // --- YOUR PROJECT IMPORTS ---
 import 'package:finaproj/common/auth_text_field.dart';
@@ -23,13 +23,13 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  int _selectedRole = 0; 
+  int _selectedRole = 0;
   bool _rememberMe = false;
-  bool _isLoading = false; 
+  bool _isLoading = false;
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final AuthService _authService = AuthService(); 
+  final AuthService _authService = AuthService();
 
   @override
   void dispose() {
@@ -55,7 +55,8 @@ class _LoginPageState extends State<LoginPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text("Try Again", style: TextStyle(color: Color(0xFF2D6A65))),
+            child: const Text("Try Again",
+                style: TextStyle(color: Color(0xFF2D6A65))),
           ),
         ],
       ),
@@ -63,7 +64,8 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _handleLogin() async {
-    if (_emailController.text.trim().isEmpty || _passwordController.text.trim().isEmpty) {
+    if (_emailController.text.trim().isEmpty ||
+        _passwordController.text.trim().isEmpty) {
       _showErrorDialog("Please enter both email and password.");
       return;
     }
@@ -102,12 +104,14 @@ class _LoginPageState extends State<LoginPage> {
         } else {
           // Wrong Role: Must sign out immediately
           await _authService.signOut();
-          _showErrorDialog("Access Denied: You are registered as a $actualRole. Please select the correct role above.");
+          _showErrorDialog(
+              "Access Denied: You are registered as a $actualRole. Please select the correct role above.");
         }
       }
     } catch (e) {
       // Catching Firebase Auth errors (wrong password, etc.)
-      _showErrorDialog("Incorrect credentials. Please check your email and password.");
+      _showErrorDialog(
+          "Incorrect credentials. Please check your email and password.");
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -131,13 +135,11 @@ class _LoginPageState extends State<LoginPage> {
                 children: [
                   const LoginLogo(height: 60),
                   const SizedBox(height: 24),
-
                   RoleSwitcher(
                     selectedIndex: _selectedRole,
                     onChanged: (i) => setState(() => _selectedRole = i),
                   ),
                   const SizedBox(height: 24),
-
                   AuthTextField(
                     label: 'Email',
                     controller: _emailController,
@@ -145,7 +147,6 @@ class _LoginPageState extends State<LoginPage> {
                     keyboardType: TextInputType.emailAddress,
                   ),
                   const SizedBox(height: 16),
-
                   AuthTextField(
                     label: 'Password',
                     controller: _passwordController,
@@ -153,45 +154,54 @@ class _LoginPageState extends State<LoginPage> {
                     obscure: true,
                     showObscureToggle: true,
                   ),
-
                   const SizedBox(height: 8),
                   RememberForgotRow(
                     rememberMe: _rememberMe,
                     onRememberChanged: (v) => setState(() => _rememberMe = v),
                     onForgot: () {},
                   ),
-
                   const SizedBox(height: 20),
-                  _isLoading 
-                    ? const Center(child: CircularProgressIndicator(color: accent))
-                    : PrimaryButton(
-                        label: 'Login', 
-                        onPressed: _handleLogin,
-                      ),
-                  
+                  _isLoading
+                      ? const Center(
+                          child: CircularProgressIndicator(color: accent))
+                      : PrimaryButton(
+                          label: 'Login',
+                          onPressed: _handleLogin,
+                        ),
                   const SizedBox(height: 24),
                   Center(
                     child: RichText(
                       textAlign: TextAlign.center,
                       text: TextSpan(
-                        style: theme.textTheme.bodyMedium?.copyWith(color: Colors.black87),
+                        style: theme.textTheme.bodyMedium
+                            ?.copyWith(color: Colors.black87),
                         children: [
                           const TextSpan(text: "Don't have an account?\n"),
                           TextSpan(
                             text: 'Sign up as mentee',
-                            style: const TextStyle(color: accent, fontWeight: FontWeight.w600),
+                            style: const TextStyle(
+                                color: accent, fontWeight: FontWeight.w600),
                             recognizer: TapGestureRecognizer()
                               ..onTap = () {
-                                Navigator.push(context, MaterialPageRoute(builder: (context) => const SignUpPage()));
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            const SignUpPage()));
                               },
                           ),
                           const TextSpan(text: '  or  '),
                           TextSpan(
                             text: 'Apply to be a mentor',
-                            style: const TextStyle(color: accent, fontWeight: FontWeight.w600),
+                            style: const TextStyle(
+                                color: accent, fontWeight: FontWeight.w600),
                             recognizer: TapGestureRecognizer()
                               ..onTap = () {
-                                Navigator.push(context, MaterialPageRoute(builder: (context) => const MentorSignUpPage()));
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            const MentorSignUpPage()));
                               },
                           ),
                         ],

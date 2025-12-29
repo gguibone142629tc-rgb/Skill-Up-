@@ -10,7 +10,7 @@ import 'package:intl/intl.dart';
 
 class MessageListWidget extends StatelessWidget {
   MessageListWidget({super.key});
-  
+
   final DatabaseService _db = DatabaseService();
   final String currentUserId = FirebaseAuth.instance.currentUser?.uid ?? "";
 
@@ -25,8 +25,18 @@ class MessageListWidget extends StatelessWidget {
           .orderBy('lastTimestamp', descending: true)
           .snapshots(),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return const Center(child: Text("No messages"));
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(40.0),
+              child: CircularProgressIndicator(
+                color: Color(0xFF2D6A65),
+              ),
+            ),
+          );
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty)
+          return const Center(child: Text("No messages"));
 
         return ListView.builder(
           shrinkWrap: true,
@@ -37,13 +47,14 @@ class MessageListWidget extends StatelessWidget {
             var chatData = chatDoc.data() as Map<String, dynamic>;
 
             List users = chatData['users'] ?? [];
-            String otherUserId = users.firstWhere((id) => id != currentUserId, orElse: () => "");
+            String otherUserId =
+                users.firstWhere((id) => id != currentUserId, orElse: () => "");
 
             return FutureBuilder<Map<String, dynamic>?>(
               future: _db.getUserData(otherUserId),
               builder: (context, userSnap) {
                 if (!userSnap.hasData) return const SizedBox.shrink();
-                
+
                 final userData = userSnap.data!;
                 String lastMsg = chatData['lastMessage'] ?? "";
                 String lastSenderId = chatData['lastSenderId'] ?? "";
@@ -59,7 +70,7 @@ class MessageListWidget extends StatelessWidget {
                   messagesModel: MessagesModel(
                     profilePath: userData['profileImageUrl'] ?? '',
                     name: userData['fullName'] ?? 'User',
-                    message: lastMsg, 
+                    message: lastMsg,
                     time: _formatTime(chatData['lastTimestamp']),
                     chatRoomId: chatDoc.id,
                   ),

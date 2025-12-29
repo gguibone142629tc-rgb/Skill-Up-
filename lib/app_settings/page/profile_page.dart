@@ -65,7 +65,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
               _buildMenuOption(
                 icon: Icons.person_outline,
-                label: "Edit Profile",
+                label: "Personal Details",
                 onTap: () {
                   // Navigate to the new Edit Profile Page
                   Navigator.push(
@@ -158,7 +158,7 @@ class _ProfilePageState extends State<ProfilePage> {
         elevation: 0, // Flat look like screenshot
         onTap: (index) {
           if (index == 3) return; // Already on Profile
-          
+
           Widget nextPage;
           switch (index) {
             case 0:
@@ -173,7 +173,7 @@ class _ProfilePageState extends State<ProfilePage> {
             default:
               return;
           }
-          
+
           Navigator.pushReplacement(
             context,
             PageRouteBuilder(

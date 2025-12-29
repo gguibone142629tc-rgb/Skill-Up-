@@ -9,7 +9,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
 import 'package:finaproj/login/pages/login_page.dart';
 import 'package:finaproj/home_page/pages/home_page.dart';
-import 'package:finaproj/app_settings/page/profile_page.dart';
+import 'package:finaproj/Profile_page/pages/my_profile_page.dart';
+import 'package:finaproj/Profile_page/pages/mentee_profile_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -125,76 +126,199 @@ class CustomBottomNavBar extends StatefulWidget {
   State<CustomBottomNavBar> createState() => _CustomBottomNavBarState();
 }
 
-class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
+class _CustomBottomNavBarState extends State<CustomBottomNavBar>
+    with SingleTickerProviderStateMixin {
   late int selectedIndex;
+  late AnimationController _animationController;
 
   @override
   void initState() {
     super.initState();
     selectedIndex = widget.initialIndex;
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant CustomBottomNavBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialIndex != widget.initialIndex) {
+      selectedIndex = widget.initialIndex;
+    }
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     const accentColor = Color(0xFF2D6A65);
 
-    return BottomNavigationBar(
-      currentIndex: selectedIndex,
-      type: BottomNavigationBarType.fixed,
-      selectedItemColor: accentColor,
-      unselectedItemColor: Colors.grey,
-      showSelectedLabels: true,
-      showUnselectedLabels: true,
-      onTap: (index) {
-        if (index == selectedIndex) return;
+    return Container(
+      decoration: BoxDecoration(
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, -3),
+          ),
+        ],
+      ),
+      child: BottomNavigationBar(
+        currentIndex: selectedIndex,
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: accentColor,
+        unselectedItemColor: Colors.grey[400],
+        showSelectedLabels: true,
+        showUnselectedLabels: true,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        selectedFontSize: 12,
+        unselectedFontSize: 11,
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
+        iconSize: 26,
+        onTap: (index) {
+          if (index == selectedIndex) return;
 
-        // --- FIXED NAVIGATION LOGIC ---
-        Widget nextPage;
-        switch (index) {
-          case 0:
-            nextPage = const HomePage();
-            break;
-          case 1:
-            nextPage = const FindMentorPage(); // Now connected!
-            break;
-          case 2:
-            nextPage = const MessagesPage(); // Now connected!
-            break;
-          case 3:
-            nextPage = const ProfilePage();
-            break;
-          default:
-            return;
+          setState(() => selectedIndex = index);
+
+          // --- FIXED NAVIGATION LOGIC ---
+          Widget nextPage;
+          switch (index) {
+            case 0:
+              nextPage = const HomePage();
+              break;
+            case 1:
+              nextPage = const FindMentorPage();
+              break;
+            case 2:
+              nextPage = const MessagesPage();
+              break;
+            case 3:
+              nextPage = const _RoleProfileEntry(startEditing: false);
+              break;
+            default:
+              return;
+          }
+
+          // Navigate without animation for instant response
+          Navigator.pushReplacement(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (context, anim1, anim2) => nextPage,
+              transitionDuration: Duration.zero,
+              reverseTransitionDuration: Duration.zero,
+            ),
+          );
+        },
+        items: [
+          _buildNavItem(
+            index: 0,
+            icon: Icons.home_outlined,
+            activeIcon: Icons.home,
+            label: 'Home',
+          ),
+          _buildNavItem(
+            index: 1,
+            icon: Icons.search,
+            activeIcon: Icons.search,
+            label: 'Search',
+          ),
+          _buildNavItem(
+            index: 2,
+            icon: Icons.message_outlined,
+            activeIcon: Icons.message,
+            label: 'Messages',
+          ),
+          _buildNavItem(
+            index: 3,
+            icon: Icons.person_outline,
+            activeIcon: Icons.person,
+            label: 'Profile',
+          ),
+        ],
+      ),
+    );
+  }
+
+  BottomNavigationBarItem _buildNavItem({
+    required int index,
+    required IconData icon,
+    required IconData activeIcon,
+    required String label,
+  }) {
+    final isSelected = selectedIndex == index;
+
+    return BottomNavigationBarItem(
+      icon: AnimatedScale(
+        scale: isSelected ? 1.1 : 1.0,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOutBack,
+        child: Icon(icon),
+      ),
+      activeIcon: AnimatedScale(
+        scale: isSelected ? 1.1 : 1.0,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOutBack,
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: const Color(0xFF2D6A65).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(activeIcon),
+        ),
+      ),
+      label: label,
+    );
+  }
+}
+
+// Small helper page that routes to the correct profile edit screen based on role
+class _RoleProfileEntry extends StatelessWidget {
+  final bool startEditing;
+  const _RoleProfileEntry({required this.startEditing});
+
+  @override
+  Widget build(BuildContext context) {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      return const Scaffold(
+        body: Center(child: Text('Not signed in')),
+      );
+    }
+
+    return FutureBuilder<DocumentSnapshot>(
+      future: FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser.uid)
+          .get(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
         }
 
-        // Navigate without animation for a "Tab" feel
-        Navigator.pushReplacement(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (context, anim1, anim2) => nextPage,
-            transitionDuration: Duration.zero,
-            reverseTransitionDuration: Duration.zero,
-          ),
-        );
+        if (!snapshot.hasData || !snapshot.data!.exists) {
+          return const Scaffold(
+            body: Center(child: Text('Profile not found')),
+          );
+        }
+
+        final data = snapshot.data!.data() as Map<String, dynamic>;
+        final role = (data['role'] ?? 'student').toString().toLowerCase();
+
+        if (role == 'mentor') {
+          return MyProfilePage(startEditing: startEditing);
+        }
+        return MenteeProfilePage(startEditing: startEditing);
       },
-      items: const [
-        BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Home'),
-        BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            activeIcon: Icon(Icons.search, weight: 600), // Thicker when active
-            label: 'Search'),
-        BottomNavigationBarItem(
-            icon: Icon(Icons.message_outlined),
-            activeIcon: Icon(Icons.message),
-            label: 'Messages'),
-        BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Profile'),
-      ],
     );
   }
 }

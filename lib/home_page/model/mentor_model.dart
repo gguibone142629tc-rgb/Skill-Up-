@@ -26,7 +26,7 @@ class Mentor {
       image: data['profileImageUrl'] ?? '', // Use the URL if you have one
       rating: (data['rating'] ?? 5.0).toDouble(),
       skills: List<String>.from(data['skills'] ?? []),
-      pricePerMonth: data['price'] ?? 'Free', 
+      pricePerMonth: data['price'] ?? 'Free',
     );
   }
 }
