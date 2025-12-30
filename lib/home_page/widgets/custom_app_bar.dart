@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:finaproj/Profile_page/pages/my_profile_page.dart';
 import 'package:finaproj/Profile_page/pages/mentee_profile_page.dart';
+import 'package:finaproj/FindMentor/page/find_mentor_page.dart';
 
 class CustomAppBar extends StatelessWidget {
   const CustomAppBar({super.key});
@@ -168,10 +169,21 @@ class CustomAppBar extends StatelessWidget {
               children: [
                 const Icon(Icons.search, color: Colors.grey),
                 const SizedBox(width: 10),
-                const Expanded(
+                Expanded(
                   child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Search service',
+                    onChanged: (value) {
+                      // Navigate to search results if text is entered
+                      if (value.isNotEmpty) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => FindMentorPage(),
+                          ),
+                        );
+                      }
+                    },
+                    decoration: const InputDecoration(
+                      hintText: 'Search mentors or students',
                       hintStyle: TextStyle(color: Colors.grey),
                       border: InputBorder.none,
                     ),

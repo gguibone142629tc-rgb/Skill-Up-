@@ -17,30 +17,31 @@ class FindMentorList extends StatelessWidget {
 
     // Price display helper that prefers membership plan starting price
     String displayPrice(Mentor mentor) {
-      if (mentor.planPrice != null && mentor.planPrice! > 0) return 'Starting at ₱${mentor.planPrice}/mo';
+      if (mentor.planPrice != null && mentor.planPrice! > 0)
+        return '₱${mentor.planPrice}/month';
       if (mentor.planTitle != null && mentor.planTitle!.isNotEmpty) {
         final p = MembershipPlan.getPriceForTitle(mentor.planTitle);
-        return 'Starting at ₱$p/mo';
+        return '₱$p/month';
       }
-      final parsed = int.tryParse(mentor.pricePerMonth.replaceAll(RegExp(r'[^0-9]'), ''));
-      if (parsed != null && parsed > 0) return 'Starting at ₱$parsed/mo';
-      return 'Starting at ₱${MembershipPlan.defaultStartingPrice}/mo';
+      final parsed =
+          int.tryParse(mentor.pricePerMonth.replaceAll(RegExp(r'[^0-9]'), ''));
+      if (parsed != null && parsed > 0) return '₱$parsed/month';
+      return '₱${MembershipPlan.defaultStartingPrice}/month';
     }
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       // height removed to let it grow dynamically
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 5,
-            offset: const Offset(0, 5),
-          )
-        ]
-      ),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 5,
+              offset: const Offset(0, 5),
+            )
+          ]),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -62,7 +63,8 @@ class FindMentorList extends StatelessWidget {
                     children: [
                       Text(
                         mentor.name,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -87,7 +89,7 @@ class FindMentorList extends StatelessWidget {
                 )
               ],
             ),
-            
+
             const SizedBox(height: 16),
 
             // Row 2: Skills Chips
@@ -108,7 +110,7 @@ class FindMentorList extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  displayPrice(mentor), 
+                  displayPrice(mentor),
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
@@ -127,9 +129,12 @@ class FindMentorList extends StatelessWidget {
                             mentorData: {
                               'uid': mentor.id,
                               'firstName': mentor.name.split(' ')[0],
-                              'lastName': mentor.name.split(' ').length > 1 ? mentor.name.split(' ')[1] : '',
+                              'lastName': mentor.name.split(' ').length > 1
+                                  ? mentor.name.split(' ')[1]
+                                  : '',
                               'jobTitle': mentor.jobTitle,
-                              'bio': 'Experienced mentor ready to help you grow.',
+                              'bio':
+                                  'Experienced mentor ready to help you grow.',
                               'skills': mentor.skills,
                               'profileImageUrl': mentor.image,
                               'price': displayPrice(mentor),
@@ -141,10 +146,15 @@ class FindMentorList extends StatelessWidget {
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF2D6A65),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20)),
                       elevation: 0,
                     ),
-                    child: const Text('View Profile', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)), 
+                    child: const Text('View Profile',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold)),
                   ),
                 )
               ],

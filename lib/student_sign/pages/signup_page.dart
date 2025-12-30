@@ -26,6 +26,7 @@ class _SignUpPageState extends State<SignUpPage> {
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  String _gender = '';
 
   @override
   void dispose() {
@@ -39,9 +40,10 @@ class _SignUpPageState extends State<SignUpPage> {
   // --- THE REAL SIGNUP LOGIC ---
   Future<void> _handleSignUp() async {
     // 1. Validation
-    if (_emailController.text.trim().isEmpty || 
+    if (_emailController.text.trim().isEmpty ||
         _passwordController.text.trim().isEmpty ||
-        _firstNameController.text.trim().isEmpty) {
+        _firstNameController.text.trim().isEmpty ||
+        _gender.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please fill in all required fields")),
       );
@@ -63,6 +65,7 @@ class _SignUpPageState extends State<SignUpPage> {
         email: _emailController.text.trim(),
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
+        gender: _gender,
       );
 
       if (mounted) {
@@ -72,7 +75,7 @@ class _SignUpPageState extends State<SignUpPage> {
           (route) => false,
         );
       }
-        } catch (e) {
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
@@ -125,6 +128,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   emailController: _emailController,
                   passwordController: _passwordController,
                   isLoading: _isLoading, // New parameter
+                  onGenderChanged: (gender) => _gender = gender,
                   onSubmit: _handleSignUp, // Swapped _noop for _handleSignUp
                 ),
 

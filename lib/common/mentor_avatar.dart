@@ -5,7 +5,8 @@ class MentorAvatar extends StatelessWidget {
   final String name; // used to derive initials fallback
   final double size; // width/height in pixels
 
-  const MentorAvatar({super.key, required this.image, required this.name, this.size = 64});
+  const MentorAvatar(
+      {super.key, required this.image, required this.name, this.size = 64});
 
   String get _initials {
     final parts = name.trim().split(RegExp(r"\s+"));
@@ -37,33 +38,7 @@ class MentorAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (image.isNotEmpty) {
-      // Network image
-      if (image.startsWith('http')) {
-        return ClipOval(
-          child: Image.network(
-            image,
-            width: size,
-            height: size,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => _placeholder(context),
-          ),
-        );
-      }
-
-      // Asset image (local)
-      return ClipOval(
-        child: Image.asset(
-          image,
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => _placeholder(context),
-        ),
-      );
-    }
-
-    // No image provided: show initials circle
+    // Always show initials (profile pics disabled for now)
     return _placeholder(context);
   }
 }

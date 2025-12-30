@@ -36,6 +36,7 @@ class _MentorSignUpPageState extends State<MentorSignUpPage> {
   final _companyController = TextEditingController();
   final _locationController = TextEditingController();
   XFile? _profileImage;
+  String _gender = ''; // Gender field
 
   // --- Step 2: Experience Data ---
   int _yearsExp = 0;
@@ -67,7 +68,8 @@ class _MentorSignUpPageState extends State<MentorSignUpPage> {
           _passwordController.text.isEmpty ||
           _jobTitleController.text.isEmpty ||
           _companyController.text.isEmpty ||
-          _locationController.text.isEmpty) {
+          _locationController.text.isEmpty ||
+          _gender.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Please fill in all fields')),
         );
@@ -92,7 +94,8 @@ class _MentorSignUpPageState extends State<MentorSignUpPage> {
     // If on Step 2, Validate
     if (_bio.isEmpty || _category.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a category and write a bio')),
+        const SnackBar(
+            content: Text('Please select a category and write a bio')),
       );
       return;
     }
@@ -118,6 +121,7 @@ class _MentorSignUpPageState extends State<MentorSignUpPage> {
           jobTitle: _jobTitleController.text.trim(),
           company: _companyController.text.trim(),
           location: _locationController.text.trim(),
+          gender: _gender,
           yearsExp: _yearsExp,
           monthsExp: _monthsExp,
           bio: _bio,
@@ -202,7 +206,7 @@ class _MentorSignUpPageState extends State<MentorSignUpPage> {
                 ],
               ),
             ),
-            
+
             // Step Title
             Text(
               _currentPage == 0 ? "Basic Information" : "Experience & Skills",
@@ -227,9 +231,10 @@ class _MentorSignUpPageState extends State<MentorSignUpPage> {
                       companyController: _companyController,
                       locationController: _locationController,
                       onImageSelected: (file) => _profileImage = file,
+                      onGenderChanged: (gender) => _gender = gender,
                     ),
                   ),
-                  
+
                   // Step 2: Experience
                   _buildScrollableStep(
                     child: MentorExperienceStep(
@@ -242,7 +247,7 @@ class _MentorSignUpPageState extends State<MentorSignUpPage> {
                       onExpertiseChanged: (list) => _expertise = list,
                       // ✅ Capture the category
                       onCategoryChanged: (val) {
-                         _category = val;
+                        _category = val;
                       },
                     ),
                   ),
@@ -256,7 +261,8 @@ class _MentorSignUpPageState extends State<MentorSignUpPage> {
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : PrimaryButton(
-                      label: _currentPage == 0 ? 'Next Step' : 'Become a Mentor',
+                      label:
+                          _currentPage == 0 ? 'Next Step' : 'Become a Mentor',
                       onPressed: _onCta,
                     ),
             ),

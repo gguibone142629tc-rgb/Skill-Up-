@@ -5,29 +5,31 @@ import 'package:image_picker/image_picker.dart';
 // --- IMPORTS ---
 // Ensure these paths match your project structure
 import 'package:finaproj/common/auth_text_field.dart';
-import 'package:finaproj/mentor_sign/widget/mentor_signup/upload_photo_field.dart'; 
+import 'package:finaproj/mentor_sign/widget/mentor_signup/upload_photo_field.dart';
 
 class MentorBasicInfoStep extends StatefulWidget {
   const MentorBasicInfoStep({
     super.key,
     required this.firstNameController,
     required this.lastNameController,
-    required this.emailController,       // <--- REQUIRED
-    required this.passwordController,    // <--- REQUIRED
+    required this.emailController, // <--- REQUIRED
+    required this.passwordController, // <--- REQUIRED
     required this.jobTitleController,
     required this.companyController,
     required this.locationController,
     this.onImageSelected,
+    this.onGenderChanged,
   });
 
   final TextEditingController firstNameController;
   final TextEditingController lastNameController;
-  final TextEditingController emailController;     
-  final TextEditingController passwordController;  
+  final TextEditingController emailController;
+  final TextEditingController passwordController;
   final TextEditingController jobTitleController;
   final TextEditingController companyController;
   final TextEditingController locationController;
   final ValueChanged<XFile?>? onImageSelected;
+  final ValueChanged<String>? onGenderChanged;
 
   @override
   State<MentorBasicInfoStep> createState() => _MentorBasicInfoStepState();
@@ -35,6 +37,7 @@ class MentorBasicInfoStep extends StatefulWidget {
 
 class _MentorBasicInfoStepState extends State<MentorBasicInfoStep> {
   Uint8List? _imageBytes;
+  String _selectedGender = '';
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -60,7 +63,8 @@ class _MentorBasicInfoStepState extends State<MentorBasicInfoStep> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             UploadPhotoField(
-              imageProvider: _imageBytes != null ? MemoryImage(_imageBytes!) : null,
+              imageProvider:
+                  _imageBytes != null ? MemoryImage(_imageBytes!) : null,
               onUpload: _pickImage,
             ),
           ],
@@ -129,6 +133,39 @@ class _MentorBasicInfoStepState extends State<MentorBasicInfoStep> {
             label: 'Location',
             controller: widget.locationController,
             hintText: 'e.g. New York'),
+        const SizedBox(height: 16),
+        // --- Gender ---
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Gender',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+            ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String>(
+              value: _selectedGender.isEmpty ? null : _selectedGender,
+              decoration: InputDecoration(
+                hintText: 'Select Gender',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              items: ['Male', 'Female', 'Other'].map((gender) {
+                return DropdownMenuItem<String>(
+                  value: gender,
+                  child: Text(gender),
+                );
+              }).toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() => _selectedGender = value);
+                  widget.onGenderChanged?.call(value);
+                }
+              },
+            ),
+          ],
+        ),
         const SizedBox(height: 20),
       ],
     );

@@ -6,7 +6,7 @@ class FindMentorSearchWidget extends StatelessWidget {
   final VoidCallback onFilterTap; // ✅ Added Callback
 
   const FindMentorSearchWidget({
-    super.key, 
+    super.key,
     required this.onSearchChanged,
     required this.onFilterTap, // ✅ Required
   });
@@ -29,16 +29,17 @@ class FindMentorSearchWidget extends StatelessWidget {
                 onChanged: onSearchChanged,
                 decoration: const InputDecoration(
                   prefixIcon: Icon(Icons.search, color: Colors.grey),
-                  hintText: 'Search by name or role...',
+                  hintText: 'Search mentors or students...',
                   hintStyle: TextStyle(color: Colors.grey),
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                 ),
               ),
             ),
           ),
           const SizedBox(width: 12),
-          
+
           // Filter Button
           GestureDetector(
             onTap: onFilterTap, // ✅ Opens the Filter Modal
@@ -51,9 +52,10 @@ class FindMentorSearchWidget extends StatelessWidget {
                 borderRadius: BorderRadius.circular(15),
               ),
               child: SvgPicture.asset(
-                'assets/icons/tune.svg', 
+                'assets/icons/tune.svg',
                 color: const Color(0xFF2D6A65),
-                placeholderBuilder: (_) => const Icon(Icons.tune, color: Color(0xFF2D6A65)),
+                placeholderBuilder: (_) =>
+                    const Icon(Icons.tune, color: Color(0xFF2D6A65)),
               ),
             ),
           )

@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:finaproj/services/database_service.dart';
+import 'package:finaproj/Profile_page/pages/my_profile_page.dart';
 
 class MenteeProfilePage extends StatefulWidget {
   final bool startEditing;
@@ -22,6 +23,7 @@ class _MenteeProfilePageState extends State<MenteeProfilePage> {
   late bool _isEditing;
 
   // Controllers for editing
+  late TextEditingController _bioController;
   late TextEditingController _interestsController;
   late TextEditingController _goalsController;
   late TextEditingController _learningStyleController;
@@ -38,11 +40,34 @@ class _MenteeProfilePageState extends State<MenteeProfilePage> {
   void initState() {
     super.initState();
     _isEditing = widget.startEditing;
+    _checkRoleAndNavigate();
     _loadProfile();
     _initializeControllers();
   }
 
+  Future<void> _checkRoleAndNavigate() async {
+    final userId = _auth.currentUser?.uid;
+    if (userId != null) {
+      try {
+        final userData = await _dbService.getUserData(userId);
+        final role = userData?['role'] ?? 'student';
+
+        if (role.toLowerCase() == 'mentor' && mounted) {
+          // Mentor shouldn't be on student profile page
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (context) => const MyProfilePage(startEditing: false)),
+          );
+        }
+      } catch (e) {
+        debugPrint('Error checking role: $e');
+      }
+    }
+  }
+
   void _initializeControllers() {
+    _bioController = TextEditingController();
     _interestsController = TextEditingController();
     _goalsController = TextEditingController();
     _learningStyleController = TextEditingController();
@@ -56,6 +81,7 @@ class _MenteeProfilePageState extends State<MenteeProfilePage> {
         if (mounted) {
           setState(() {
             _profileData = userData;
+            _bioController.text = userData?['bio'] ?? '';
             _interests = List<String>.from(userData?['interests'] ?? []);
             _goals = List<String>.from(userData?['goals'] ?? []);
             _learningStyles =
@@ -110,7 +136,7 @@ class _MenteeProfilePageState extends State<MenteeProfilePage> {
         lastName: _profileData?['lastName'] ?? '',
         jobTitle: _profileData?['jobTitle'] ?? '',
         location: _profileData?['location'] ?? '',
-        bio: '',
+        bio: _bioController.text,
         newImage: _newImageFile,
       );
 
@@ -189,6 +215,7 @@ class _MenteeProfilePageState extends State<MenteeProfilePage> {
 
   @override
   void dispose() {
+    _bioController.dispose();
     _interestsController.dispose();
     _goalsController.dispose();
     _learningStyleController.dispose();
@@ -267,7 +294,8 @@ class _MenteeProfilePageState extends State<MenteeProfilePage> {
                                 height: 80,
                                 width: 80,
                                 fit: BoxFit.cover,
-                                errorBuilder: (c, e, s) => const Icon(Icons.person, size: 40),
+                                errorBuilder: (c, e, s) =>
+                                    const Icon(Icons.person, size: 40),
                               ),
                             )
                           : null,
@@ -317,6 +345,41 @@ class _MenteeProfilePageState extends State<MenteeProfilePage> {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 30),
+
+            // About Me section
+            _buildSection(
+              title: 'About Me',
+              isEditing: _isEditing,
+              child: _isEditing
+                  ? TextField(
+                      controller: _bioController,
+                      minLines: 3,
+                      maxLines: 5,
+                      decoration: InputDecoration(
+                        hintText: 'Write something about yourself',
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
+                      ),
+                    )
+                  : Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey[300]!),
+                      ),
+                      child: Text(
+                        _bioController.text.isNotEmpty
+                            ? _bioController.text
+                            : 'No biography provided yet.',
+                        style: TextStyle(fontSize: 14, color: Colors.grey[800]),
+                      ),
+                    ),
             ),
             const SizedBox(height: 30),
 

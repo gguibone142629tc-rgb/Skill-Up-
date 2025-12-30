@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:finaproj/services/database_service.dart';
+import 'package:finaproj/Profile_page/pages/mentee_profile_page.dart';
 
 class MyProfilePage extends StatefulWidget {
   final bool startEditing;
@@ -39,8 +40,31 @@ class _MyProfilePageState extends State<MyProfilePage> {
   void initState() {
     super.initState();
     _isEditing = widget.startEditing;
+    _checkRoleAndNavigate();
     _loadProfile();
     _initializeControllers();
+  }
+
+  Future<void> _checkRoleAndNavigate() async {
+    final userId = _auth.currentUser?.uid;
+    if (userId != null) {
+      try {
+        final userData = await _dbService.getUserData(userId);
+        final role = userData?['role'] ?? 'mentor';
+
+        if (role.toLowerCase() == 'student' && mounted) {
+          // Student shouldn't be on mentor profile page
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (context) =>
+                    const MenteeProfilePage(startEditing: false)),
+          );
+        }
+      } catch (e) {
+        debugPrint('Error checking role: $e');
+      }
+    }
   }
 
   void _initializeControllers() {
@@ -252,7 +276,8 @@ class _MyProfilePageState extends State<MyProfilePage> {
                                   height: 100,
                                   width: 100,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (c, e, s) => const Icon(Icons.person, size: 50),
+                                  errorBuilder: (c, e, s) =>
+                                      const Icon(Icons.person, size: 50),
                                 ),
                               )
                             : null,

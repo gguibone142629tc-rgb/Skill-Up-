@@ -4,12 +4,8 @@ import 'package:finaproj/services/database_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:finaproj/common/mentor_avatar.dart';
-// ... other imports
-// ✅ ENSURE THIS IMPORT MATCHES THE FILE NAME EXACTLY
-import 'package:finaproj/Profile_page/pages/pofile_page.dart'; 
 // Membership plan helper
 import 'package:finaproj/membershipPlan/model/membership_plan.dart';
-// ...
 
 class MentorCard extends StatefulWidget {
   final Mentor mentor;
@@ -97,23 +93,24 @@ class _MentorCardState extends State<MentorCard> {
   String _displayPrice(Mentor mentor) {
     // Priority 1: explicit planPrice saved as integer
     if (mentor.planPrice != null && mentor.planPrice! > 0) {
-      return 'Starting at ₱${mentor.planPrice}/mo';
+      return '₱${mentor.planPrice}/month';
     }
 
     // Priority 2: planTitle -> lookup default plans
     if (mentor.planTitle != null && mentor.planTitle!.isNotEmpty) {
       final p = MembershipPlan.getPriceForTitle(mentor.planTitle);
-      return 'Starting at ₱$p/mo';
+      return '₱$p/month';
     }
 
     // Priority 3: parse pricePerMonth if it contains digits
-    final parsed = int.tryParse(mentor.pricePerMonth.replaceAll(RegExp(r'[^0-9]'), ''));
+    final parsed =
+        int.tryParse(mentor.pricePerMonth.replaceAll(RegExp(r'[^0-9]'), ''));
     if (parsed != null && parsed > 0) {
-      return 'Starting at ₱$parsed/mo';
+      return '₱$parsed/month';
     }
 
     // Fallback: default starting price
-    return 'Starting at ₱${MembershipPlan.defaultStartingPrice}/mo';
+    return '₱${MembershipPlan.defaultStartingPrice}/month';
   }
 
   @override

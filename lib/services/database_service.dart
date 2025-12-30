@@ -22,6 +22,7 @@ class DatabaseService {
     required String jobTitle,
     required String company,
     required String location,
+    required String gender,
     required int yearsExp,
     required int monthsExp,
     required String bio,
@@ -45,17 +46,18 @@ class DatabaseService {
         'jobTitle': jobTitle,
         'company': company,
         'location': location,
+        'gender': gender,
         'yearsExperience': yearsExp,
         'monthsExperience': monthsExp,
-        
+
         // ✅ These are the keys your Profile Page looks for:
         'bio': bio,
         'skills': skills,
         'expertise': expertise,
-        
+
         'profileImageUrl': imageUrl,
         // Saving 'profilePic' as duplicate for safety if other widgets use it
-        'profilePic': imageUrl, 
+        'profilePic': imageUrl,
         'createdAt': FieldValue.serverTimestamp(),
         'rating': 5.0,
         'price': 'Free',
@@ -71,6 +73,7 @@ class DatabaseService {
     required String email,
     required String firstName,
     required String lastName,
+    required String gender,
     XFile? profileImage,
   }) async {
     try {
@@ -85,6 +88,7 @@ class DatabaseService {
         'firstName': firstName,
         'lastName': lastName,
         'fullName': '$firstName $lastName',
+        'gender': gender,
         'role': 'student',
         'profileImageUrl': imageUrl,
         'profilePic': imageUrl, // Duplicate for safety
