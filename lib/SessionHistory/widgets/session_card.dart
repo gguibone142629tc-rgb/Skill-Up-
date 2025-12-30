@@ -19,12 +19,42 @@ class SessionCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 24,
-                backgroundColor: Colors.transparent,
-                // Using the specific asset image
-                backgroundImage: AssetImage(session.imagePath),
-              ),
+              Builder(builder: (context) {
+                final initials = session.name.trim().isNotEmpty
+                    ? session.name.trim().split(' ').map((s) => s[0]).take(2).join().toUpperCase()
+                    : '';
+
+                if (session.imagePath.isNotEmpty && (session.imagePath.startsWith('http') || session.imagePath.startsWith('https'))) {
+                  return CircleAvatar(
+                    radius: 24,
+                    backgroundColor: Colors.transparent,
+                    backgroundImage: NetworkImage(session.imagePath),
+                    onBackgroundImageError: (_, __) {},
+                  );
+                } else {
+                  // Try project default asset first, otherwise show initials
+                  return FutureBuilder<bool>(
+                    future: Future<bool>.delayed(Duration.zero, () => true), // quick microtask to allow errorBuilder handling
+                    builder: (context, snap) {
+                      return CircleAvatar(
+                        radius: 24,
+                        backgroundColor: Colors.grey[200],
+                        child: ClipOval(
+                          child: Image.asset(
+                            'assets/images/default_avatar.png',
+                            height: 48,
+                            width: 48,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Center(child: Text(initials, style: const TextStyle(color: Color(0xFF2D6A65), fontWeight: FontWeight.bold)));
+                            },
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                }
+              }),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(

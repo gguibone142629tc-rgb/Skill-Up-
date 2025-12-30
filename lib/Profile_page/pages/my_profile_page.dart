@@ -246,7 +246,15 @@ class _MyProfilePageState extends State<MyProfilePage> {
                                 : null) as ImageProvider?,
                         child: _newImageBytes == null &&
                                 (_profileData?['profileImageUrl'] ?? '').isEmpty
-                            ? const Icon(Icons.person, size: 50)
+                            ? ClipOval(
+                                child: Image.asset(
+                                  'assets/images/default_avatar.png',
+                                  height: 100,
+                                  width: 100,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (c, e, s) => const Icon(Icons.person, size: 50),
+                                ),
+                              )
                             : null,
                       ),
                       Positioned(

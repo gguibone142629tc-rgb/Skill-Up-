@@ -261,7 +261,15 @@ class _MenteeProfilePageState extends State<MenteeProfilePage> {
                               : null) as ImageProvider?,
                       child: _newImageBytes == null &&
                               (_profileData?['profileImageUrl'] ?? '').isEmpty
-                          ? const Icon(Icons.person, size: 40)
+                          ? ClipOval(
+                              child: Image.asset(
+                                'assets/images/default_avatar.png',
+                                height: 80,
+                                width: 80,
+                                fit: BoxFit.cover,
+                                errorBuilder: (c, e, s) => const Icon(Icons.person, size: 40),
+                              ),
+                            )
                           : null,
                     ),
                     Positioned(

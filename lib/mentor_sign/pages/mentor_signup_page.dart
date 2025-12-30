@@ -1,13 +1,16 @@
+import 'package:cloud_firestore/cloud_firestore.dart'; // ✅ Required for the fix
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart'; // Required for XFile
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-// Project Imports
+// --- YOUR PROJECT IMPORTS ---
 import 'package:finaproj/common/primary_button.dart';
 import 'package:finaproj/login/widgets/login/login_logo.dart';
 import 'package:finaproj/mentor_sign/widget/mentor_signup/mentor_basic_info_step.dart';
 import 'package:finaproj/mentor_sign/widget/mentor_signup/mentor_experience_step.dart';
 import 'package:finaproj/services/auth_service.dart';
 import 'package:finaproj/services/database_service.dart';
+import 'package:finaproj/home_page/pages/home_page.dart';
 
 class MentorSignUpPage extends StatefulWidget {
   const MentorSignUpPage({super.key});
@@ -32,29 +35,18 @@ class _MentorSignUpPageState extends State<MentorSignUpPage> {
   final _jobTitleController = TextEditingController();
   final _companyController = TextEditingController();
   final _locationController = TextEditingController();
-  
-  // 🟢 WEB-SAFE: Use XFile (Works on Web & Mobile)
-  XFile? _profileImage; 
+  XFile? _profileImage;
 
   // --- Step 2: Experience Data ---
   int _yearsExp = 0;
   int _monthsExp = 0;
   String _bio = "";
+  String _category = ""; // ✅ NEW: Variable to hold category
   List<String> _skills = [];
   List<String> _expertise = [];
 
   @override
-  void initState() {
-    super.initState();
-    _pageController.addListener(() {
-      final next = _pageController.page?.round() ?? 0;
-      if (_currentPage != next) setState(() => _currentPage = next);
-    });
-  }
-
-  @override
   void dispose() {
-    _pageController.dispose();
     _firstNameController.dispose();
     _lastNameController.dispose();
     _emailController.dispose();
@@ -62,25 +54,45 @@ class _MentorSignUpPageState extends State<MentorSignUpPage> {
     _jobTitleController.dispose();
     _companyController.dispose();
     _locationController.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
-  void _onCta() async {
+  // --- Navigation Logic ---
+  void _nextPage() {
     if (_currentPage == 0) {
+      if (_firstNameController.text.isEmpty ||
+          _lastNameController.text.isEmpty ||
+          _emailController.text.isEmpty ||
+          _passwordController.text.isEmpty ||
+          _jobTitleController.text.isEmpty ||
+          _companyController.text.isEmpty ||
+          _locationController.text.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please fill in all fields')),
+        );
+        return;
+      }
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
-    } else {
-      await _submitApplication();
+      setState(() => _currentPage = 1);
     }
   }
 
-  Future<void> _submitApplication() async {
-    // Basic Validation
-    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+  // --- SUBMIT LOGIC ---
+  Future<void> _onCta() async {
+    // If on Step 1, go to Step 2
+    if (_currentPage == 0) {
+      _nextPage();
+      return;
+    }
+
+    // If on Step 2, Validate
+    if (_bio.isEmpty || _category.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in email and password')),
+        const SnackBar(content: Text('Please select a category and write a bio')),
       );
       return;
     }
@@ -88,48 +100,51 @@ class _MentorSignUpPageState extends State<MentorSignUpPage> {
     setState(() => _isLoading = true);
 
     try {
-      // 1. Create Auth User
-      final cred = await _authService.signUp(
+      // 1. Create User in Firebase Auth
+      UserCredential? cred = await _authService.signUp(
         _emailController.text.trim(),
-        _passwordController.text.trim(),
+        _passwordController.text,
       );
 
-      if (cred.user == null) {
-        throw Exception("Failed to create user account.");
-      }
+      if (cred.user != null) {
+        String uid = cred.user!.uid;
 
-      // 2. Save Profile Data to Firestore
-      // 🟢 Matches the new Web-Safe DatabaseService signature
-      await _dbService.saveMentorProfile(
-        uid: cred.user!.uid, 
-        email: _emailController.text.trim(),
-        firstName: _firstNameController.text.trim(),
-        lastName: _lastNameController.text.trim(),
-        jobTitle: _jobTitleController.text.trim(),
-        company: _companyController.text.trim(),
-        location: _locationController.text.trim(),
-        yearsExp: _yearsExp,
-        monthsExp: _monthsExp,
-        bio: _bio,
-        skills: _skills,
-        expertise: _expertise,
-        profileImage: _profileImage, // Passes XFile directly
-      );
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Application Submitted Successfully!')),
+        // 2. Save Basic Profile to Firestore
+        await _dbService.saveMentorProfile(
+          uid: uid,
+          email: _emailController.text.trim(),
+          firstName: _firstNameController.text.trim(),
+          lastName: _lastNameController.text.trim(),
+          jobTitle: _jobTitleController.text.trim(),
+          company: _companyController.text.trim(),
+          location: _locationController.text.trim(),
+          yearsExp: _yearsExp,
+          monthsExp: _monthsExp,
+          bio: _bio,
+          skills: _skills,
+          expertise: _expertise,
+          profileImage: _profileImage,
         );
-        // Navigate back to login
-        Navigator.of(context).popUntil((route) => route.isFirst);
+
+        // 3. ✅ CRITICAL FIX: Save the Category Field Manually
+        // This ensures the filter logic works (mentor.categories.contains(...))
+        await FirebaseFirestore.instance.collection('users').doc(uid).update({
+          'categories': [_category], // Save as a List
+        });
+
+        // 4. Success! Go to Home
+        if (mounted) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => const HomePage()),
+            (route) => false,
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'), 
-            backgroundColor: Colors.red
-          ),
+          SnackBar(content: Text('Error: ${e.toString()}')),
         );
       }
     } finally {
@@ -141,33 +156,61 @@ class _MentorSignUpPageState extends State<MentorSignUpPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () {
+            if (_currentPage == 1) {
+              _pageController.previousPage(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+              );
+              setState(() => _currentPage = 0);
+            } else {
+              Navigator.pop(context);
+            }
+          },
+        ),
+        title: const LoginLogo(height: 32),
+        centerTitle: true,
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            // Header
+            // Progress Indicator
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               child: Row(
                 children: [
-                  IconButton(
-                    onPressed: () {
-                      if (_currentPage > 0) {
-                        _pageController.previousPage(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOut);
-                      } else {
-                        Navigator.pop(context);
-                      }
-                    },
-                    icon: const Icon(Icons.arrow_back),
+                  Expanded(
+                    child: Container(
+                      height: 4,
+                      color: const Color(0xFF2E6F6A),
+                    ),
                   ),
-                  const Expanded(child: Center(child: LoginLogo(height: 40))),
-                  const SizedBox(width: 48), // Balance for back button
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Container(
+                      height: 4,
+                      color: _currentPage == 1
+                          ? const Color(0xFF2E6F6A)
+                          : Colors.grey[300],
+                    ),
+                  ),
                 ],
               ),
             ),
+            
+            // Step Title
+            Text(
+              _currentPage == 0 ? "Basic Information" : "Experience & Skills",
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
 
-            // Scrollable Content
+            // Form Pages
             Expanded(
               child: PageView(
                 controller: _pageController,
@@ -183,12 +226,7 @@ class _MentorSignUpPageState extends State<MentorSignUpPage> {
                       jobTitleController: _jobTitleController,
                       companyController: _companyController,
                       locationController: _locationController,
-                      // 🟢 Callback receives XFile
-                      onImageSelected: (XFile? file) {
-                        setState(() {
-                          _profileImage = file;
-                        });
-                      },
+                      onImageSelected: (file) => _profileImage = file,
                     ),
                   ),
                   
@@ -202,6 +240,10 @@ class _MentorSignUpPageState extends State<MentorSignUpPage> {
                       onBioChanged: (val) => _bio = val,
                       onSkillsChanged: (list) => _skills = list,
                       onExpertiseChanged: (list) => _expertise = list,
+                      // ✅ Capture the category
+                      onCategoryChanged: (val) {
+                         _category = val;
+                      },
                     ),
                   ),
                 ],

@@ -4,18 +4,25 @@ class AuthTextField extends StatefulWidget {
   final String label;
   final TextEditingController controller;
   final String? hintText;
-  final TextInputType keyboardType;
   final bool obscure;
   final bool showObscureToggle;
+  final TextInputType? keyboardType;
+  
+  // ✅ NEW PARAMETERS ADDED HERE
+  final int maxLines;
+  final ValueChanged<String>? onSubmitted;
 
   const AuthTextField({
     super.key,
     required this.label,
     required this.controller,
     this.hintText,
-    this.keyboardType = TextInputType.text,
     this.obscure = false,
     this.showObscureToggle = false,
+    this.keyboardType,
+    // ✅ Initialize new parameters
+    this.maxLines = 1,
+    this.onSubmitted,
   });
 
   @override
@@ -23,45 +30,66 @@ class AuthTextField extends StatefulWidget {
 }
 
 class _AuthTextFieldState extends State<AuthTextField> {
-  bool _obscure = false;
+  late bool _obscureText;
 
   @override
   void initState() {
     super.initState();
-    _obscure = widget.obscure;
+    _obscureText = widget.obscure;
   }
 
   @override
   Widget build(BuildContext context) {
-    const fieldFill = Color(0xFFF3F4F6);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.label, style: Theme.of(context).textTheme.bodySmall),
-        const SizedBox(height: 8),
+        if (widget.label.isNotEmpty) ...[
+          Text(
+            widget.label,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
         TextField(
           controller: widget.controller,
+          obscureText: _obscureText,
           keyboardType: widget.keyboardType,
-          obscureText: widget.showObscureToggle ? _obscure : widget.obscure,
+          
+          // ✅ PASSING THE NEW PARAMETERS TO TEXTFIELD
+          maxLines: widget.maxLines,
+          onSubmitted: widget.onSubmitted, 
+          
           decoration: InputDecoration(
             hintText: widget.hintText,
-            filled: true,
-            fillColor: fieldFill,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
-            ),
+            hintStyle: const TextStyle(color: Colors.grey),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFF2E6F6A), width: 1.5),
             ),
             suffixIcon: widget.showObscureToggle
                 ? IconButton(
-                    onPressed: () => setState(() => _obscure = !_obscure),
                     icon: Icon(
-                      _obscure ? Icons.visibility_off : Icons.visibility,
-                      color: Colors.grey[600],
+                      _obscureText ? Icons.visibility_off : Icons.visibility,
+                      color: Colors.grey,
                     ),
+                    onPressed: () {
+                      setState(() {
+                        _obscureText = !_obscureText;
+                      });
+                    },
                   )
                 : null,
           ),

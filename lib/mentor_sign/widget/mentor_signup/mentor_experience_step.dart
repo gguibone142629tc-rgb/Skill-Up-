@@ -1,13 +1,14 @@
-import 'package:finaproj/common/auth_text_field.dart';
 import 'package:flutter/material.dart';
-// CHECK THIS IMPORT: Make sure it points to where AuthTextField actually is
-
+import 'package:finaproj/common/auth_text_field.dart';
 
 class MentorExperienceStep extends StatefulWidget {
   final Function(int years, int months)? onExperienceChanged;
   final ValueChanged<String>? onBioChanged;
   final ValueChanged<List<String>>? onSkillsChanged;
   final ValueChanged<List<String>>? onExpertiseChanged;
+  
+  // ✅ NEW: Callback for Category
+  final ValueChanged<String>? onCategoryChanged;
 
   const MentorExperienceStep({
     super.key,
@@ -15,6 +16,7 @@ class MentorExperienceStep extends StatefulWidget {
     this.onBioChanged,
     this.onSkillsChanged,
     this.onExpertiseChanged,
+    this.onCategoryChanged, // ✅ Initialize it
   });
 
   @override
@@ -25,18 +27,51 @@ class _MentorExperienceStepState extends State<MentorExperienceStep> {
   int _years = 0;
   int _months = 0;
 
-  final TextEditingController _skillController = TextEditingController();
-  final List<String> _skills = [];
-
-  final TextEditingController _expertiseController = TextEditingController();
-  final List<String> _expertise = [];
-  
   final TextEditingController _bioController = TextEditingController();
+
+  // --- DATA STRUCTURE ---
+  final Map<String, Map<String, List<String>>> _categoryData = {
+    'Graphic Design': {
+      'skills': ['Adobe Photoshop', 'Adobe Illustrator', 'Figma', 'InDesign', 'Canva', 'Sketch', 'CorelDRAW'],
+      'expertise': ['Logo Design', 'Brand Identity', 'Illustration', 'Print Design', 'Packaging', 'Visual Arts', 'UI/UX Design'],
+    },
+    'Digital Marketing': {
+      'skills': ['Google Analytics', 'SEO Tools', 'Facebook Ads Manager', 'Mailchimp', 'HubSpot', 'Canva', 'WordPress'],
+      'expertise': ['Social Media Marketing', 'SEO', 'Content Strategy', 'Email Marketing', 'PPC Advertising', 'Copywriting'],
+    },
+    'Video & Animation': {
+      'skills': ['Adobe Premiere Pro', 'After Effects', 'Final Cut Pro', 'DaVinci Resolve', 'Blender', 'Cinema 4D'],
+      'expertise': ['Video Editing', 'Motion Graphics', '2D Animation', '3D Animation', 'Visual Effects (VFX)', 'Color Grading'],
+    },
+    'Music & Audio': {
+      'skills': ['Ableton Live', 'Logic Pro', 'Pro Tools', 'FL Studio', 'Audacity', 'GarageBand'],
+      'expertise': ['Music Production', 'Sound Design', 'Mixing & Mastering', 'Voice Over', 'Songwriting', 'Audio Engineering'],
+    },
+    'Program & Tech': {
+      'skills': ['Flutter', 'Dart', 'React', 'JavaScript', 'Python', 'Java', 'C++', 'AWS', 'Firebase', 'Git', 'Docker'],
+      'expertise': ['Mobile App Dev', 'Web Development', 'Backend Engineering', 'Cybersecurity', 'Cloud Computing', 'DevOps'],
+    },
+    'Product Photography': {
+      'skills': ['Adobe Lightroom', 'Photoshop', 'DSLR Cameras', 'Lighting Equipment', 'Capture One'],
+      'expertise': ['Product Styling', 'Commercial Photography', 'E-commerce', 'Photo Retouching', 'Composition'],
+    },
+    'Build AI Service': {
+      'skills': ['Python', 'TensorFlow', 'PyTorch', 'OpenAI API', 'Pandas', 'Scikit-learn', 'Jupyter'],
+      'expertise': ['Machine Learning', 'NLP', 'Computer Vision', 'Deep Learning', 'Chatbot Development', 'Data Modeling'],
+    },
+    'Data': {
+      'skills': ['SQL', 'Excel', 'Tableau', 'Power BI', 'Python', 'R', 'SAS'],
+      'expertise': ['Data Analysis', 'Data Science', 'Business Intelligence', 'Big Data', 'Statistical Analysis'],
+    },
+  };
+
+  String? _selectedCategory;
+  final List<String> _selectedSkills = [];
+  final List<String> _selectedExpertise = [];
 
   @override
   void initState() {
     super.initState();
-    // FIX: Listen to the controller instead of using onChanged
     _bioController.addListener(() {
       widget.onBioChanged?.call(_bioController.text);
     });
@@ -44,63 +79,82 @@ class _MentorExperienceStepState extends State<MentorExperienceStep> {
 
   @override
   void dispose() {
-    _skillController.dispose();
-    _expertiseController.dispose();
     _bioController.dispose();
     super.dispose();
   }
 
-  void _addSkill() {
-    if (_skillController.text.isNotEmpty) {
-      setState(() {
-        _skills.add(_skillController.text.trim());
-        _skillController.clear();
-      });
-      widget.onSkillsChanged?.call(_skills);
+  void _onCategoryChanged(String? newCategory) {
+    setState(() {
+      _selectedCategory = newCategory;
+      _selectedSkills.clear();
+      _selectedExpertise.clear();
+    });
+    
+    // ✅ Notify Parent about the Category Change
+    if (newCategory != null) {
+      widget.onCategoryChanged?.call(newCategory);
+    }
+
+    widget.onSkillsChanged?.call([]);
+    widget.onExpertiseChanged?.call([]);
+  }
+
+  void _addSkill(String? value) {
+    if (value != null && !_selectedSkills.contains(value)) {
+      setState(() => _selectedSkills.add(value));
+      widget.onSkillsChanged?.call(_selectedSkills);
     }
   }
 
-  void _addExpertise() {
-    if (_expertiseController.text.isNotEmpty) {
-      setState(() {
-        _expertise.add(_expertiseController.text.trim());
-        _expertiseController.clear();
-      });
-      widget.onExpertiseChanged?.call(_expertise);
+  void _addExpertise(String? value) {
+    if (value != null && !_selectedExpertise.contains(value)) {
+      setState(() => _selectedExpertise.add(value));
+      widget.onExpertiseChanged?.call(_selectedExpertise);
     }
+  }
+
+  void _removeSkill(String value) {
+    setState(() => _selectedSkills.remove(value));
+    widget.onSkillsChanged?.call(_selectedSkills);
+  }
+
+  void _removeExpertise(String value) {
+    setState(() => _selectedExpertise.remove(value));
+    widget.onExpertiseChanged?.call(_selectedExpertise);
   }
 
   @override
   Widget build(BuildContext context) {
+    List<String> availableSkills = [];
+    List<String> availableExpertise = [];
+
+    if (_selectedCategory != null) {
+      availableSkills = _categoryData[_selectedCategory]!['skills'] ?? [];
+      availableExpertise = _categoryData[_selectedCategory]!['expertise'] ?? [];
+    }
+
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Experience & Skills',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 16),
-        
-        // Experience Dropdowns
         Row(
           children: [
             Expanded(
-              child: _buildDropdown(
-                label: "Years",
+              child: _buildNumberDropdown(
+                label: "Years of Exp",
                 value: _years,
-                items: List.generate(30, (index) => index),
+                max: 30,
                 onChanged: (val) {
                   setState(() => _years = val!);
                   widget.onExperienceChanged?.call(_years, _months);
                 },
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 16),
             Expanded(
-              child: _buildDropdown(
+              child: _buildNumberDropdown(
                 label: "Months",
                 value: _months,
-                items: List.generate(12, (index) => index),
+                max: 11,
                 onChanged: (val) {
                   setState(() => _months = val!);
                   widget.onExperienceChanged?.call(_years, _months);
@@ -109,98 +163,142 @@ class _MentorExperienceStepState extends State<MentorExperienceStep> {
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
 
-        // Skills Input
-        Row(
-          children: [
-            Expanded(
-              child: AuthTextField(
-                label: "Add Skills (e.g. Flutter)",
-                controller: _skillController,
-                hintText: "Type and press +",
+        const Text("Main Category", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        _buildStyledDropdown(
+          hint: "Select your main category",
+          value: _selectedCategory,
+          items: _categoryData.keys.toList(),
+          onChanged: _onCategoryChanged,
+        ),
+        const SizedBox(height: 20),
+
+        if (_selectedCategory != null) ...[
+          const Text("Select Skills", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          _buildStyledDropdown(
+            hint: "Add a skill...",
+            value: null,
+            items: availableSkills,
+            onChanged: _addSkill,
+          ),
+          if (_selectedSkills.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Wrap(
+                spacing: 8,
+                children: _selectedSkills.map((skill) => Chip(
+                  label: Text(skill),
+                  backgroundColor: const Color(0xFFE0F2F1),
+                  deleteIconColor: Colors.teal,
+                  onDeleted: () => _removeSkill(skill),
+                )).toList(),
               ),
             ),
-            IconButton(onPressed: _addSkill, icon: const Icon(Icons.add_circle))
-          ],
-        ),
-        Wrap(
-          spacing: 8,
-          children: _skills.map((s) => Chip(
-            label: Text(s),
-            onDeleted: () {
-              setState(() => _skills.remove(s));
-              widget.onSkillsChanged?.call(_skills);
-            },
-          )).toList(),
-        ),
+          const SizedBox(height: 20),
 
-        const SizedBox(height: 16),
-
-        // Expertise Input
-        Row(
-          children: [
-            Expanded(
-              child: AuthTextField(
-                label: "Add Expertise (e.g. Mobile Dev)",
-                controller: _expertiseController,
-                hintText: "Type and press +",
+          const Text("Select Expertise", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          _buildStyledDropdown(
+            hint: "Add an area of expertise...",
+            value: null,
+            items: availableExpertise,
+            onChanged: _addExpertise,
+          ),
+          if (_selectedExpertise.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Wrap(
+                spacing: 8,
+                children: _selectedExpertise.map((exp) => Chip(
+                  label: Text(exp),
+                  backgroundColor: const Color(0xFFE0F2F1),
+                  deleteIconColor: Colors.teal,
+                  onDeleted: () => _removeExpertise(exp),
+                )).toList(),
               ),
             ),
-            IconButton(onPressed: _addExpertise, icon: const Icon(Icons.add_circle))
-          ],
-        ),
-        Wrap(
-          spacing: 8,
-          children: _expertise.map((e) => Chip(
-            label: Text(e),
-            onDeleted: () {
-              setState(() => _expertise.remove(e));
-              widget.onExpertiseChanged?.call(_expertise);
-            },
-          )).toList(),
-        ),
+        ] else ...[
+          const Text(
+            "Please select a category above.",
+            style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+          ),
+        ],
 
-        const SizedBox(height: 16),
-        
-        // Bio
+        const SizedBox(height: 20),
+
         AuthTextField(
           label: "Bio",
           controller: _bioController,
           hintText: "Tell us about yourself...",
-          // REMOVED onChanged: (val) => ...
+          maxLines: 4,
         ),
         const SizedBox(height: 20),
       ],
     );
   }
 
-  Widget _buildDropdown({
-    required String label, 
-    required int value, 
-    required List<int> items,
-    required ValueChanged<int?> onChanged
+  Widget _buildStyledDropdown({
+    required String hint,
+    required String? value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          isExpanded: true,
+          hint: Text(hint, style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
+          value: value,
+          items: items.map((String item) {
+            return DropdownMenuItem<String>(
+              value: item,
+              child: Text(item),
+            );
+          }).toList(),
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNumberDropdown({
+    required String label,
+    required int value,
+    required int max,
+    required ValueChanged<int?> onChanged,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 5),
+        Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+        const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
             color: Colors.grey[100],
-            borderRadius: BorderRadius.circular(8)
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey.shade300)
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<int>(
               value: value,
               isExpanded: true,
-              items: items.map((e) => DropdownMenuItem(value: e, child: Text("$e"))).toList(),
+              items: List.generate(max + 1, (index) => index)
+                  .map((e) => DropdownMenuItem(value: e, child: Text(e.toString())))
+                  .toList(),
               onChanged: onChanged,
             ),
           ),
-        )
+        ),
       ],
     );
   }

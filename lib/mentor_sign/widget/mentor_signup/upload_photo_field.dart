@@ -15,7 +15,15 @@ class UploadPhotoField extends StatelessWidget {
           backgroundColor: const Color(0xFFE5E7EB),
           backgroundImage: imageProvider,
           child: imageProvider == null
-              ? const Icon(Icons.person, color: Colors.white)
+              ? ClipOval(
+                  child: Image.asset(
+                    'assets/images/default_avatar.png',
+                    height: 56,
+                    width: 56,
+                    fit: BoxFit.cover,
+                    errorBuilder: (c, e, s) => const Icon(Icons.person, color: Colors.white),
+                  ),
+                )
               : null,
         ),
         const SizedBox(width: 12),

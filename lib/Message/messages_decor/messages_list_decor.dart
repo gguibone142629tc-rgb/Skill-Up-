@@ -33,8 +33,16 @@ class MessagesListDecor extends StatelessWidget {
             ? NetworkImage(messagesModel.profilePath)
             : null,
         backgroundColor: Colors.grey[200],
-        child: messagesModel.profilePath.isEmpty 
-            ? const Icon(Icons.person, color: Colors.grey) 
+        child: messagesModel.profilePath.isEmpty
+            ? ClipOval(
+                child: Image.asset(
+                  'assets/images/default_avatar.png',
+                  height: 52,
+                  width: 52,
+                  fit: BoxFit.cover,
+                  errorBuilder: (c, e, s) => const Icon(Icons.person, color: Colors.grey),
+                ),
+              )
             : null,
       ),
       title: Text(

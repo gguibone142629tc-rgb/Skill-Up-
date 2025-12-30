@@ -1,8 +1,13 @@
 import 'package:finaproj/app_settings/model/profile_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:finaproj/login/pages/login_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
+// --- IMPORTS FOR NAVIGATION ---
+import 'package:finaproj/login/pages/login_page.dart';
+import 'package:finaproj/app_settings/page/edit_profile_page.dart'; // Personal Details
+import 'package:finaproj/SessionHistory/pages/session_history_screen.dart'; // Session History
+import 'package:finaproj/SavedMentors/saved_mentors_page.dart'; // Saved Members
 
 class ProfileListDecor extends StatelessWidget {
   const ProfileListDecor({super.key, required this.profileModel});
@@ -14,24 +19,45 @@ class ProfileListDecor extends StatelessWidget {
     final Color logoutColor = const Color(0xFFFF3B30);
 
     return InkWell(
-      // Inside ProfileListDecor widget
-// Inside ProfileListDecor -> build -> return InkWell
-onTap: () async {
-  if (isLogout) {
-    // 1. Sign out from Firebase
-    await FirebaseAuth.instance.signOut();
-    
-    // 2. Clear navigation and go back to LoginPage
-    if (context.mounted) {
-      Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const LoginPage()),
-        (route) => false,
-      );
-    }
-  } else {
-    // Handle other menu items here
-  }
-},
+      onTap: () async {
+        if (isLogout) {
+          // --- LOGOUT LOGIC ---
+          await FirebaseAuth.instance.signOut();
+          if (context.mounted) {
+            Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const LoginPage()),
+              (route) => false,
+            );
+          }
+        } else {
+          // --- NAVIGATION LOGIC ---
+          Widget? nextPage;
+
+          switch (profileModel.title) {
+            case 'Personal Details':
+              nextPage = const EditProfilePage();
+              break;
+            case 'Session History':
+              nextPage = SessionHistoryPage();
+              break;
+            case 'Saved Members':
+              nextPage = const SavedMentorsPage();
+              break;
+            default:
+              // Handle unknown cases or show a "Coming Soon" snackbar
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('${profileModel.title} coming soon!')),
+              );
+          }
+
+          if (nextPage != null && context.mounted) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => nextPage!),
+            );
+          }
+        }
+      },
       child: Container(
         margin: const EdgeInsets.only(left: 25, right: 25, top: 5),
         decoration: BoxDecoration(

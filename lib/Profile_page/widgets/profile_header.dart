@@ -73,15 +73,20 @@ class ProfileHeader extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: CircleAvatar(
-                  radius: 52, 
+                  radius: 52,
                   backgroundColor: Colors.grey.shade200,
-                  // 4. LOGIC: If URL exists, show image. If not, show null (so child icon shows).
-                  backgroundImage: imgUrl.isNotEmpty 
-                      ? NetworkImage(imgUrl) 
-                      : null,
-                  // 5. LOGIC: If NO URL, show the Grey Person Icon
+                  backgroundImage: imgUrl.isNotEmpty ? NetworkImage(imgUrl) : null,
+                  // If no URL, show the project's default avatar asset (fallback to Icon if asset missing)
                   child: imgUrl.isEmpty
-                      ? const Icon(Icons.person, size: 50, color: Colors.grey)
+                      ? ClipOval(
+                          child: Image.asset(
+                            'assets/images/default_avatar.png',
+                            height: 104,
+                            width: 104,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => const Icon(Icons.person, size: 50, color: Colors.grey),
+                          ),
+                        )
                       : null,
                 ),
               ),

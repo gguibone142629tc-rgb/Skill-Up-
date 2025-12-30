@@ -1,18 +1,19 @@
-import 'dart:typed_data'; // Needed for Uint8List
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:finaproj/common/auth_text_field.dart'; 
-import 'upload_photo_field.dart';
 
-// ❌ NO IMPORT DART:IO HERE!
+// --- IMPORTS ---
+// Ensure these paths match your project structure
+import 'package:finaproj/common/auth_text_field.dart';
+import 'package:finaproj/mentor_sign/widget/mentor_signup/upload_photo_field.dart'; 
 
 class MentorBasicInfoStep extends StatefulWidget {
   const MentorBasicInfoStep({
     super.key,
     required this.firstNameController,
     required this.lastNameController,
-    required this.emailController,
-    required this.passwordController,
+    required this.emailController,       // <--- REQUIRED
+    required this.passwordController,    // <--- REQUIRED
     required this.jobTitleController,
     required this.companyController,
     required this.locationController,
@@ -21,54 +22,52 @@ class MentorBasicInfoStep extends StatefulWidget {
 
   final TextEditingController firstNameController;
   final TextEditingController lastNameController;
-  final TextEditingController emailController;
-  final TextEditingController passwordController;
+  final TextEditingController emailController;     
+  final TextEditingController passwordController;  
   final TextEditingController jobTitleController;
   final TextEditingController companyController;
   final TextEditingController locationController;
-  final ValueChanged<XFile?>? onImageSelected; 
+  final ValueChanged<XFile?>? onImageSelected;
 
   @override
   State<MentorBasicInfoStep> createState() => _MentorBasicInfoStepState();
 }
 
 class _MentorBasicInfoStepState extends State<MentorBasicInfoStep> {
-  // We store the image as Bytes (Memory), which works on Web & Mobile
-  Uint8List? _imageBytes; 
+  Uint8List? _imageBytes;
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery);
-    
-    if (picked != null) {
-      // Read the bytes immediately. Safe for all platforms.
-      final bytes = await picked.readAsBytes();
-      
-      setState(() {
-        _imageBytes = bytes;
-      });
-      
-      // Send the XFile back to the parent for uploading later
-      widget.onImageSelected?.call(picked);
+    try {
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        final bytes = await pickedFile.readAsBytes();
+        setState(() => _imageBytes = bytes);
+        widget.onImageSelected?.call(pickedFile);
+      }
+    } catch (e) {
+      debugPrint('Image pick error: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: 20),
-        
-        // 1. Upload Photo Field
-        UploadPhotoField(
-          onUpload: _pickImage,
-          // If we have bytes, use MemoryImage. If not, pass null.
-          imageProvider: _imageBytes != null ? MemoryImage(_imageBytes!) : null,
+        // --- Profile Photo ---
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            UploadPhotoField(
+              imageProvider: _imageBytes != null ? MemoryImage(_imageBytes!) : null,
+              onUpload: _pickImage,
+            ),
+          ],
         ),
-
         const SizedBox(height: 24),
-        
-        // 2. Form Fields
+
+        // --- Names ---
         Row(
           children: [
             Expanded(
@@ -89,6 +88,8 @@ class _MentorBasicInfoStepState extends State<MentorBasicInfoStep> {
           ],
         ),
         const SizedBox(height: 16),
+
+        // --- Email & Password ---
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -112,6 +113,8 @@ class _MentorBasicInfoStepState extends State<MentorBasicInfoStep> {
           ],
         ),
         const SizedBox(height: 16),
+
+        // --- Job Details ---
         AuthTextField(
             label: 'Job Title',
             controller: widget.jobTitleController,

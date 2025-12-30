@@ -35,8 +35,9 @@ class MessageListWidget extends StatelessWidget {
             ),
           );
         }
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty)
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return const Center(child: Text("No messages"));
+        }
 
         return ListView.builder(
           shrinkWrap: true,

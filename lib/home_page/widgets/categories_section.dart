@@ -1,3 +1,4 @@
+import 'package:finaproj/FindMentor/page/find_mentor_page.dart';
 import 'package:flutter/material.dart';
 import 'category_card.dart';
 
@@ -19,7 +20,6 @@ class CategoriesSection extends StatelessWidget {
               ),
               TextButton(
                 onPressed: () {
-                  // Navigates to the Service Category page
                   Navigator.pushNamed(context, '/service_category');
                 },
                 child: const Text(
@@ -30,6 +30,7 @@ class CategoriesSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
+          // 1. Removed "const" and used GridView with children
           GridView.count(
             crossAxisCount: 4,
             shrinkWrap: true,
@@ -37,15 +38,42 @@ class CategoriesSection extends StatelessWidget {
             crossAxisSpacing: 10,
             mainAxisSpacing: 10,
             childAspectRatio: 0.85,
-            children: const [
-              CategoryCard(icon: Icons.computer, label: 'Technology'),
-              CategoryCard(icon: Icons.palette, label: 'Design'),
-              CategoryCard(icon: Icons.business, label: 'Business'),
-              CategoryCard(icon: Icons.campaign, label: 'Marketing'),
+            children: [
+              _buildCategory(context, Icons.computer, 'Technology'),
+              _buildCategory(context, Icons.palette, 'Design'),
+              _buildCategory(context, Icons.business, 'Business'),
+              _buildCategory(context, Icons.campaign, 'Marketing'),
             ],
           ),
         ],
       ),
+    );
+  }
+
+  // 2. Helper method to make cards clickable
+  Widget _buildCategory(BuildContext context, IconData icon, String label) {
+    return GestureDetector(
+      onTap: () {
+        // Map simple labels to one or more search categories
+        List<String>? mapped;
+        if (label == 'Technology') {
+          mapped = ['Program & Tech', 'Build AI Service', 'Data'];
+        } else if (label == 'Design') {
+          mapped = ['Graphic Design'];
+        } else if (label == 'Marketing') {
+          mapped = ['Digital Marketing'];
+        } else {
+          mapped = null;
+        }
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => FindMentorPage(initialCategory: label, initialCategories: mapped),
+          ),
+        );
+      },
+      child: CategoryCard(icon: icon, label: label),
     );
   }
 }

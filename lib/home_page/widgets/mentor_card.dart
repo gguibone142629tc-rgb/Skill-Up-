@@ -3,6 +3,13 @@ import 'package:finaproj/Profile_page/pages/pofile_page.dart';
 import 'package:finaproj/services/database_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:finaproj/common/mentor_avatar.dart';
+// ... other imports
+// ✅ ENSURE THIS IMPORT MATCHES THE FILE NAME EXACTLY
+import 'package:finaproj/Profile_page/pages/pofile_page.dart'; 
+// Membership plan helper
+import 'package:finaproj/membershipPlan/model/membership_plan.dart';
+// ...
 
 class MentorCard extends StatefulWidget {
   final Mentor mentor;
@@ -86,6 +93,29 @@ class _MentorCardState extends State<MentorCard> {
     }
   }
 
+  // Compute a display price derived from plan data if available, falling back to stored price or default
+  String _displayPrice(Mentor mentor) {
+    // Priority 1: explicit planPrice saved as integer
+    if (mentor.planPrice != null && mentor.planPrice! > 0) {
+      return 'Starting at ₱${mentor.planPrice}/mo';
+    }
+
+    // Priority 2: planTitle -> lookup default plans
+    if (mentor.planTitle != null && mentor.planTitle!.isNotEmpty) {
+      final p = MembershipPlan.getPriceForTitle(mentor.planTitle);
+      return 'Starting at ₱$p/mo';
+    }
+
+    // Priority 3: parse pricePerMonth if it contains digits
+    final parsed = int.tryParse(mentor.pricePerMonth.replaceAll(RegExp(r'[^0-9]'), ''));
+    if (parsed != null && parsed > 0) {
+      return 'Starting at ₱$parsed/mo';
+    }
+
+    // Fallback: default starting price
+    return 'Starting at ₱${MembershipPlan.defaultStartingPrice}/mo';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -107,17 +137,10 @@ class _MentorCardState extends State<MentorCard> {
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 32,
-                backgroundColor: Colors.grey[200],
-                backgroundImage: widget.mentor.image.startsWith('http')
-                    ? NetworkImage(widget.mentor.image)
-                    : (widget.mentor.image.isNotEmpty
-                        ? AssetImage(widget.mentor.image)
-                        : null) as ImageProvider?,
-                child: widget.mentor.image.isEmpty
-                    ? const Icon(Icons.person, size: 30, color: Colors.grey)
-                    : null,
+              MentorAvatar(
+                image: widget.mentor.image,
+                name: widget.mentor.name,
+                size: 64,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -230,9 +253,7 @@ class _MentorCardState extends State<MentorCard> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                widget.mentor.pricePerMonth == 'Free'
-                    ? 'Starting at ₱1200/mo'
-                    : widget.mentor.pricePerMonth,
+                _displayPrice(widget.mentor),
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
@@ -255,7 +276,7 @@ class _MentorCardState extends State<MentorCard> {
                           'profileImageUrl': widget.mentor.image,
                           'rating': widget.mentor.rating,
                           'skills': widget.mentor.skills,
-                          'price': widget.mentor.pricePerMonth,
+                          'price': _displayPrice(widget.mentor),
                         },
                       ),
                     ),

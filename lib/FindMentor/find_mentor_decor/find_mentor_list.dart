@@ -1,6 +1,8 @@
 import 'package:finaproj/home_page/model/mentor_model.dart'; // Use the shared Mentor model
 import 'package:flutter/material.dart';
 import 'package:finaproj/Profile_page/pages/pofile_page.dart'; // Import Profile Page
+import 'package:finaproj/membershipPlan/model/membership_plan.dart'; // Membership plan helper
+import 'package:finaproj/common/mentor_avatar.dart'; // Shared avatar widget
 
 class FindMentorList extends StatelessWidget {
   const FindMentorList({super.key, required this.mentor});
@@ -11,7 +13,19 @@ class FindMentorList extends StatelessWidget {
   Widget build(BuildContext context) {
     // Helper to get skills safely
     String skill1 = mentor.skills.isNotEmpty ? mentor.skills[0] : 'Mentoring';
-    String skill2 = mentor.skills.length > 1 ? mentor.skills[1] : 'Leadership';
+    String? skill2 = mentor.skills.length > 1 ? mentor.skills[1] : null;
+
+    // Price display helper that prefers membership plan starting price
+    String displayPrice(Mentor mentor) {
+      if (mentor.planPrice != null && mentor.planPrice! > 0) return 'Starting at ₱${mentor.planPrice}/mo';
+      if (mentor.planTitle != null && mentor.planTitle!.isNotEmpty) {
+        final p = MembershipPlan.getPriceForTitle(mentor.planTitle);
+        return 'Starting at ₱$p/mo';
+      }
+      final parsed = int.tryParse(mentor.pricePerMonth.replaceAll(RegExp(r'[^0-9]'), ''));
+      if (parsed != null && parsed > 0) return 'Starting at ₱$parsed/mo';
+      return 'Starting at ₱${MembershipPlan.defaultStartingPrice}/mo';
+    }
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -35,20 +49,11 @@ class FindMentorList extends StatelessWidget {
             // Row 1: Image, Name, Job
             Row(
               children: [
-                // Dynamic Image Handling
-                Container(
-                  height: 50,
-                  width: 50,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    color: Colors.grey[200],
-                    image: DecorationImage(
-                      fit: BoxFit.cover,
-                      image: mentor.image.isNotEmpty
-                          ? NetworkImage(mentor.image) // Use URL if available
-                          : const AssetImage('assets/images/Ellipse 2057.png') as ImageProvider, // Fallback
-                    ),
-                  ),
+                // Unified avatar (circular) — use shared MentorAvatar to keep visuals consistent
+                MentorAvatar(
+                  image: mentor.image,
+                  name: mentor.name,
+                  size: 50,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -89,8 +94,10 @@ class FindMentorList extends StatelessWidget {
             Row(
               children: [
                 _buildSkillChip(skill1),
-                const SizedBox(width: 8),
-                _buildSkillChip(skill2),
+                if (skill2 != null) ...[
+                  const SizedBox(width: 8),
+                  _buildSkillChip(skill2),
+                ],
               ],
             ),
 
@@ -101,8 +108,12 @@ class FindMentorList extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  mentor.pricePerMonth, 
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  displayPrice(mentor), 
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: Color(0xFF2D6A65),
+                  ),
                 ),
                 SizedBox(
                   height: 36,
@@ -114,13 +125,14 @@ class FindMentorList extends StatelessWidget {
                         MaterialPageRoute(
                           builder: (context) => ProfileScreen(
                             mentorData: {
+                              'uid': mentor.id,
                               'firstName': mentor.name.split(' ')[0],
                               'lastName': mentor.name.split(' ').length > 1 ? mentor.name.split(' ')[1] : '',
                               'jobTitle': mentor.jobTitle,
                               'bio': 'Experienced mentor ready to help you grow.',
                               'skills': mentor.skills,
                               'profileImageUrl': mentor.image,
-                              'price': mentor.pricePerMonth,
+                              'price': displayPrice(mentor),
                               'rating': mentor.rating,
                             },
                           ),
@@ -132,7 +144,7 @@ class FindMentorList extends StatelessWidget {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                       elevation: 0,
                     ),
-                    child: const Text('View Profile', style: TextStyle(color: Colors.white, fontSize: 12)),
+                    child: const Text('View Profile', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)), 
                   ),
                 )
               ],

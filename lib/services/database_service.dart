@@ -47,10 +47,15 @@ class DatabaseService {
         'location': location,
         'yearsExperience': yearsExp,
         'monthsExperience': monthsExp,
+        
+        // ✅ These are the keys your Profile Page looks for:
         'bio': bio,
         'skills': skills,
         'expertise': expertise,
+        
         'profileImageUrl': imageUrl,
+        // Saving 'profilePic' as duplicate for safety if other widgets use it
+        'profilePic': imageUrl, 
         'createdAt': FieldValue.serverTimestamp(),
         'rating': 5.0,
         'price': 'Free',
@@ -82,6 +87,7 @@ class DatabaseService {
         'fullName': '$firstName $lastName',
         'role': 'student',
         'profileImageUrl': imageUrl,
+        'profilePic': imageUrl, // Duplicate for safety
         'createdAt': FieldValue.serverTimestamp(),
         'bio': 'Learning and growing.',
         'location': 'Remote',
@@ -115,6 +121,7 @@ class DatabaseService {
         String newUrl = await _uploadToCloudinary(newImage);
         if (newUrl.isNotEmpty) {
           dataToUpdate['profileImageUrl'] = newUrl;
+          dataToUpdate['profilePic'] = newUrl;
         }
       }
 
@@ -226,7 +233,6 @@ class DatabaseService {
 
   // --- 5. SAVED MENTORS ---
 
-  /// Save a mentor to user's saved list
   Future<void> saveMentor(String userId, String mentorId) async {
     try {
       await _db
@@ -244,7 +250,6 @@ class DatabaseService {
     }
   }
 
-  /// Remove a mentor from user's saved list
   Future<void> unsaveMentor(String userId, String mentorId) async {
     try {
       await _db
@@ -259,7 +264,6 @@ class DatabaseService {
     }
   }
 
-  /// Check if a mentor is saved by the user
   Future<bool> isMentorSaved(String userId, String mentorId) async {
     try {
       final doc = await _db
@@ -275,7 +279,6 @@ class DatabaseService {
     }
   }
 
-  /// Get stream of saved mentors for a user
   Stream<QuerySnapshot> getSavedMentors(String userId) {
     return _db
         .collection('users')
@@ -285,7 +288,6 @@ class DatabaseService {
         .snapshots();
   }
 
-  /// Get saved mentor details
   Stream<List<Map<String, dynamic>>> getSavedMentorsDetails(
       String userId) async* {
     await for (var snapshot in getSavedMentors(userId)) {
@@ -306,7 +308,7 @@ class DatabaseService {
     }
   }
 
-  // --- 5. PRIVATE CLOUDINARY HELPER ---
+  // --- 6. PRIVATE CLOUDINARY HELPER ---
 
   Future<String> _uploadToCloudinary(XFile image) async {
     try {
@@ -315,6 +317,7 @@ class DatabaseService {
       final request = http.MultipartRequest('POST', url)
         ..fields['upload_preset'] = uploadPreset;
 
+      // 🟢 WEB-SAFE: Use readAsBytes instead of File
       final Uint8List fileBytes = await image.readAsBytes();
       request.files.add(http.MultipartFile.fromBytes(
         'file',
