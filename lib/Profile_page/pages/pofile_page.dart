@@ -86,6 +86,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final List<String> skills = List<String>.from(_displayData['skills'] ?? []);
     final List<String> expertise =
         List<String>.from(_displayData['expertise'] ?? []);
+    final List<String> languages =
+        List<String>.from(_displayData['languages'] ?? []);
     final String bio = _displayData['bio'] ?? 'No bio provided.';
     final String fullName =
         '${_displayData['firstName'] ?? ''} ${_displayData['lastName'] ?? ''}'
@@ -264,7 +266,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ),
                                     ),
                                   )
-                                : OutlinedButton(
+                                : ElevatedButton(
                                     onPressed: () {
                                       Navigator.push(
                                         context,
@@ -276,10 +278,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         ),
                                       );
                                     },
-                                    style: OutlinedButton.styleFrom(
-                                      side: const BorderSide(
-                                        color: Color(0xFF2D6A65),
-                                      ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF2D6A65),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(8),
                                       ),
@@ -290,7 +290,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     child: const Text(
                                       'View Plans & Subscribe',
                                       style: TextStyle(
-                                        color: Color(0xFF2D6A65),
+                                        color: Colors.white,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -299,27 +299,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
 
                     // About Section
                     _buildSection(
                       title: 'About',
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[50],
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.grey[300]!),
-                        ),
-                        child: Text(
-                          bio,
-                          style:
-                              TextStyle(fontSize: 14, color: Colors.grey[800]),
-                        ),
+                      child: Text(
+                        bio,
+                        style: TextStyle(fontSize: 14, color: Colors.grey[700]),
                       ),
                     ),
-                    const SizedBox(height: 24),
 
                     // Expertise Section
                     _buildSection(
@@ -336,30 +325,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               spacing: 8,
                               runSpacing: 8,
                               children: expertise.map((item) {
-                                return Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey[100],
-                                    borderRadius: BorderRadius.circular(20),
-                                    border:
-                                        Border.all(color: Colors.grey[300]!),
-                                  ),
-                                  child: Text(
-                                    item,
-                                    style: const TextStyle(fontSize: 13),
-                                  ),
+                                return Chip(
+                                  label: Text(item),
+                                  backgroundColor: const Color(0xFFE8F5F3),
+                                  side: BorderSide.none,
                                 );
                               }).toList(),
                             ),
                     ),
-                    const SizedBox(height: 24),
 
                     // Skills Section
                     _buildSection(
-                      title: 'Skills & Tools',
+                      title: 'Skills',
                       child: skills.isEmpty
                           ? Text(
                               'No skills listed',
@@ -372,25 +349,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               spacing: 8,
                               runSpacing: 8,
                               children: skills.map((item) {
-                                return Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey[100],
-                                    borderRadius: BorderRadius.circular(20),
-                                    border:
-                                        Border.all(color: Colors.grey[300]!),
-                                  ),
-                                  child: Text(
-                                    item,
-                                    style: const TextStyle(fontSize: 13),
-                                  ),
+                                return Chip(
+                                  label: Text(item),
+                                  backgroundColor: const Color(0xFFE8F5F3),
+                                  side: BorderSide.none,
                                 );
                               }).toList(),
                             ),
                     ),
+
+                    // Languages Section
+                    _buildSection(
+                      title: 'Languages',
+                      child: languages.isEmpty
+                          ? Text(
+                              'No languages listed',
+                              style: TextStyle(
+                                color: Colors.grey[500],
+                                fontSize: 14,
+                              ),
+                            )
+                          : Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: languages.map((item) {
+                                return Chip(
+                                  label: Text(item),
+                                  backgroundColor: const Color(0xFFE8F5F3),
+                                  side: BorderSide.none,
+                                );
+                              }).toList(),
+                            ),
+                    ),
+
                     const SizedBox(height: 40),
                   ],
                 ),
@@ -406,29 +397,51 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required String title,
     required Widget child,
   }) {
+    IconData sectionIcon;
+    switch (title) {
+      case 'About':
+        sectionIcon = Icons.info_outline;
+        break;
+      case 'Expertise':
+        sectionIcon = Icons.stars_outlined;
+        break;
+      case 'Skills':
+        sectionIcon = Icons.construction_outlined;
+        break;
+      case 'Languages':
+        sectionIcon = Icons.language_outlined;
+        break;
+      default:
+        sectionIcon = Icons.bookmark_border;
+    }
+
     return Container(
+      margin: const EdgeInsets.only(bottom: 15),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                _getSectionIcon(title),
-                size: 20,
-                color: const Color(0xFF2D6A65),
-              ),
+              Icon(sectionIcon, size: 18, color: const Color(0xFF2D6A65)),
               const SizedBox(width: 8),
               Text(
                 title,
                 style: const TextStyle(
                   fontSize: 16,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2D6A65),
                 ),
               ),
             ],
@@ -438,18 +451,5 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
     );
-  }
-
-  IconData _getSectionIcon(String title) {
-    switch (title) {
-      case 'Expertise':
-        return Icons.school_outlined;
-      case 'Skills & Tools':
-        return Icons.build_outlined;
-      case 'About':
-        return Icons.info_outline;
-      default:
-        return Icons.info_outline;
-    }
   }
 }

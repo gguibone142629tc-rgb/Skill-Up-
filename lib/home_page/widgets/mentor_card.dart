@@ -1,5 +1,6 @@
 import 'package:finaproj/home_page/model/mentor_model.dart';
 import 'package:finaproj/Profile_page/pages/pofile_page.dart';
+import 'package:finaproj/app_settings/page/profile_page.dart';
 import 'package:finaproj/services/database_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -259,25 +260,39 @@ class _MentorCardState extends State<MentorCard> {
               ),
               ElevatedButton(
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ProfileScreen(
-                        mentorData: {
-                          'uid': widget.mentor.id,
-                          'firstName': widget.mentor.name.split(' ')[0],
-                          'lastName': widget.mentor.name.contains(' ')
-                              ? widget.mentor.name.split(' ')[1]
-                              : '',
-                          'jobTitle': widget.mentor.jobTitle,
-                          'profileImageUrl': widget.mentor.image,
-                          'rating': widget.mentor.rating,
-                          'skills': widget.mentor.skills,
-                          'price': _displayPrice(widget.mentor),
-                        },
+                  final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+                  final isOwnProfile = widget.mentor.id == currentUserId;
+
+                  if (isOwnProfile) {
+                    // Navigate to own profile page (from nav bar)
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ProfilePage(),
                       ),
-                    ),
-                  );
+                    );
+                  } else {
+                    // Navigate to other mentor's profile
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ProfileScreen(
+                          mentorData: {
+                            'uid': widget.mentor.id,
+                            'firstName': widget.mentor.name.split(' ')[0],
+                            'lastName': widget.mentor.name.contains(' ')
+                                ? widget.mentor.name.split(' ')[1]
+                                : '',
+                            'jobTitle': widget.mentor.jobTitle,
+                            'profileImageUrl': widget.mentor.image,
+                            'rating': widget.mentor.rating,
+                            'skills': widget.mentor.skills,
+                            'price': _displayPrice(widget.mentor),
+                          },
+                        ),
+                      ),
+                    );
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2D6A65),

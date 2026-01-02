@@ -1,15 +1,23 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '../models/session_model.dart';
-import '../widgets/session_card.dart';
+import 'package:intl/intl.dart';
 
-class SessionHistoryPage extends StatelessWidget {
-  const SessionHistoryPage({super.key}); // Added const
+class MySubscriptionPage extends StatelessWidget {
+  const MySubscriptionPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final String currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final currentUser = FirebaseAuth.instance.currentUser;
+
+    if (currentUser == null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('My Subscription'),
+        ),
+        body: const Center(child: Text('Please log in')),
+      );
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9F9F9),
@@ -21,55 +29,289 @@ class SessionHistoryPage extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          "Session History",
+          "My Subscription",
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
       body: StreamBuilder<QuerySnapshot>(
-        // Fetch sessions where the current user is a participant
         stream: FirebaseFirestore.instance
-            .collection('sessions')
-            .where('participants', arrayContains: currentUserId)
-            .orderBy('date', descending: true)
+            .collection('subscriptions')
+            .where('menteeId', isEqualTo: currentUser.uid)
             .snapshots(),
         builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(
+              child: Text('Error: ${snapshot.error}'),
+            );
+          }
+
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(
+            return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.history, size: 60, color: Colors.grey),
-                  SizedBox(height: 10),
-                  Text("No session history yet.", style: TextStyle(color: Colors.grey)),
+                  Icon(Icons.school_outlined,
+                      size: 80, color: Colors.grey[300]),
+                  const SizedBox(height: 20),
+                  Text(
+                    "No active subscription",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Subscribe to a mentor to start your journey",
+                    style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    "Debug: Found ${snapshot.data?.docs.length ?? 0} subscriptions",
+                    style: TextStyle(fontSize: 10, color: Colors.red),
+                  ),
                 ],
               ),
             );
+          }
+
+          // Debug info
+          print('Found ${snapshot.data!.docs.length} subscriptions');
+          for (var doc in snapshot.data!.docs) {
+            print('Subscription data: ${doc.data()}');
           }
 
           return ListView.builder(
             padding: const EdgeInsets.all(20),
             itemCount: snapshot.data!.docs.length,
             itemBuilder: (context, index) {
-              final data = snapshot.data!.docs[index].data() as Map<String, dynamic>;
-              
-              // Map Firestore data to your Session model
-              // NOTE: You might need to adjust fields based on your actual DB structure
-              final imageUrl = (data['mentorProfileImageUrl'] ?? data['mentorImage'] ?? data['profileImageUrl'] ?? '') as String;
-              final session = Session(
-                name: data['mentorName'] ?? 'Mentor', 
-                role: data['role'] ?? 'Mentor',
-                date: data['date'] ?? '',
-                time: data['time'] ?? '',
-                imagePath: imageUrl,
-                status: _getStatus(data['status']),
-              );
+              final doc = snapshot.data!.docs[index];
+              final data = doc.data() as Map<String, dynamic>;
+              final isActive = data['status'] == 'active';
 
-              return SessionCard(session: session);
+              return Container(
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 15,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    // Header with status
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: isActive
+                            ? const Color(0xFF2D6A65)
+                            : Colors.grey[400],
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(16),
+                          topRight: Radius.circular(16),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                isActive ? Icons.check_circle : Icons.cancel,
+                                color: Colors.white,
+                                size: 24,
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                isActive ? 'ACTIVE SUBSCRIPTION' : 'CANCELLED',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (isActive)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                '₱${data['planPrice']}/mo',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+
+                    // Content
+                    Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Plan Title
+                          Text(
+                            data['planTitle'] ?? 'N/A',
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF2D6A65),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Mentor Info
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFE8F5F3),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(
+                                  Icons.person,
+                                  color: Color(0xFF2D6A65),
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Your Mentor',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      data['mentorName'] ?? 'N/A',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 16),
+                          const Divider(),
+                          const SizedBox(height: 16),
+
+                          // Call Details
+                          _buildInfoRow(
+                            Icons.phone_in_talk,
+                            'Call Access',
+                            data['callDetails'] ?? 'N/A',
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          // Features
+                          if (data['features'] != null &&
+                              (data['features'] as List).isNotEmpty) ...[
+                            _buildInfoRow(
+                              Icons.star,
+                              'Features',
+                              '',
+                            ),
+                            const SizedBox(height: 8),
+                            ...List<String>.from(data['features']).map(
+                              (feature) => Padding(
+                                padding:
+                                    const EdgeInsets.only(left: 32, bottom: 6),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 6,
+                                      height: 6,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFF2D6A65),
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        feature,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey[700],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+
+                          const Divider(),
+                          const SizedBox(height: 16),
+
+                          // Billing Information
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _buildDateCard(
+                                'Started',
+                                data['startDate'] != null
+                                    ? DateFormat('MMM dd, yyyy').format(
+                                        (data['startDate'] as Timestamp)
+                                            .toDate())
+                                    : 'N/A',
+                                Icons.calendar_today,
+                              ),
+                              if (isActive)
+                                _buildDateCard(
+                                  'Next Billing',
+                                  data['nextBillingDate'] != null
+                                      ? DateFormat('MMM dd, yyyy').format(
+                                          (data['nextBillingDate'] as Timestamp)
+                                              .toDate())
+                                      : 'N/A',
+                                  Icons.event,
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
             },
           );
         },
@@ -77,12 +319,80 @@ class SessionHistoryPage extends StatelessWidget {
     );
   }
 
-  // Helper to convert string status to Enum
-  SessionStatus _getStatus(String? status) {
-    switch (status?.toLowerCase()) {
-      case 'completed': return SessionStatus.completed;
-      case 'cancelled': return SessionStatus.cancelled;
-      default: return SessionStatus.upcoming;
-    }
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 20, color: const Color(0xFF2D6A65)),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              if (value.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[800],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDateCard(String label, String date, IconData icon) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF5F5F5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[300]!),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, size: 14, color: Colors.grey[600]),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              date,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF2D6A65),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

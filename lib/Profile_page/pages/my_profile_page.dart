@@ -232,381 +232,516 @@ class _MyProfilePageState extends State<MyProfilePage> {
       );
     }
 
+    final String fullName = _profileData?['fullName'] ?? 'Mentor';
+    final String bio = _bioController.text.isNotEmpty
+        ? _bioController.text
+        : 'No biography provided yet.';
+
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          "My Profile",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.w800),
-        ),
-        centerTitle: true,
-        actions: const [],
-      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Profile Header (aligned with view screen)
-            Center(
+            // Header Card
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
+              decoration: const BoxDecoration(
+                color: Color(0xFF6B9A91),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
+                ),
+              ),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Stack(
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      CircleAvatar(
-                        radius: 50,
-                        backgroundColor: Colors.grey[200],
-                        backgroundImage: _newImageBytes != null
-                            ? MemoryImage(_newImageBytes!)
-                            : ((_profileData?['profileImageUrl'] ?? '')
-                                    .isNotEmpty
-                                ? NetworkImage(_profileData!['profileImageUrl'])
-                                : null) as ImageProvider?,
-                        child: _newImageBytes == null &&
-                                (_profileData?['profileImageUrl'] ?? '').isEmpty
-                            ? ClipOval(
-                                child: Image.asset(
-                                  'assets/images/default_avatar.png',
-                                  height: 100,
-                                  width: 100,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (c, e, s) =>
-                                      const Icon(Icons.person, size: 50),
-                                ),
-                              )
-                            : null,
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child:
+                            const Icon(Icons.arrow_back, color: Colors.white),
                       ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: InkWell(
-                          onTap: _pickImage,
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF2D6A65),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.camera_alt,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                          ),
+                      const Text(
+                        'Mentor Profile',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          if (_isEditing) {
+                            _saveProfile();
+                          } else {
+                            setState(() => _isEditing = true);
+                          }
+                        },
+                        child: Icon(
+                          _isEditing ? Icons.save : Icons.edit,
+                          color: Colors.white,
                         ),
                       ),
                     ],
                   ),
+                  const SizedBox(height: 20),
+                  // Logo/Icon placeholder
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      '👨‍🏫',
+                      style: TextStyle(fontSize: 32),
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   Text(
-                    _profileData?['fullName'] ?? 'User',
+                    fullName,
                     style: const TextStyle(
+                      color: Colors.white,
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _profileData?['jobTitle'] ?? 'Mentor',
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _profileData?['location'] ?? 'Location',
-                    style: TextStyle(fontSize: 14, color: Colors.grey[500]),
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 16),
-
-            // Edit/Save CTA to mirror profile view
-            ElevatedButton.icon(
-              onPressed: () {
-                if (_isEditing) {
-                  _saveProfile();
-                }
-                setState(() => _isEditing = !_isEditing);
-              },
-              icon: Icon(_isEditing ? Icons.check : Icons.edit, size: 20),
-              label: Text(
-                _isEditing ? 'Save Changes' : 'Edit Profile',
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2D6A65),
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 52),
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // About Me section for parity with view page
-            _buildSection(
-              title: 'About Me',
-              isEditing: _isEditing,
-              child: _isEditing
-                  ? TextField(
-                      controller: _bioController,
-                      minLines: 3,
-                      maxLines: 5,
-                      decoration: InputDecoration(
-                        hintText: 'Write something about yourself',
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8)),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 10),
-                      ),
-                    )
-                  : Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(14),
+            // Profile Content
+            Transform.translate(
+              offset: const Offset(0, -30),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Avatar and Info Card
+                    Container(
+                      padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Colors.grey[50],
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey[300]!),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(15),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
                       ),
-                      child: Text(
-                        _bioController.text.isNotEmpty
-                            ? _bioController.text
-                            : 'No biography provided yet.',
-                        style: TextStyle(fontSize: 14, color: Colors.grey[800]),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Stack(
+                            children: [
+                              CircleAvatar(
+                                radius: 50,
+                                backgroundColor: Colors.grey[200],
+                                backgroundImage: _newImageBytes != null
+                                    ? MemoryImage(_newImageBytes!)
+                                    : ((_profileData?['profileImageUrl'] ?? '')
+                                            .isNotEmpty
+                                        ? NetworkImage(
+                                            _profileData!['profileImageUrl'])
+                                        : null) as ImageProvider?,
+                                child: _newImageBytes == null &&
+                                        (_profileData?['profileImageUrl'] ?? '')
+                                            .isEmpty
+                                    ? ClipOval(
+                                        child: Image.asset(
+                                          'assets/images/default_avatar.png',
+                                          height: 100,
+                                          width: 100,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (c, e, s) => const Icon(
+                                              Icons.person,
+                                              size: 50),
+                                        ),
+                                      )
+                                    : null,
+                              ),
+                              if (_isEditing)
+                                Positioned(
+                                  bottom: 0,
+                                  right: 0,
+                                  child: InkWell(
+                                    onTap: _pickImage,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFF2D6A65),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.camera_alt,
+                                        color: Colors.white,
+                                        size: 18,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            fullName,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Mentor',
+                            style: TextStyle(fontSize: 16, color: Colors.grey),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _profileData?['location'] ?? 'Tagum City',
+                            style: TextStyle(
+                                fontSize: 14, color: Colors.grey[600]),
+                          ),
+                          const SizedBox(height: 20),
+                          // Edit Profile Button
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton(
+                              onPressed: () {
+                                if (_isEditing) {
+                                  _saveProfile();
+                                } else {
+                                  setState(() => _isEditing = true);
+                                }
+                              },
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(
+                                    color: Color(0xFF2D6A65), width: 1.5),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                              ),
+                              child: Text(
+                                _isEditing ? 'Save Profile' : 'Edit Profile',
+                                style: const TextStyle(
+                                  color: Color(0xFF2D6A65),
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-            ),
 
-            const SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
-            // Expertise Section
-            _buildSection(
-              title: 'Expertise',
-              isEditing: _isEditing,
-              child: _isEditing
-                  ? Column(
-                      children: [
-                        TextField(
-                          controller: _expertiseController,
-                          decoration: InputDecoration(
-                            hintText: 'Add expertise',
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8)),
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 10),
-                            suffixIcon: IconButton(
-                              icon: const Icon(Icons.add),
-                              onPressed: _addExpertise,
+                    // About Section
+                    _buildInfoCard(
+                      title: 'About',
+                      child: _isEditing
+                          ? TextField(
+                              controller: _bioController,
+                              minLines: 3,
+                              maxLines: 5,
+                              decoration: InputDecoration(
+                                hintText: 'Write something about yourself',
+                                border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8)),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 10),
+                              ),
+                            )
+                          : Text(
+                              bio,
+                              style: TextStyle(
+                                  fontSize: 14, color: Colors.grey[700]),
                             ),
-                          ),
-                          onSubmitted: (_) => _addExpertise(),
-                        ),
-                        const SizedBox(height: 12),
-                        if (_expertise.isNotEmpty)
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: List.generate(_expertise.length, (index) {
-                              return _buildChip(_expertise[index],
-                                  () => _removeExpertise(index));
-                            }),
-                          ),
-                      ],
-                    )
-                  : _expertise.isEmpty
-                      ? Text(
-                          'No information provided',
-                          style:
-                              TextStyle(color: Colors.grey[500], fontSize: 14),
-                        )
-                      : Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: _expertise.map((exp) {
-                            return Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[100],
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: Colors.grey[300]!),
-                              ),
-                              child: Text(
-                                exp,
-                                style: const TextStyle(fontSize: 13),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-            ),
-            const SizedBox(height: 24),
+                    ),
 
-            // Disciplines Section
-            _buildSection(
-              title: 'Disciplines',
-              isEditing: _isEditing,
-              child: _isEditing
-                  ? Column(
-                      children: [
-                        TextField(
-                          controller: _disciplinesController,
-                          decoration: InputDecoration(
-                            hintText: 'Add discipline',
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8)),
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 10),
-                            suffixIcon: IconButton(
-                              icon: const Icon(Icons.add),
-                              onPressed: _addDiscipline,
+                    // Expertise Section
+                    _buildInfoCard(
+                      title: 'Expertise',
+                      child: _isEditing
+                          ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextField(
+                                        controller: _expertiseController,
+                                        decoration: InputDecoration(
+                                          hintText: 'Add expertise',
+                                          border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8)),
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                  horizontal: 12, vertical: 10),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    IconButton(
+                                      onPressed: _addExpertise,
+                                      icon: const Icon(Icons.add_circle,
+                                          color: Color(0xFF2D6A65)),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: _expertise.map((item) {
+                                    final index = _expertise.indexOf(item);
+                                    return Chip(
+                                      label: Text(item),
+                                      deleteIcon:
+                                          const Icon(Icons.close, size: 18),
+                                      onDeleted: () => _removeExpertise(index),
+                                      backgroundColor: const Color(0xFFE8F5F3),
+                                      side: BorderSide.none,
+                                    );
+                                  }).toList(),
+                                ),
+                              ],
+                            )
+                          : Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: _expertise.isEmpty
+                                  ? [
+                                      Text('No expertise added yet.',
+                                          style: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.grey[700]))
+                                    ]
+                                  : _expertise.map((item) {
+                                      return Chip(
+                                        label: Text(item),
+                                        backgroundColor:
+                                            const Color(0xFFE8F5F3),
+                                        side: BorderSide.none,
+                                      );
+                                    }).toList(),
                             ),
-                          ),
-                          onSubmitted: (_) => _addDiscipline(),
-                        ),
-                        const SizedBox(height: 12),
-                        if (_disciplines.isNotEmpty)
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children:
-                                List.generate(_disciplines.length, (index) {
-                              return _buildChip(_disciplines[index],
-                                  () => _removeDiscipline(index));
-                            }),
-                          ),
-                      ],
-                    )
-                  : _disciplines.isEmpty
-                      ? Text(
-                          'No information provided',
-                          style:
-                              TextStyle(color: Colors.grey[500], fontSize: 14),
-                        )
-                      : Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: _disciplines.map((disc) {
-                            return Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[100],
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: Colors.grey[300]!),
-                              ),
-                              child: Text(
-                                disc,
-                                style: const TextStyle(fontSize: 13),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-            ),
-            const SizedBox(height: 24),
+                    ),
 
-            // Fluent In Section
-            _buildSection(
-              title: 'Fluent In',
-              isEditing: _isEditing,
-              child: _isEditing
-                  ? Column(
-                      children: [
-                        TextField(
-                          controller: _languagesController,
-                          decoration: InputDecoration(
-                            hintText: 'Add language',
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8)),
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 10),
-                            suffixIcon: IconButton(
-                              icon: const Icon(Icons.add),
-                              onPressed: _addLanguage,
+                    // Skills Section
+                    _buildInfoCard(
+                      title: 'Skills',
+                      child: _isEditing
+                          ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextField(
+                                        controller: _disciplinesController,
+                                        decoration: InputDecoration(
+                                          hintText: 'Add skill',
+                                          border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8)),
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                  horizontal: 12, vertical: 10),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    IconButton(
+                                      onPressed: _addDiscipline,
+                                      icon: const Icon(Icons.add_circle,
+                                          color: Color(0xFF2D6A65)),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: _disciplines.map((item) {
+                                    final index = _disciplines.indexOf(item);
+                                    return Chip(
+                                      label: Text(item),
+                                      deleteIcon:
+                                          const Icon(Icons.close, size: 18),
+                                      onDeleted: () => _removeDiscipline(index),
+                                      backgroundColor: const Color(0xFFE8F5F3),
+                                      side: BorderSide.none,
+                                    );
+                                  }).toList(),
+                                ),
+                              ],
+                            )
+                          : Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: _disciplines.isEmpty
+                                  ? [
+                                      Text('No skills added yet.',
+                                          style: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.grey[700]))
+                                    ]
+                                  : _disciplines.map((item) {
+                                      return Chip(
+                                        label: Text(item),
+                                        backgroundColor:
+                                            const Color(0xFFE8F5F3),
+                                        side: BorderSide.none,
+                                      );
+                                    }).toList(),
                             ),
-                          ),
-                          onSubmitted: (_) => _addLanguage(),
-                        ),
-                        const SizedBox(height: 12),
-                        if (_languages.isNotEmpty)
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: List.generate(_languages.length, (index) {
-                              return _buildChip(_languages[index],
-                                  () => _removeLanguage(index));
-                            }),
-                          ),
-                      ],
-                    )
-                  : _languages.isEmpty
-                      ? Text(
-                          'No information provided',
-                          style:
-                              TextStyle(color: Colors.grey[500], fontSize: 14),
-                        )
-                      : Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: _languages.map((lang) {
-                            return Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: Colors.blue[50],
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: Colors.blue[200]!),
-                              ),
-                              child: Text(
-                                lang,
-                                style: TextStyle(
-                                    fontSize: 13, color: Colors.blue[700]),
-                              ),
-                            );
-                          }).toList(),
-                        ),
+                    ),
+
+                    // Languages Section
+                    _buildInfoCard(
+                      title: 'Languages',
+                      child: _isEditing
+                          ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextField(
+                                        controller: _languagesController,
+                                        decoration: InputDecoration(
+                                          hintText: 'Add language',
+                                          border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8)),
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                  horizontal: 12, vertical: 10),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    IconButton(
+                                      onPressed: _addLanguage,
+                                      icon: const Icon(Icons.add_circle,
+                                          color: Color(0xFF2D6A65)),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: _languages.map((item) {
+                                    final index = _languages.indexOf(item);
+                                    return Chip(
+                                      label: Text(item),
+                                      deleteIcon:
+                                          const Icon(Icons.close, size: 18),
+                                      onDeleted: () => _removeLanguage(index),
+                                      backgroundColor: const Color(0xFFE8F5F3),
+                                      side: BorderSide.none,
+                                    );
+                                  }).toList(),
+                                ),
+                              ],
+                            )
+                          : Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: _languages.isEmpty
+                                  ? [
+                                      Text('No languages added yet.',
+                                          style: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.grey[700]))
+                                    ]
+                                  : _languages.map((item) {
+                                      return Chip(
+                                        label: Text(item),
+                                        backgroundColor:
+                                            const Color(0xFFE8F5F3),
+                                        side: BorderSide.none,
+                                      );
+                                    }).toList(),
+                            ),
+                    ),
+
+                    const SizedBox(height: 40),
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(height: 30),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSection({
-    required String title,
-    required bool isEditing,
-    required Widget child,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 12),
-        child,
-      ],
-    );
-  }
+  Widget _buildInfoCard({required String title, required Widget child}) {
+    IconData sectionIcon;
+    switch (title) {
+      case 'About':
+        sectionIcon = Icons.info_outline;
+        break;
+      case 'Expertise':
+        sectionIcon = Icons.stars_outlined;
+        break;
+      case 'Skills':
+        sectionIcon = Icons.construction_outlined;
+        break;
+      case 'Languages':
+        sectionIcon = Icons.language_outlined;
+        break;
+      default:
+        sectionIcon = Icons.bookmark_border;
+    }
 
-  Widget _buildChip(String label, VoidCallback onRemove) {
-    return Chip(
-      label: Text(label, style: const TextStyle(fontSize: 13)),
-      deleteIcon: const Icon(Icons.close, size: 18),
-      onDeleted: onRemove,
-      backgroundColor: Colors.grey[200],
-      side: BorderSide(color: Colors.grey[300]!),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 15),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(sectionIcon, size: 18, color: const Color(0xFF2D6A65)),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2D6A65),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          child,
+        ],
+      ),
     );
   }
 }

@@ -1,8 +1,10 @@
 import 'package:finaproj/home_page/model/mentor_model.dart'; // Use the shared Mentor model
 import 'package:flutter/material.dart';
 import 'package:finaproj/Profile_page/pages/pofile_page.dart'; // Import Profile Page
+import 'package:finaproj/app_settings/page/profile_page.dart';
 import 'package:finaproj/membershipPlan/model/membership_plan.dart'; // Membership plan helper
 import 'package:finaproj/common/mentor_avatar.dart'; // Shared avatar widget
+import 'package:firebase_auth/firebase_auth.dart';
 
 class FindMentorList extends StatelessWidget {
   const FindMentorList({super.key, required this.mentor});
@@ -121,28 +123,42 @@ class FindMentorList extends StatelessWidget {
                   height: 36,
                   child: ElevatedButton(
                     onPressed: () {
-                      // Navigate to Profile with real data
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ProfileScreen(
-                            mentorData: {
-                              'uid': mentor.id,
-                              'firstName': mentor.name.split(' ')[0],
-                              'lastName': mentor.name.split(' ').length > 1
-                                  ? mentor.name.split(' ')[1]
-                                  : '',
-                              'jobTitle': mentor.jobTitle,
-                              'bio':
-                                  'Experienced mentor ready to help you grow.',
-                              'skills': mentor.skills,
-                              'profileImageUrl': mentor.image,
-                              'price': displayPrice(mentor),
-                              'rating': mentor.rating,
-                            },
+                      final currentUserId =
+                          FirebaseAuth.instance.currentUser?.uid;
+                      final isOwnProfile = mentor.id == currentUserId;
+
+                      if (isOwnProfile) {
+                        // Navigate to own profile page
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ProfilePage(),
                           ),
-                        ),
-                      );
+                        );
+                      } else {
+                        // Navigate to other mentor's profile
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ProfileScreen(
+                              mentorData: {
+                                'uid': mentor.id,
+                                'firstName': mentor.name.split(' ')[0],
+                                'lastName': mentor.name.split(' ').length > 1
+                                    ? mentor.name.split(' ')[1]
+                                    : '',
+                                'jobTitle': mentor.jobTitle,
+                                'bio':
+                                    'Experienced mentor ready to help you grow.',
+                                'skills': mentor.skills,
+                                'profileImageUrl': mentor.image,
+                                'price': displayPrice(mentor),
+                                'rating': mentor.rating,
+                              },
+                            ),
+                          ),
+                        );
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF2D6A65),

@@ -6,8 +6,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 // --- IMPORTS FOR NAVIGATION ---
 import 'package:finaproj/login/pages/login_page.dart';
 import 'package:finaproj/app_settings/page/edit_profile_page.dart'; // Personal Details
-import 'package:finaproj/SessionHistory/pages/session_history_screen.dart'; // Session History
+import 'package:finaproj/SessionHistory/pages/session_history_screen.dart'; // My Mentorship
 import 'package:finaproj/SavedMentors/saved_mentors_page.dart'; // Saved Members
+import 'package:finaproj/app_settings/page/my_subscribers_page.dart'; // My Subscribers
 
 class ProfileListDecor extends StatelessWidget {
   const ProfileListDecor({super.key, required this.profileModel});
@@ -37,8 +38,11 @@ class ProfileListDecor extends StatelessWidget {
             case 'Personal Details':
               nextPage = const EditProfilePage();
               break;
-            case 'Session History':
-              nextPage = SessionHistoryPage();
+            case 'My Subscription':
+              nextPage = const MySubscriptionPage();
+              break;
+            case 'My Subscribers':
+              nextPage = const MySubscribersPage();
               break;
             case 'Saved Members':
               nextPage = const SavedMentorsPage();
@@ -75,10 +79,13 @@ class ProfileListDecor extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  margin: const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
+                  margin:
+                      const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: isLogout ? logoutColor.withOpacity(0.1) : const Color(0xFFF7F7F7),
+                    color: isLogout
+                        ? logoutColor.withOpacity(0.1)
+                        : const Color(0xFFF7F7F7),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: SvgPicture.asset(
@@ -97,7 +104,8 @@ class ProfileListDecor extends StatelessWidget {
                 )
               ],
             ),
-            Icon(Icons.arrow_forward_ios, size: 18, color: isLogout ? logoutColor : Colors.black45),
+            Icon(Icons.arrow_forward_ios,
+                size: 18, color: isLogout ? logoutColor : Colors.black45),
           ],
         ),
       ),

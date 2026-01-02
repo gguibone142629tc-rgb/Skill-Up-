@@ -230,427 +230,516 @@ class _MenteeProfilePageState extends State<MenteeProfilePage> {
       );
     }
 
+    final String fullName = _profileData?['fullName'] ?? 'User';
+    final String bio = _bioController.text.isNotEmpty
+        ? _bioController.text
+        : 'No biography provided yet.';
+
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          "My Profile",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.w800),
-        ),
-        centerTitle: true,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: ElevatedButton(
-              onPressed: () {
-                if (_isEditing) {
-                  _saveProfile();
-                } else {
-                  setState(() => _isEditing = true);
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2D6A65),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6)),
-              ),
-              child: Text(
-                _isEditing ? 'Save' : 'Edit',
-                style: const TextStyle(color: Colors.white, fontSize: 12),
-              ),
-            ),
-          ),
-        ],
-      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Profile Header
-            Row(
-              children: [
-                Stack(
-                  children: [
-                    CircleAvatar(
-                      radius: 40,
-                      backgroundColor: Colors.grey[200],
-                      backgroundImage: _newImageBytes != null
-                          ? MemoryImage(_newImageBytes!)
-                          : ((_profileData?['profileImageUrl'] ?? '').isNotEmpty
-                              ? NetworkImage(_profileData!['profileImageUrl'])
-                              : null) as ImageProvider?,
-                      child: _newImageBytes == null &&
-                              (_profileData?['profileImageUrl'] ?? '').isEmpty
-                          ? ClipOval(
-                              child: Image.asset(
-                                'assets/images/default_avatar.png',
-                                height: 80,
-                                width: 80,
-                                fit: BoxFit.cover,
-                                errorBuilder: (c, e, s) =>
-                                    const Icon(Icons.person, size: 40),
-                              ),
-                            )
-                          : null,
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: InkWell(
-                        onTap: _pickImage,
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF2D6A65),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.camera_alt,
-                            color: Colors.white,
-                            size: 16,
-                          ),
+            // Header Card
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
+              decoration: const BoxDecoration(
+                color: Color(0xFF6B9A91),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child:
+                            const Icon(Icons.arrow_back, color: Colors.white),
+                      ),
+                      const Text(
+                        'Student Profile',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _profileData?['fullName'] ?? 'User',
-                        style: const TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Student',
-                        style: TextStyle(fontSize: 14, color: Colors.grey),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _profileData?['location'] ?? 'Location',
-                        style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                      GestureDetector(
+                        onTap: () {
+                          if (_isEditing) {
+                            _saveProfile();
+                          } else {
+                            setState(() => _isEditing = true);
+                          }
+                        },
+                        child: Icon(
+                          _isEditing ? Icons.save : Icons.edit,
+                          color: Colors.white,
+                        ),
                       ),
                     ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 20),
+                  // Logo/Icon placeholder
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      '📚',
+                      style: TextStyle(fontSize: 32),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    fullName,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 30),
 
-            // About Me section
-            _buildSection(
-              title: 'About Me',
-              isEditing: _isEditing,
-              child: _isEditing
-                  ? TextField(
-                      controller: _bioController,
-                      minLines: 3,
-                      maxLines: 5,
-                      decoration: InputDecoration(
-                        hintText: 'Write something about yourself',
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8)),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 10),
-                      ),
-                    )
-                  : Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(14),
+            // Profile Content
+            Transform.translate(
+              offset: const Offset(0, -30),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Avatar and Info Card
+                    Container(
+                      padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Colors.grey[50],
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey[300]!),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(15),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
                       ),
-                      child: Text(
-                        _bioController.text.isNotEmpty
-                            ? _bioController.text
-                            : 'No biography provided yet.',
-                        style: TextStyle(fontSize: 14, color: Colors.grey[800]),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Stack(
+                            children: [
+                              CircleAvatar(
+                                radius: 50,
+                                backgroundColor: Colors.grey[200],
+                                backgroundImage: _newImageBytes != null
+                                    ? MemoryImage(_newImageBytes!)
+                                    : ((_profileData?['profileImageUrl'] ?? '')
+                                            .isNotEmpty
+                                        ? NetworkImage(
+                                            _profileData!['profileImageUrl'])
+                                        : null) as ImageProvider?,
+                                child: _newImageBytes == null &&
+                                        (_profileData?['profileImageUrl'] ?? '')
+                                            .isEmpty
+                                    ? ClipOval(
+                                        child: Image.asset(
+                                          'assets/images/default_avatar.png',
+                                          height: 100,
+                                          width: 100,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (c, e, s) => const Icon(
+                                              Icons.person,
+                                              size: 50),
+                                        ),
+                                      )
+                                    : null,
+                              ),
+                              if (_isEditing)
+                                Positioned(
+                                  bottom: 0,
+                                  right: 0,
+                                  child: InkWell(
+                                    onTap: _pickImage,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFF2D6A65),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.camera_alt,
+                                        color: Colors.white,
+                                        size: 18,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            fullName,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Student',
+                            style: TextStyle(fontSize: 16, color: Colors.grey),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _profileData?['location'] ?? 'Tagum City',
+                            style: TextStyle(
+                                fontSize: 14, color: Colors.grey[600]),
+                          ),
+                          const SizedBox(height: 20),
+                          // Edit Profile Button
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton(
+                              onPressed: () {
+                                if (_isEditing) {
+                                  _saveProfile();
+                                } else {
+                                  setState(() => _isEditing = true);
+                                }
+                              },
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(
+                                    color: Color(0xFF2D6A65), width: 1.5),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                              ),
+                              child: Text(
+                                _isEditing ? 'Save Profile' : 'Edit Profile',
+                                style: const TextStyle(
+                                  color: Color(0xFF2D6A65),
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-            ),
-            const SizedBox(height: 30),
 
-            // Interests Section
-            _buildSection(
-              title: 'Interests',
-              isEditing: _isEditing,
-              child: _isEditing
-                  ? Column(
-                      children: [
-                        TextField(
-                          controller: _interestsController,
-                          decoration: InputDecoration(
-                            hintText: 'Add interest',
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8)),
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 10),
-                            suffixIcon: IconButton(
-                              icon: const Icon(Icons.add),
-                              onPressed: _addInterest,
-                            ),
-                          ),
-                          onSubmitted: (_) => _addInterest(),
-                        ),
-                        const SizedBox(height: 12),
-                        if (_interests.isNotEmpty)
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: List.generate(_interests.length, (index) {
-                              return _buildChip(_interests[index],
-                                  () => _removeInterest(index));
-                            }),
-                          ),
-                      ],
-                    )
-                  : _interests.isEmpty
-                      ? Text(
-                          'No information provided',
-                          style:
-                              TextStyle(color: Colors.grey[500], fontSize: 14),
-                        )
-                      : Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: _interests.map((interest) {
-                            return Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[100],
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: Colors.grey[300]!),
-                              ),
-                              child: Text(
-                                interest,
-                                style: const TextStyle(fontSize: 13),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-            ),
-            const SizedBox(height: 24),
+                    const SizedBox(height: 20),
 
-            // Goals Section
-            _buildSection(
-              title: 'Learning Goals',
-              isEditing: _isEditing,
-              child: _isEditing
-                  ? Column(
-                      children: [
-                        TextField(
-                          controller: _goalsController,
-                          decoration: InputDecoration(
-                            hintText: 'Add goal',
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8)),
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 10),
-                            suffixIcon: IconButton(
-                              icon: const Icon(Icons.add),
-                              onPressed: _addGoal,
+                    // About Section
+                    _buildInfoCard(
+                      title: 'About',
+                      child: _isEditing
+                          ? TextField(
+                              controller: _bioController,
+                              minLines: 3,
+                              maxLines: 5,
+                              decoration: InputDecoration(
+                                hintText: 'Write something about yourself',
+                                border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8)),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 10),
+                              ),
+                            )
+                          : Text(
+                              bio,
+                              style: TextStyle(
+                                  fontSize: 14, color: Colors.grey[700]),
                             ),
-                          ),
-                          onSubmitted: (_) => _addGoal(),
-                        ),
-                        const SizedBox(height: 12),
-                        if (_goals.isNotEmpty)
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: List.generate(_goals.length, (index) {
-                              return _buildChip(
-                                  _goals[index], () => _removeGoal(index));
-                            }),
-                          ),
-                      ],
-                    )
-                  : _goals.isEmpty
-                      ? Text(
-                          'No information provided',
-                          style:
-                              TextStyle(color: Colors.grey[500], fontSize: 14),
-                        )
-                      : Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: _goals.map((goal) {
-                            return Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[100],
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: Colors.grey[300]!),
-                              ),
-                              child: Text(
-                                goal,
-                                style: const TextStyle(fontSize: 13),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-            ),
-            const SizedBox(height: 24),
+                    ),
 
-            // Learning Style Section
-            _buildSection(
-              title: 'Learning Preferences',
-              isEditing: _isEditing,
-              child: _isEditing
-                  ? Column(
-                      children: [
-                        TextField(
-                          controller: _learningStyleController,
-                          decoration: InputDecoration(
-                            hintText: 'Add learning preference',
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8)),
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 10),
-                            suffixIcon: IconButton(
-                              icon: const Icon(Icons.add),
-                              onPressed: _addLearningStyle,
+                    // Interests Section
+                    _buildInfoCard(
+                      title: 'Interests',
+                      child: _isEditing
+                          ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextField(
+                                        controller: _interestsController,
+                                        decoration: InputDecoration(
+                                          hintText: 'Add interest',
+                                          border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8)),
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                  horizontal: 12, vertical: 10),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    IconButton(
+                                      onPressed: _addInterest,
+                                      icon: const Icon(Icons.add_circle,
+                                          color: Color(0xFF2D6A65)),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: _interests.map((interest) {
+                                    final index = _interests.indexOf(interest);
+                                    return Chip(
+                                      label: Text(interest),
+                                      deleteIcon:
+                                          const Icon(Icons.close, size: 18),
+                                      onDeleted: () => _removeInterest(index),
+                                      backgroundColor: const Color(0xFFE8F5F3),
+                                      side: BorderSide.none,
+                                    );
+                                  }).toList(),
+                                ),
+                              ],
+                            )
+                          : Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: _interests.isEmpty
+                                  ? [
+                                      Text('No interests added yet.',
+                                          style: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.grey[700]))
+                                    ]
+                                  : _interests.map((interest) {
+                                      return Chip(
+                                        label: Text(interest),
+                                        backgroundColor:
+                                            const Color(0xFFE8F5F3),
+                                        side: BorderSide.none,
+                                      );
+                                    }).toList(),
                             ),
-                          ),
-                          onSubmitted: (_) => _addLearningStyle(),
-                        ),
-                        const SizedBox(height: 12),
-                        if (_learningStyles.isNotEmpty)
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children:
-                                List.generate(_learningStyles.length, (index) {
-                              return _buildChip(_learningStyles[index],
-                                  () => _removeLearningStyle(index));
-                            }),
-                          ),
-                      ],
-                    )
-                  : _learningStyles.isEmpty
-                      ? Text(
-                          'No information provided',
-                          style:
-                              TextStyle(color: Colors.grey[500], fontSize: 14),
-                        )
-                      : Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: _learningStyles.map((style) {
-                            return Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[100],
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: Colors.grey[300]!),
-                              ),
-                              child: Text(
-                                style,
-                                style: const TextStyle(fontSize: 13),
-                              ),
-                            );
-                          }).toList(),
-                        ),
+                    ),
+
+                    // Learning Goals Section
+                    _buildInfoCard(
+                      title: 'Learning Goals',
+                      child: _isEditing
+                          ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextField(
+                                        controller: _goalsController,
+                                        decoration: InputDecoration(
+                                          hintText: 'Add learning goal',
+                                          border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8)),
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                  horizontal: 12, vertical: 10),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    IconButton(
+                                      onPressed: _addGoal,
+                                      icon: const Icon(Icons.add_circle,
+                                          color: Color(0xFF2D6A65)),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: _goals.map((goal) {
+                                    final index = _goals.indexOf(goal);
+                                    return Chip(
+                                      label: Text(goal),
+                                      deleteIcon:
+                                          const Icon(Icons.close, size: 18),
+                                      onDeleted: () => _removeGoal(index),
+                                      backgroundColor: const Color(0xFFE8F5F3),
+                                      side: BorderSide.none,
+                                    );
+                                  }).toList(),
+                                ),
+                              ],
+                            )
+                          : Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: _goals.isEmpty
+                                  ? [
+                                      Text('No learning goals added yet.',
+                                          style: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.grey[700]))
+                                    ]
+                                  : _goals.map((goal) {
+                                      return Chip(
+                                        label: Text(goal),
+                                        backgroundColor:
+                                            const Color(0xFFE8F5F3),
+                                        side: BorderSide.none,
+                                      );
+                                    }).toList(),
+                            ),
+                    ),
+
+                    // Learning Preferences Section
+                    _buildInfoCard(
+                      title: 'Learning Preferences',
+                      child: _isEditing
+                          ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextField(
+                                        controller: _learningStyleController,
+                                        decoration: InputDecoration(
+                                          hintText: 'Add learning preference',
+                                          border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8)),
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                  horizontal: 12, vertical: 10),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    IconButton(
+                                      onPressed: _addLearningStyle,
+                                      icon: const Icon(Icons.add_circle,
+                                          color: Color(0xFF2D6A65)),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: _learningStyles.map((style) {
+                                    final index =
+                                        _learningStyles.indexOf(style);
+                                    return Chip(
+                                      label: Text(style),
+                                      deleteIcon:
+                                          const Icon(Icons.close, size: 18),
+                                      onDeleted: () =>
+                                          _removeLearningStyle(index),
+                                      backgroundColor: const Color(0xFFE8F5F3),
+                                      side: BorderSide.none,
+                                    );
+                                  }).toList(),
+                                ),
+                              ],
+                            )
+                          : Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: _learningStyles.isEmpty
+                                  ? [
+                                      Text('No learning preferences added yet.',
+                                          style: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.grey[700]))
+                                    ]
+                                  : _learningStyles.map((style) {
+                                      return Chip(
+                                        label: Text(style),
+                                        backgroundColor:
+                                            const Color(0xFFE8F5F3),
+                                        side: BorderSide.none,
+                                      );
+                                    }).toList(),
+                            ),
+                    ),
+
+                    const SizedBox(height: 40),
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(height: 24),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSection({
-    required String title,
-    required bool isEditing,
-    required Widget child,
-  }) {
+  Widget _buildInfoCard({required String title, required Widget child}) {
+    IconData sectionIcon;
+    switch (title) {
+      case 'About':
+        sectionIcon = Icons.info_outline;
+        break;
+      case 'Interests':
+        sectionIcon = Icons.favorite_outline;
+        break;
+      case 'Learning Goals':
+        sectionIcon = Icons.flag_outlined;
+        break;
+      case 'Learning Preferences':
+        sectionIcon = Icons.tune_outlined;
+        break;
+      default:
+        sectionIcon = Icons.bookmark_border;
+    }
+
     return Container(
+      margin: const EdgeInsets.only(bottom: 15),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                _getSectionIcon(title),
-                size: 20,
-                color: const Color(0xFF2D6A65),
-              ),
+              Icon(sectionIcon, size: 18, color: const Color(0xFF2D6A65)),
               const SizedBox(width: 8),
               Text(
                 title,
                 style: const TextStyle(
                   fontSize: 16,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2D6A65),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
           child,
-        ],
-      ),
-    );
-  }
-
-  IconData _getSectionIcon(String title) {
-    switch (title) {
-      case 'Interests':
-        return Icons.interests_outlined;
-      case 'Learning Goals':
-        return Icons.flag_outlined;
-      case 'Learning Preferences':
-        return Icons.school_outlined;
-      default:
-        return Icons.info_outline;
-    }
-  }
-
-  Widget _buildChip(String label, VoidCallback onRemove) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFF2D6A65).withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF2D6A65).withOpacity(0.3)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(fontSize: 13),
-          ),
-          const SizedBox(width: 4),
-          InkWell(
-            onTap: onRemove,
-            child: const Icon(
-              Icons.close,
-              size: 16,
-              color: Color(0xFF2D6A65),
-            ),
-          ),
         ],
       ),
     );

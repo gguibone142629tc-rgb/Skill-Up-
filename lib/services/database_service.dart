@@ -211,31 +211,7 @@ class DatabaseService {
         .snapshots();
   }
 
-  // --- 4. BOOKINGS ---
-
-  Future<void> createBooking({
-    required String menteeId,
-    required String mentorId,
-    required String mentorName,
-    required DateTime selectedDate,
-    required String status,
-  }) async {
-    try {
-      await _db.collection('bookings').add({
-        'menteeId': menteeId,
-        'mentorId': mentorId,
-        'mentorName': mentorName,
-        'bookingDate': selectedDate,
-        'status': status,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-    } catch (e) {
-      debugPrint("Error creating booking: $e");
-      rethrow;
-    }
-  }
-
-  // --- 5. SAVED MENTORS ---
+  // --- 4. SAVED MENTORS ---
 
   Future<void> saveMentor(String userId, String mentorId) async {
     try {

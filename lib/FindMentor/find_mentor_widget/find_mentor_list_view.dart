@@ -4,6 +4,8 @@ import 'package:finaproj/FindMentor/find_mentor_decor/find_mentor_list.dart';
 import 'package:finaproj/home_page/model/mentor_model.dart';
 import 'package:finaproj/common/mentor_avatar.dart';
 import 'package:finaproj/Profile_page/pages/student_profile_view.dart';
+import 'package:finaproj/app_settings/page/profile_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class FindMentorListView extends StatelessWidget {
   final String searchQuery;
@@ -263,12 +265,26 @@ class StudentSearchCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => StudentProfileView(studentId: studentId),
-          ),
-        );
+        final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+        final isOwnProfile = studentId == currentUserId;
+
+        if (isOwnProfile) {
+          // Navigate to own profile page (from nav bar)
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ProfilePage(),
+            ),
+          );
+        } else {
+          // Navigate to other student's profile
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => StudentProfileView(studentId: studentId),
+            ),
+          );
+        }
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),

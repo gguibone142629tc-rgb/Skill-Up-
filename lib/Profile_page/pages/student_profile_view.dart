@@ -16,6 +16,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
   Map<String, dynamic>? _studentData;
   bool _isLoading = true;
 
+  String _bio = '';
   List<String> _interests = [];
   List<String> _goals = [];
   List<String> _learningStyles = [];
@@ -37,6 +38,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
         final data = doc.data() as Map<String, dynamic>;
         setState(() {
           _studentData = data;
+          _bio = data['bio'] ?? '';
           _interests = List<String>.from(data['interests'] ?? []);
           _goals = List<String>.from(data['goals'] ?? []);
           _learningStyles = List<String>.from(data['learningStyles'] ?? []);
@@ -219,7 +221,21 @@ class _StudentProfileViewState extends State<StudentProfileView> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
+
+                    // About Section
+                    _buildSection(
+                      title: 'About',
+                      child: Text(
+                        _bio.isEmpty ? 'No bio provided yet.' : _bio,
+                        style: TextStyle(
+                          color: _bio.isEmpty
+                              ? Colors.grey[500]
+                              : Colors.grey[700],
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
 
                     // Interests Section
                     _buildSection(
@@ -236,27 +252,14 @@ class _StudentProfileViewState extends State<StudentProfileView> {
                               spacing: 8,
                               runSpacing: 8,
                               children: _interests.map((interest) {
-                                return Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey[100],
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: Colors.grey[300]!,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    interest,
-                                    style: const TextStyle(fontSize: 13),
-                                  ),
+                                return Chip(
+                                  label: Text(interest),
+                                  backgroundColor: const Color(0xFFE8F5F3),
+                                  side: BorderSide.none,
                                 );
                               }).toList(),
                             ),
                     ),
-                    const SizedBox(height: 24),
 
                     // Learning Goals Section
                     _buildSection(
@@ -273,27 +276,14 @@ class _StudentProfileViewState extends State<StudentProfileView> {
                               spacing: 8,
                               runSpacing: 8,
                               children: _goals.map((goal) {
-                                return Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey[100],
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: Colors.grey[300]!,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    goal,
-                                    style: const TextStyle(fontSize: 13),
-                                  ),
+                                return Chip(
+                                  label: Text(goal),
+                                  backgroundColor: const Color(0xFFE8F5F3),
+                                  side: BorderSide.none,
                                 );
                               }).toList(),
                             ),
                     ),
-                    const SizedBox(height: 24),
 
                     // Learning Preferences Section
                     _buildSection(
@@ -310,27 +300,16 @@ class _StudentProfileViewState extends State<StudentProfileView> {
                               spacing: 8,
                               runSpacing: 8,
                               children: _learningStyles.map((style) {
-                                return Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey[100],
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: Colors.grey[300]!,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    style,
-                                    style: const TextStyle(fontSize: 13),
-                                  ),
+                                return Chip(
+                                  label: Text(style),
+                                  backgroundColor: const Color(0xFFE8F5F3),
+                                  side: BorderSide.none,
                                 );
                               }).toList(),
                             ),
                     ),
-                    const SizedBox(height: 20),
+
+                    const SizedBox(height: 40),
                   ],
                 ),
               ),
@@ -346,11 +325,18 @@ class _StudentProfileViewState extends State<StudentProfileView> {
     required Widget child,
   }) {
     return Container(
+      margin: const EdgeInsets.only(bottom: 15),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -359,7 +345,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
             children: [
               Icon(
                 _getSectionIcon(title),
-                size: 20,
+                size: 18,
                 color: const Color(0xFF2D6A65),
               ),
               const SizedBox(width: 8),
@@ -367,7 +353,8 @@ class _StudentProfileViewState extends State<StudentProfileView> {
                 title,
                 style: const TextStyle(
                   fontSize: 16,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2D6A65),
                 ),
               ),
             ],
@@ -381,12 +368,14 @@ class _StudentProfileViewState extends State<StudentProfileView> {
 
   IconData _getSectionIcon(String title) {
     switch (title) {
+      case 'About':
+        return Icons.info_outline;
       case 'Interests':
-        return Icons.interests_outlined;
+        return Icons.favorite_outline;
       case 'Learning Goals':
         return Icons.flag_outlined;
       case 'Learning Preferences':
-        return Icons.school_outlined;
+        return Icons.tune_outlined;
       default:
         return Icons.info_outline;
     }

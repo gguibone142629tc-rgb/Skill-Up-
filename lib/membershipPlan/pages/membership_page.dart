@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:finaproj/common/auth_text_field.dart';
 import 'package:finaproj/membershipPlan/model/membership_plan.dart';
+import 'package:finaproj/membershipPlan/pages/checkout_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../widgets/plan_card.dart';
@@ -10,8 +11,8 @@ class MembershipPage extends StatefulWidget {
   final Map<String, dynamic>? mentorData; // ✅ Added this back to fix the error
 
   const MembershipPage({
-    super.key, 
-    this.isMentorView = false, 
+    super.key,
+    this.isMentorView = false,
     this.mentorData, // ✅ Added this back
   });
 
@@ -20,7 +21,7 @@ class MembershipPage extends StatefulWidget {
 }
 
 class _MembershipPageState extends State<MembershipPage> {
-  int selectedIndex = 1; 
+  int selectedIndex = 1;
 
   // Static Plans
   final List<MembershipPlan> plans = [
@@ -49,36 +50,44 @@ class _MembershipPageState extends State<MembershipPage> {
     // Pre-fill with the selected plan's static data
     // (Or you can use widget.mentorData here if you want to load saved overrides)
     final titleCtrl = TextEditingController(text: selectedPlan.title);
-    final priceCtrl = TextEditingController(text: selectedPlan.price.toString());
+    final priceCtrl =
+        TextEditingController(text: selectedPlan.price.toString());
     final callCtrl = TextEditingController(text: selectedPlan.callDetails);
-    final featuresCtrl = TextEditingController(text: selectedPlan.features.join(", "));
+    final featuresCtrl =
+        TextEditingController(text: selectedPlan.features.join(", "));
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) {
         return Padding(
           padding: EdgeInsets.only(
-            top: 20, left: 20, right: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20
-          ),
+              top: 20,
+              left: 20,
+              right: 20,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("Edit Plan Details", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text("Edit Plan Details",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 15),
-              
               AuthTextField(label: "Plan Title", controller: titleCtrl),
               const SizedBox(height: 10),
-              AuthTextField(label: "Price (₱)", controller: priceCtrl, keyboardType: TextInputType.number),
+              AuthTextField(
+                  label: "Price (₱)",
+                  controller: priceCtrl,
+                  keyboardType: TextInputType.number),
               const SizedBox(height: 10),
               AuthTextField(label: "Call Details", controller: callCtrl),
               const SizedBox(height: 10),
-              AuthTextField(label: "Features (comma separated)", controller: featuresCtrl),
-              
+              AuthTextField(
+                  label: "Features (comma separated)",
+                  controller: featuresCtrl),
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
@@ -88,26 +97,36 @@ class _MembershipPageState extends State<MembershipPage> {
                     // Save to Firestore
                     final uid = FirebaseAuth.instance.currentUser?.uid;
                     if (uid != null) {
-                      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+                      await FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(uid)
+                          .update({
                         'planTitle': titleCtrl.text,
                         'price': priceCtrl.text,
                         'planCallDetails': callCtrl.text,
-                        'planFeatures': featuresCtrl.text.split(',').map((e) => e.trim()).toList(),
+                        'planFeatures': featuresCtrl.text
+                            .split(',')
+                            .map((e) => e.trim())
+                            .toList(),
                       });
-                      
-                      if(mounted) {
-                        Navigator.pop(context); 
+
+                      if (mounted) {
+                        Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Plan updated successfully!")),
+                          const SnackBar(
+                              content: Text("Plan updated successfully!")),
                         );
                       }
                     }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF5D70F3),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25)),
                   ),
-                  child: const Text("Save Changes", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  child: const Text("Save Changes",
+                      style: TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold)),
                 ),
               )
             ],
@@ -149,7 +168,6 @@ class _MembershipPageState extends State<MembershipPage> {
               },
             ),
           ),
-          
           Padding(
             padding: const EdgeInsets.all(20.0),
             child: SizedBox(
@@ -160,19 +178,29 @@ class _MembershipPageState extends State<MembershipPage> {
                   if (widget.isMentorView) {
                     _showEditSheet(plans[selectedIndex]);
                   } else {
-                    // Student Checkout Logic
-                    print("Student checking out: ${plans[selectedIndex].title}");
+                    // Navigate to Checkout
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => CheckoutPage(
+                          selectedPlan: plans[selectedIndex],
+                          mentorData: widget.mentorData!,
+                        ),
+                      ),
+                    );
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF5D70F3), 
+                  backgroundColor: const Color(0xFF5D70F3),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(25),
                   ),
                   elevation: 0,
                 ),
                 child: Text(
-                  widget.isMentorView ? "Edit Plan Details" : "Proceed to Checkout",
+                  widget.isMentorView
+                      ? "Edit Plan Details"
+                      : "Proceed to Checkout",
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
