@@ -19,8 +19,9 @@ class FindMentorList extends StatelessWidget {
 
     // Price display helper that prefers membership plan starting price
     String displayPrice(Mentor mentor) {
-      if (mentor.planPrice != null && mentor.planPrice! > 0)
+      if (mentor.planPrice != null && mentor.planPrice! > 0) {
         return '₱${mentor.planPrice}/month';
+      }
       if (mentor.planTitle != null && mentor.planTitle!.isNotEmpty) {
         final p = MembershipPlan.getPriceForTitle(mentor.planTitle);
         return '₱$p/month';

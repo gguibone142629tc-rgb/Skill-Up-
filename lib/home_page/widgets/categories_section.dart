@@ -69,7 +69,7 @@ class CategoriesSection extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => FindMentorPage(initialCategory: label, initialCategories: mapped),
+            builder: (context) => FindMentorPage(initialCategory: label, initialCategories: mapped, hideStudents: true),
           ),
         );
       },

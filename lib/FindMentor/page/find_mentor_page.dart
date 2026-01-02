@@ -6,8 +6,10 @@ import 'package:finaproj/main.dart';
 class FindMentorPage extends StatefulWidget {
   final String? initialCategory;
   final List<String>? initialCategories;
+  final bool hideStudents;
+  final String? initialSearch;
 
-  const FindMentorPage({super.key, this.initialCategory, this.initialCategories});
+  const FindMentorPage({super.key, this.initialCategory, this.initialCategories, this.hideStudents = false, this.initialSearch});
 
   @override
   State<FindMentorPage> createState() => _FindMentorPageState();
@@ -36,6 +38,7 @@ class _FindMentorPageState extends State<FindMentorPage> {
     super.initState();
     _selectedCategory = widget.initialCategory;
     _selectedCategories = widget.initialCategories;
+    _searchQuery = widget.initialSearch ?? "";
   }
 
   // Show Filter Bottom Sheet
@@ -110,6 +113,7 @@ class _FindMentorPageState extends State<FindMentorPage> {
           
           SliverToBoxAdapter(
             child: FindMentorSearchWidget(
+              initialText: _searchQuery,
               onSearchChanged: (value) {
                 setState(() {
                   _searchQuery = value;
@@ -123,6 +127,7 @@ class _FindMentorPageState extends State<FindMentorPage> {
             child: FindMentorListView(
               searchQuery: _searchQuery,
               categories: _selectedCategories ?? (_selectedCategory != null ? [_selectedCategory!] : null), // pass multi or single category
+              hideStudents: widget.hideStudents || (_selectedCategory != null) || (_selectedCategories != null && _selectedCategories!.isNotEmpty),
             ),
           ),
           

@@ -4,11 +4,13 @@ import 'package:flutter_svg/svg.dart';
 class FindMentorSearchWidget extends StatelessWidget {
   final ValueChanged<String> onSearchChanged;
   final VoidCallback onFilterTap; // ✅ Added Callback
+  final String initialText;
 
   const FindMentorSearchWidget({
     super.key,
     required this.onSearchChanged,
     required this.onFilterTap, // ✅ Required
+    this.initialText = '',
   });
 
   @override
@@ -25,16 +27,22 @@ class FindMentorSearchWidget extends StatelessWidget {
                 color: const Color(0xFFF3F4F6),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: TextField(
-                onChanged: onSearchChanged,
-                decoration: const InputDecoration(
-                  prefixIcon: Icon(Icons.search, color: Colors.grey),
-                  hintText: 'Search mentors or students...',
-                  hintStyle: TextStyle(color: Colors.grey),
-                  border: InputBorder.none,
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                ),
+              child: Builder(
+                builder: (context) {
+                  final controller = TextEditingController(text: initialText);
+                  return TextField(
+                    controller: controller,
+                    onChanged: onSearchChanged,
+                    decoration: const InputDecoration(
+                      prefixIcon: Icon(Icons.search, color: Colors.grey),
+                      hintText: 'Search mentors or students...',
+                      hintStyle: TextStyle(color: Colors.grey),
+                      border: InputBorder.none,
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                    ),
+                  );
+                },
               ),
             ),
           ),

@@ -10,11 +10,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 class FindMentorListView extends StatelessWidget {
   final String searchQuery;
   final List<String>? categories; // supports multiple selected categories
+  final bool hideStudents;
 
   const FindMentorListView({
     super.key,
     required this.searchQuery,
     this.categories,
+    this.hideStudents = false,
   });
 
   @override
@@ -185,7 +187,7 @@ class FindMentorListView extends StatelessWidget {
           return matchesSearch && matchesCategory;
         }).toList();
 
-        final filteredStudents = students.where((doc) {
+        var filteredStudents = students.where((doc) {
           final data = doc.data() as Map<String, dynamic>;
           final query = searchQuery.toLowerCase();
 
@@ -206,6 +208,11 @@ class FindMentorListView extends StatelessWidget {
               lastName.contains(query) ||
               location.contains(query);
         }).toList();
+
+        // If requested to hide students (navigated from categories) or categories are active, clear students
+        if (hideStudents || (categories != null && categories!.isNotEmpty)) {
+          filteredStudents = [];
+        }
 
         // Combine results (mentors first, then students)
         final combinedCount = filteredMentors.length + filteredStudents.length;

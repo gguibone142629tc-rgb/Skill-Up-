@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart'; // Required for kIsWeb
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:finaproj/Profile_page/pages/pofile_page.dart';
+import 'package:finaproj/Profile_page/pages/student_profile_view.dart';
 
 class ChatRoomPage extends StatefulWidget {
   final String chatRoomId;
@@ -191,19 +193,58 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
         backgroundColor: bgGrey, elevation: 0,
         leading: IconButton(icon: const Icon(Icons.chevron_left, color: Colors.black, size: 28), onPressed: () => Navigator.pop(context)),
         titleSpacing: 0,
-        title: Row(
-          children: [
-            CircleAvatar(
-              radius: 20, backgroundColor: brandGreen.withOpacity(0.1),
-              backgroundImage: widget.otherUserProfileImage != null && widget.otherUserProfileImage!.isNotEmpty ? NetworkImage(widget.otherUserProfileImage!) : null,
-              child: widget.otherUserProfileImage == null || widget.otherUserProfileImage!.isEmpty ? Text(widget.otherUserName[0].toUpperCase(), style: const TextStyle(color: brandGreen)) : null,
-            ),
-            const SizedBox(width: 12),
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(widget.otherUserName, style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
-              const Text("Online", style: TextStyle(color: Colors.grey, fontSize: 12)),
-            ]),
-          ],
+        title: GestureDetector(
+          onTap: () async {
+            // Load and navigate to the other user's profile
+            try {
+              final userDoc = await FirebaseFirestore.instance
+                  .collection('users')
+                  .where('fullName', isEqualTo: widget.otherUserName)
+                  .limit(1)
+                  .get();
+              
+              if (userDoc.docs.isNotEmpty && mounted) {
+                final userData = userDoc.docs.first.data();
+                final uid = userDoc.docs.first.id;
+                final userRole = (userData['role'] ?? 'mentor').toLowerCase();
+                
+                // Navigate to appropriate profile based on user role
+                if (userRole == 'student') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => StudentProfileView(studentId: uid),
+                    ),
+                  );
+                } else {
+                  // Mentor profile
+                  userData['uid'] = uid;
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ProfileScreen(mentorData: userData),
+                    ),
+                  );
+                }
+              }
+            } catch (e) {
+              debugPrint("Error loading profile: $e");
+            }
+          },
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 20, backgroundColor: brandGreen.withOpacity(0.1),
+                backgroundImage: widget.otherUserProfileImage != null && widget.otherUserProfileImage!.isNotEmpty ? NetworkImage(widget.otherUserProfileImage!) : null,
+                child: widget.otherUserProfileImage == null || widget.otherUserProfileImage!.isEmpty ? Text(widget.otherUserName[0].toUpperCase(), style: const TextStyle(color: brandGreen)) : null,
+              ),
+              const SizedBox(width: 12),
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(widget.otherUserName, style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
+                const Text("Online", style: TextStyle(color: Colors.grey, fontSize: 12)),
+              ]),
+            ],
+          ),
         ),
       ),
       body: Column(
@@ -211,7 +252,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           if (_isUploading) const LinearProgressIndicator(color: brandGreen),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance.collection('chat_rooms').doc(widget.chatRoomId).collection('messages').orderBy('timestamp', descending: true).snapshots(),
+              stream: FirebaseFirestore.instance.collection('chat_rooms').doc(widget.chatRoomId).collection('messages').orderBy('timestamp', descending: false).snapshots(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) return const SizedBox();
                 var docs = snapshot.data!.docs;
@@ -219,7 +260,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                 return ListView.builder(
                   controller: _scrollController,
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-                  reverse: true,
+                  reverse: false,
                   itemCount: docs.length,
                   itemBuilder: (context, index) {
                     var doc = docs[index];
@@ -232,60 +273,62 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                     bool isLastMessage = index == 0;
                     String? nextMessageInList = docs.length > 1 ? (docs[1].data() as Map<String, dynamic>)['text'] : null;
 
-                    return Align(
-                      alignment: isMe ? Alignment.centerLeft : Alignment.centerRight,
-                      child: GestureDetector(
-                        onLongPress: () => _showOptions(doc.id, isMe, isLastMessage, nextMessageInList),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Column(
-                            crossAxisAlignment: isMe ? CrossAxisAlignment.start : CrossAxisAlignment.end,
-                            children: [
-                              Stack(
-                                clipBehavior: Clip.none,
-                                children: [
-                                  Container(
-                                    constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
-                                    padding: isImage ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                    decoration: BoxDecoration(
-                                      color: isMe ? brandGreen : bubbleGrey,
-                                      borderRadius: BorderRadius.only(
-                                        topLeft: const Radius.circular(20),
-                                        topRight: const Radius.circular(20),
-                                        bottomLeft: Radius.circular(isMe ? 4 : 20),
-                                        bottomRight: Radius.circular(isMe ? 20 : 4),
-                                      ),
-                                    ),
-                                    child: isImage 
-                                      ? ClipRRect(borderRadius: BorderRadius.circular(15), child: Image.network(data['imageUrl'], fit: BoxFit.cover))
-                                      : Text(data['text'] ?? "", style: TextStyle(color: isMe ? Colors.white : Colors.black87)),
-                                  ),
-                                  // --- REACTION BADGE ---
-                                  if (reaction.isNotEmpty)
-                                    Positioned(
-                                      bottom: -8,
-                                      right: isMe ? -8 : null,
-                                      left: isMe ? null : -8,
-                                      child: Container(
-                                        padding: const EdgeInsets.all(4),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          shape: BoxShape.circle,
-                                          boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))],
+                    return Row(
+                      mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+                      children: [
+                        GestureDetector(
+                          onLongPress: () => _showOptions(doc.id, isMe, isLastMessage, nextMessageInList),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: Column(
+                              crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                              children: [
+                                Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    Container(
+                                      constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+                                      padding: isImage ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                      decoration: BoxDecoration(
+                                        color: isMe ? brandGreen : bubbleGrey,
+                                        borderRadius: BorderRadius.only(
+                                          topLeft: const Radius.circular(20),
+                                          topRight: const Radius.circular(20),
+                                          bottomLeft: Radius.circular(isMe ? 4 : 20),
+                                          bottomRight: Radius.circular(isMe ? 20 : 4),
                                         ),
-                                        child: Text(reaction, style: const TextStyle(fontSize: 12)),
                                       ),
+                                      child: isImage 
+                                        ? ClipRRect(borderRadius: BorderRadius.circular(15), child: Image.network(data['imageUrl'], fit: BoxFit.cover))
+                                        : Text(data['text'] ?? "", style: TextStyle(color: isMe ? Colors.white : Colors.black87)),
                                     ),
-                                ],
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.only(top: 10, left: 4, right: 4),
-                                child: Text(time, style: const TextStyle(color: Colors.grey, fontSize: 10)),
-                              ),
-                            ],
+                                    // --- REACTION BADGE ---
+                                    if (reaction.isNotEmpty)
+                                      Positioned(
+                                        bottom: -8,
+                                        right: isMe ? -8 : null,
+                                        left: isMe ? null : -8,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(4),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            shape: BoxShape.circle,
+                                            boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))],
+                                          ),
+                                          child: Text(reaction, style: const TextStyle(fontSize: 12)),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 10, left: 4, right: 4),
+                                  child: Text(time, style: const TextStyle(color: Colors.grey, fontSize: 10)),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     );
                   },
                 );

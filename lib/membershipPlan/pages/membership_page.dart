@@ -23,38 +23,124 @@ class MembershipPage extends StatefulWidget {
 class _MembershipPageState extends State<MembershipPage> {
   int selectedIndex = 1;
 
-  // Static Plans
-  final List<MembershipPlan> plans = [
-    MembershipPlan(
-      title: "Growth Starter",
-      callDetails: "1x 45-min call per month",
-      features: ["Basic email support"],
-      price: 1200,
-    ),
-    MembershipPlan(
-      title: "Career Accelerator",
-      callDetails: "4x 30-min call per month",
-      features: ["Priority in-app messaging", "Document Review"],
-      price: 2500,
-    ),
-    MembershipPlan(
-      title: "Executive Elite",
-      callDetails: "Unlimited calls",
-      features: ["Direct chat access", "Resume/ Profile optimization"],
-      price: 4000,
-    ),
-  ];
+  // Plans - will be updated with mentor's custom pricing if viewing as student
+  late List<MembershipPlan> plans;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializePlans();
+  }
+
+  Future<void> _initializePlans() async {
+    // Get mentor's custom price if available
+    String? mentorCustomPrice = widget.mentorData?['price'];
+    String? mentorPlanTitle = widget.mentorData?['planTitle'];
+    String? mentorCallDetails = widget.mentorData?['planCallDetails'];
+    List<String>? mentorFeatures;
+
+    // If mentor is viewing their own plans, load from Firestore
+    if (widget.isMentorView) {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        try {
+          final doc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(uid)
+              .get();
+          final data = doc.data();
+          if (data != null) {
+            mentorCustomPrice = data['price'];
+            mentorPlanTitle = data['planTitle'];
+            mentorCallDetails = data['planCallDetails'];
+            if (data['planFeatures'] != null) {
+              mentorFeatures = List<String>.from(data['planFeatures']);
+            }
+          }
+        } catch (e) {
+          debugPrint("Error loading mentor data: $e");
+        }
+      }
+    }
+
+    // Base plans with default prices
+    plans = [
+      MembershipPlan(
+        title: "Growth Starter",
+        callDetails: "1x 45-min call per month",
+        features: ["Basic email support"],
+        price: 1200,
+      ),
+      MembershipPlan(
+        title: "Career Accelerator",
+        callDetails: "4x 30-min call per month",
+        features: ["Priority in-app messaging", "Document Review"],
+        price: 2500,
+      ),
+      MembershipPlan(
+        title: "Executive Elite",
+        callDetails: "Unlimited calls",
+        features: ["Direct chat access", "Resume/ Profile optimization"],
+        price: 4000,
+      ),
+    ];
+
+    // If mentor has custom pricing, update the corresponding plan
+    if (mentorCustomPrice != null) {
+      final customPrice = int.tryParse(mentorCustomPrice.toString()) ?? 0;
+      if (customPrice > 0) {
+        // Find which plan matches the mentor's selected plan title
+        for (int i = 0; i < plans.length; i++) {
+          if (mentorPlanTitle != null &&
+              plans[i].title.toLowerCase() == mentorPlanTitle.toLowerCase()) {
+            // Update the plan with custom data
+            plans[i] = MembershipPlan(
+              title: plans[i].title,
+              callDetails: mentorCallDetails ?? plans[i].callDetails,
+              features: mentorFeatures ?? plans[i].features,
+              price: customPrice,
+            );
+            break;
+          }
+        }
+      }
+    }
+
+    if (mounted) {
+      setState(() {});
+    }
+  }
 
   // --- EDIT LOGIC ---
-  void _showEditSheet(MembershipPlan selectedPlan) {
-    // Pre-fill with the selected plan's static data
-    // (Or you can use widget.mentorData here if you want to load saved overrides)
-    final titleCtrl = TextEditingController(text: selectedPlan.title);
-    final priceCtrl =
-        TextEditingController(text: selectedPlan.price.toString());
-    final callCtrl = TextEditingController(text: selectedPlan.callDetails);
-    final featuresCtrl =
-        TextEditingController(text: selectedPlan.features.join(", "));
+  void _showEditSheet(MembershipPlan selectedPlan) async {
+    // Load mentor's current saved plan data from Firestore
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    Map<String, dynamic>? savedData;
+    
+    if (uid != null) {
+      try {
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .get();
+        savedData = doc.data();
+      } catch (e) {
+        debugPrint("Error loading mentor data: $e");
+      }
+    }
+
+    // Pre-fill with mentor's saved data if available, otherwise use default plan data
+    final titleCtrl = TextEditingController(
+        text: savedData?['planTitle'] ?? selectedPlan.title);
+    final priceCtrl = TextEditingController(
+        text: savedData?['price']?.toString() ?? selectedPlan.price.toString());
+    final callCtrl = TextEditingController(
+        text: savedData?['planCallDetails'] ?? selectedPlan.callDetails);
+    final savedFeatures = savedData?['planFeatures'];
+    final featuresCtrl = TextEditingController(
+        text: savedFeatures != null
+            ? (savedFeatures as List).join(", ")
+            : selectedPlan.features.join(", "));
 
     showModalBottomSheet(
       context: context,
@@ -112,6 +198,10 @@ class _MembershipPageState extends State<MembershipPage> {
 
                       if (mounted) {
                         Navigator.pop(context);
+                        // Reload the plans to reflect the changes
+                        setState(() {
+                          _initializePlans();
+                        });
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                               content: Text("Plan updated successfully!")),

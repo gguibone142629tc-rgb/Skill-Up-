@@ -112,17 +112,16 @@ class CustomAppBar extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: TextField(
-                    onChanged: (value) {
-                      // Navigate to search results if text is entered
-                      if (value.isNotEmpty) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => FindMentorPage(),
-                          ),
-                        );
-                      }
+                    onSubmitted: (value) {
+                      // Navigate to Find Mentor with the submitted query
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => FindMentorPage(initialSearch: value),
+                        ),
+                      );
                     },
+                    textInputAction: TextInputAction.search,
                     decoration: const InputDecoration(
                       hintText: 'Search mentors or students',
                       hintStyle: TextStyle(color: Colors.grey),

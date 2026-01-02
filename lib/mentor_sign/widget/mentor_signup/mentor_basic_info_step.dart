@@ -144,7 +144,7 @@ class _MentorBasicInfoStepState extends State<MentorBasicInfoStep> {
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
-              value: _selectedGender.isEmpty ? null : _selectedGender,
+              initialValue: _selectedGender.isEmpty ? null : _selectedGender,
               decoration: InputDecoration(
                 hintText: 'Select Gender',
                 border: OutlineInputBorder(

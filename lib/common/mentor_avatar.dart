@@ -38,7 +38,27 @@ class MentorAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Always show initials (profile pics disabled for now)
+    // If image URL is provided and not empty, try to display it
+    if (image.isNotEmpty) {
+      return ClipOval(
+        child: Image.network(
+          image,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            // If image fails to load, fallback to initials
+            return _placeholder(context);
+          },
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            // Show placeholder while loading
+            return _placeholder(context);
+          },
+        ),
+      );
+    }
+    // Fallback to initials
     return _placeholder(context);
   }
 }
