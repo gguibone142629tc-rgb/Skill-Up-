@@ -61,6 +61,13 @@ class DatabaseService {
         'createdAt': FieldValue.serverTimestamp(),
         'rating': 5.0,
         'price': 'Free',
+        // Per-plan slot values - mentors can set this when configuring their plan
+        'slots_Growth_Starter_max': 10,
+        'slots_Growth_Starter_available': 10,
+        'slots_Career_Accelerator_max': 10,
+        'slots_Career_Accelerator_available': 10,
+        'slots_Executive_Elite_max': 10,
+        'slots_Executive_Elite_available': 10,
       });
     } catch (e) {
       debugPrint("Error saving mentor profile: $e");

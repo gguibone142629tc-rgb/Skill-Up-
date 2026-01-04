@@ -34,59 +34,128 @@ class MySubscribersPage extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: StreamBuilder<QuerySnapshot>(
+      body: StreamBuilder<DocumentSnapshot>(
         stream: FirebaseFirestore.instance
-            .collection('subscriptions')
-            .where('mentorId', isEqualTo: currentUser.uid)
-            .where('status', isEqualTo: 'active')
+            .collection('users')
+            .doc(currentUser.uid)
             .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Center(
-              child: Text('Error: ${snapshot.error}'),
-            );
-          }
+        builder: (context, userSnapshot) {
+          // Get mentor's slot data
+          final mentorData = userSnapshot.data?.data() as Map<String, dynamic>?;
+          final maxSlots = mentorData?['planMaxSlots'] ?? 10;
+          final availableSlots = mentorData?['planAvailableSlots'] ?? maxSlots;
+          final usedSlots = maxSlots - availableSlots;
 
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.people_outline, size: 80, color: Colors.grey[300]),
-                  const SizedBox(height: 20),
-                  Text(
-                    "No active subscribers yet",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey[700],
+          return Column(
+            children: [
+              // Slot counter card at the top
+              Container(
+                margin: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF2D6A65), Color(0xFF3D8A7D)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "Students who subscribe to your plans will appear here",
-                    style: TextStyle(fontSize: 14, color: Colors.grey[500]),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildSlotInfo(
+                      icon: Icons.people,
+                      label: 'Total Slots',
+                      value: '$maxSlots',
+                      color: Colors.white,
+                    ),
+                    Container(
+                      width: 1,
+                      height: 40,
+                      color: Colors.white.withOpacity(0.3),
+                    ),
+                    _buildSlotInfo(
+                      icon: Icons.check_circle,
+                      label: 'Used',
+                      value: '$usedSlots',
+                      color: Colors.white,
+                    ),
+                    Container(
+                      width: 1,
+                      height: 40,
+                      color: Colors.white.withOpacity(0.3),
+                    ),
+                    _buildSlotInfo(
+                      icon: Icons.event_available,
+                      label: 'Available',
+                      value: '$availableSlots',
+                      color: Colors.white,
+                    ),
+                  ],
+                ),
               ),
-            );
-          }
+              // Subscribers list
+              Expanded(
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('subscriptions')
+                      .where('mentorId', isEqualTo: currentUser.uid)
+                      .where('status', isEqualTo: 'active')
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text('Error: ${snapshot.error}'),
+                      );
+                    }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(20),
-            itemCount: snapshot.data!.docs.length,
-            itemBuilder: (context, index) {
-              final doc = snapshot.data!.docs[index];
-              final data = doc.data() as Map<String, dynamic>;
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
 
-              final menteeName = data['menteeName'] ?? 'Student';
-              final planTitle = data['planTitle'] ?? 'Plan';
-              final planPrice = data['planPrice'] ?? 0;
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.people_outline, size: 80, color: Colors.grey[300]),
+                            const SizedBox(height: 20),
+                            Text(
+                              "No active subscribers yet",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              "Students who subscribe to your plans will appear here",
+                              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    return ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      itemCount: snapshot.data!.docs.length,
+                      itemBuilder: (context, index) {
+                        final doc = snapshot.data!.docs[index];
+                        final data = doc.data() as Map<String, dynamic>;
+
+                        final menteeName = data['menteeName'] ?? 'Student';
+                        final planTitle = data['planTitle'] ?? 'Plan';
+                        final planPrice = data['planPrice'] ?? 0;
 
               DateTime? startDate;
               if (data['startDate'] != null) {
@@ -244,8 +313,43 @@ class MySubscribersPage extends StatelessWidget {
               );
             },
           );
+                  },
+                ),
+              ),
+            ],
+          );
         },
       ),
+    );
+  }
+
+  Widget _buildSlotInfo({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Column(
+      children: [
+        Icon(icon, color: color, size: 28),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: TextStyle(
+            color: color,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            color: color.withOpacity(0.9),
+            fontSize: 12,
+          ),
+        ),
+      ],
     );
   }
 }

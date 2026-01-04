@@ -66,6 +66,46 @@ class PlanCard extends StatelessWidget {
                   ),
                 )),
             const SizedBox(height: 12),
+            // Display available slots if provided
+            if (plan.availableSlots != null && plan.maxSlots != null) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: plan.availableSlots! > 0 
+                      ? const Color(0xFFE8F5F3) 
+                      : Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      plan.availableSlots! > 0 
+                          ? Icons.people_outline 
+                          : Icons.block,
+                      size: 16,
+                      color: plan.availableSlots! > 0 
+                          ? const Color(0xFF2D6A65) 
+                          : Colors.red,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      plan.availableSlots! > 0
+                          ? "${plan.availableSlots}/${plan.maxSlots} slots available"
+                          : "No slots available",
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: plan.availableSlots! > 0 
+                            ? const Color(0xFF2D6A65) 
+                            : Colors.red,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
             Align(
               alignment: Alignment.bottomRight,
               child: Text(

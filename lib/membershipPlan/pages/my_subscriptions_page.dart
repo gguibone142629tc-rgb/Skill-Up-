@@ -31,10 +31,32 @@ class MySubscriptionsPage extends StatelessWidget {
 
     if (confirm == true) {
       try {
+        // Get subscription data to retrieve mentor ID and plan title
+        final subscriptionDoc = await FirebaseFirestore.instance
+            .collection('subscriptions')
+            .doc(subscriptionId)
+            .get();
+        
+        final subscriptionData = subscriptionDoc.data();
+        final mentorId = subscriptionData?['mentorId'];
+        final planTitle = subscriptionData?['planTitle'];
+        
+        // Update subscription status
         await FirebaseFirestore.instance
             .collection('subscriptions')
             .doc(subscriptionId)
             .update({'status': 'cancelled'});
+
+        // Increment mentor's available slots back for the specific plan
+        if (mentorId != null && planTitle != null) {
+          final slotKey = 'slots_${planTitle}_available';
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(mentorId)
+              .update({
+            slotKey: FieldValue.increment(1),
+          });
+        }
 
         // Also update user's current subscription
         final currentUser = FirebaseAuth.instance.currentUser;

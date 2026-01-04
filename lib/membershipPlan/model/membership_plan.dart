@@ -3,12 +3,16 @@ class MembershipPlan {
   final String callDetails;
   final List<String> features;
   final int price;
+  final int? maxSlots; // Total slots available for this plan
+  final int? availableSlots; // Remaining slots available
 
   const MembershipPlan({
     required this.title,
     required this.callDetails,
     required this.features,
     required this.price,
+    this.maxSlots,
+    this.availableSlots,
   });
 
   // Default static plans used across the app

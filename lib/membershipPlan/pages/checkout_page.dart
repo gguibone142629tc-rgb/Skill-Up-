@@ -35,6 +35,23 @@ class _CheckoutPageState extends State<CheckoutPage> {
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser == null) throw 'User not logged in';
 
+      // Check if mentor has available slots
+      final mentorDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.mentorData['uid'])
+          .get();
+      
+      if (!mentorDoc.exists) throw 'Mentor not found';
+      
+      final mentorData = mentorDoc.data() as Map<String, dynamic>;
+      final selectedPlanTitle = widget.selectedPlan.title;
+      final selectedSlotKey = 'slots_${selectedPlanTitle}_available';
+      final availableSlots = mentorData[selectedSlotKey] ?? 0;
+      
+      if (availableSlots <= 0) {
+        throw 'No available slots for this plan. Please try again later.';
+      }
+
       // Get current user's data
       final userDoc = await FirebaseFirestore.instance
           .collection('users')
@@ -62,6 +79,15 @@ class _CheckoutPageState extends State<CheckoutPage> {
         'startDate': now,
         'nextBillingDate': now.add(const Duration(days: 30)),
         'createdAt': now,
+      });
+
+      // Decrement available slots for the specific plan
+      final decrementSlotKey = 'slots_${widget.selectedPlan.title}_available';
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.mentorData['uid'])
+          .update({
+        decrementSlotKey: FieldValue.increment(-1),
       });
 
       // Update user's current subscription

@@ -68,7 +68,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
 
     items.addAll([
       ProfileModel(
-          iconPath: 'assets/icons/favorite.svg', title: 'Saved Members'),
+          iconPath: 'assets/icons/favorite.svg', title: 'Saved Mentors'),
       ProfileModel(iconPath: 'assets/icons/logout.svg', title: 'Log Out'),
     ]);
 

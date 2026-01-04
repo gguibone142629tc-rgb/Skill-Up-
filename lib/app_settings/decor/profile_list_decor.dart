@@ -7,7 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:finaproj/login/pages/login_page.dart';
 import 'package:finaproj/app_settings/page/edit_profile_page.dart'; // Personal Details
 import 'package:finaproj/SessionHistory/pages/session_history_screen.dart'; // My Mentorship
-import 'package:finaproj/SavedMentors/saved_mentors_page.dart'; // Saved Members
+import 'package:finaproj/SavedMentors/saved_mentors_page.dart'; // Saved Mentors
 import 'package:finaproj/app_settings/page/my_subscribers_page.dart'; // My Subscribers
 
 class ProfileListDecor extends StatelessWidget {
@@ -44,7 +44,7 @@ class ProfileListDecor extends StatelessWidget {
             case 'My Subscribers':
               nextPage = const MySubscribersPage();
               break;
-            case 'Saved Members':
+            case 'Saved Mentors':
               nextPage = const SavedMentorsPage();
               break;
             default:
