@@ -46,8 +46,39 @@ class _CheckoutPageState extends State<CheckoutPage> {
       final mentorData = mentorDoc.data() as Map<String, dynamic>;
       final selectedPlanTitle = widget.selectedPlan.title;
       final selectedSlotKey = 'slots_${selectedPlanTitle}_available';
-      final availableSlots = mentorData[selectedSlotKey] ?? 0;
-      
+      final selectedMaxKey = 'slots_${selectedPlanTitle}_max';
+
+      // Fallback: compute availability if fields are missing or stale
+      int maxSlots = mentorData[selectedMaxKey] is int
+          ? mentorData[selectedMaxKey] as int
+          : 10;
+
+      // Count active subscriptions for this mentor & plan
+      final activeSubs = await FirebaseFirestore.instance
+          .collection('subscriptions')
+          .where('mentorId', isEqualTo: widget.mentorData['uid'])
+          .where('planTitle', isEqualTo: selectedPlanTitle)
+          .where('status', isEqualTo: 'active')
+          .get();
+      final activeCount = activeSubs.docs.length;
+
+      int availableSlots = mentorData[selectedSlotKey] is int
+          ? mentorData[selectedSlotKey] as int
+          : (maxSlots - activeCount);
+
+      // Keep Firestore in sync if derived value differs
+      final correctedAvailable = maxSlots - activeCount;
+      if (availableSlots != correctedAvailable) {
+        availableSlots = correctedAvailable;
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(widget.mentorData['uid'])
+            .update({
+          selectedSlotKey: correctedAvailable,
+          selectedMaxKey: maxSlots,
+        });
+      }
+
       if (availableSlots <= 0) {
         throw 'No available slots for this plan. Please try again later.';
       }
