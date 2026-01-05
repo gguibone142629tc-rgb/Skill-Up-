@@ -181,6 +181,23 @@ class _CheckoutPageState extends State<CheckoutPage> {
         sessionDate: DateTime.now(),
       );
 
+      // Send automatic welcome message from mentor to student
+      await _sendWelcomeMessage(
+        mentorId: widget.mentorData['uid'],
+        mentorName:
+            '${widget.mentorData['firstName'] ?? ''} ${widget.mentorData['lastName'] ?? ''}',
+        studentId: currentUser.uid,
+        planTitle: widget.selectedPlan.title,
+      );
+
+      // Send notification to student about welcome message
+      await NotificationService().sendWelcomeMessageNotification(
+        studentId: currentUser.uid,
+        mentorName:
+            '${widget.mentorData['firstName'] ?? ''} ${widget.mentorData['lastName'] ?? ''}',
+        planName: widget.selectedPlan.title,
+      );
+
       if (mounted) {
         // Show success dialog
         showDialog(
@@ -470,5 +487,61 @@ class _CheckoutPageState extends State<CheckoutPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _sendWelcomeMessage({
+    required String mentorId,
+    required String mentorName,
+    required String studentId,
+    required String planTitle,
+  }) async {
+    try {
+      // Find or create chat room between mentor and student
+      final chatRoomsRef = FirebaseFirestore.instance.collection('chat_rooms');
+      
+      // Create a unique chat room ID
+      final chatRoomId = '$mentorId\_$studentId';
+      
+      // Check if chat room exists, create if not
+      final chatRoomDoc = await chatRoomsRef.doc(chatRoomId).get();
+      
+      if (!chatRoomDoc.exists) {
+        // Create new chat room
+        await chatRoomsRef.doc(chatRoomId).set({
+          'users': [mentorId, studentId],
+          'lastMessage': 'Chat started',
+          'lastTimestamp': FieldValue.serverTimestamp(),
+          'lastSenderId': mentorId,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+      
+      // Send welcome message from mentor
+      final welcomeMessage = 'Hi! 👋 Welcome to my $planTitle plan! I\'m excited to work with you. Feel free to reach out anytime you have questions or need guidance. Let\'s make this a great learning experience!';
+      
+      await chatRoomsRef
+          .doc(chatRoomId)
+          .collection('messages')
+          .add({
+        'senderId': mentorId,
+        'text': welcomeMessage,
+        'imageUrl': '',
+        'timestamp': FieldValue.serverTimestamp(),
+        'type': 'text',
+        'reaction': '',
+      });
+      
+      // Update chat room with latest message
+      await chatRoomsRef.doc(chatRoomId).update({
+        'lastMessage': welcomeMessage,
+        'lastTimestamp': FieldValue.serverTimestamp(),
+        'lastSenderId': mentorId,
+      });
+      
+      debugPrint('Welcome message sent from $mentorName to student');
+    } catch (e) {
+      debugPrint('Error sending welcome message: $e');
+      // Don't throw - subscription should succeed even if message fails
+    }
   }
 }

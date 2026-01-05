@@ -396,4 +396,40 @@ class NotificationService {
       print('Error sending subscription notification: $e');
     }
   }
+
+  // Send custom welcome message notification to student
+  Future<void> sendWelcomeMessageNotification({
+    required String studentId,
+    required String mentorName,
+    required String planName,
+  }) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(studentId)
+          .collection('notifications')
+          .add({
+        'userId': studentId,
+        'title': 'Welcome Message from $mentorName',
+        'body': 'Your mentor sent you a welcome message. Check your messages!',
+        'type': 'message',
+        'relatedId': planName,
+        'isRead': false,
+        'createdAt': DateTime.now(),
+        'data': {
+          'mentorName': mentorName,
+          'planName': planName,
+        },
+      });
+
+      // Show local notification
+      await _showLocalNotification(
+        title: 'Welcome Message from $mentorName',
+        body: 'Your mentor sent you a welcome message. Check your messages!',
+        payload: {'type': 'message', 'studentId': studentId},
+      );
+    } catch (e) {
+      print('Error sending welcome message notification: $e');
+    }
+  }
 }
