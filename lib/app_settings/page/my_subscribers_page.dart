@@ -182,7 +182,7 @@ class _MySubscribersPageState extends State<MySubscribersPage> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  planTitle,
+                                  'Expires',
                                   style: TextStyle(
                                     fontSize: 14,
                                     color: Colors.grey[600],

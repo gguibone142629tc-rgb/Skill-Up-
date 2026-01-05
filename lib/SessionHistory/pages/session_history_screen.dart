@@ -286,10 +286,10 @@ class MySubscriptionPage extends StatelessWidget {
                               ),
                               if (isActive)
                                 _buildDateCard(
-                                  'Next Billing',
-                                  data['nextBillingDate'] != null
+                                  'Expires',
+                                  data['expiresAt'] != null
                                       ? DateFormat('MMM dd, yyyy').format(
-                                          (data['nextBillingDate'] as Timestamp)
+                                          (data['expiresAt'] as Timestamp)
                                               .toDate())
                                       : 'N/A',
                                   Icons.event,

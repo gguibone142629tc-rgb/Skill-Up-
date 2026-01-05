@@ -397,7 +397,7 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
-                                  'Next Billing',
+                                  'Expires',
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: Colors.grey[600],
@@ -405,9 +405,9 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  data['nextBillingDate'] != null
+                                  data['expiresAt'] != null
                                       ? DateFormat('MMM dd, yyyy').format(
-                                          (data['nextBillingDate'] as Timestamp)
+                                          (data['expiresAt'] as Timestamp)
                                               .toDate())
                                       : 'N/A',
                                   style: const TextStyle(
