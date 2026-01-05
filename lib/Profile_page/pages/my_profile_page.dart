@@ -355,7 +355,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
                                             .isEmpty
                                     ? ClipOval(
                                         child: Image.asset(
-                                          'assets/images/default_avatar.png',
+                                          'images/default_avatar.png',
                                           height: 100,
                                           width: 100,
                                           fit: BoxFit.cover,
@@ -676,6 +676,8 @@ class _MyProfilePageState extends State<MyProfilePage> {
                                     }).toList(),
                             ),
                     ),
+
+                    const SizedBox(height: 20),
 
                     const SizedBox(height: 40),
                   ],

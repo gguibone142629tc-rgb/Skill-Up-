@@ -1,12 +1,16 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart'; // Required for kIsWeb
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:finaproj/Profile_page/pages/pofile_page.dart';
 import 'package:finaproj/Profile_page/pages/student_profile_view.dart';
+import 'package:finaproj/services/notification_service.dart';
+import 'package:finaproj/services/unread_messages_service.dart';
+
 
 class ChatRoomPage extends StatefulWidget {
   final String chatRoomId;
@@ -31,6 +35,20 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   final ScrollController _scrollController = ScrollController();
   final ImagePicker _picker = ImagePicker();
   bool _isUploading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Mark chat room as read when opened
+    UnreadMessagesService().markChatRoomAsRead(widget.chatRoomId);
+  }
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   // --- NEW: REACTION FUNCTION ---
   void _reactToMessage(String messageId, String emoji) async {
@@ -127,6 +145,29 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     final String displayMessage = text ?? (imageUrl != null ? 'Sent an image' : '');
 
     try {
+      // Get sender's name
+      final senderDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.currentUserId)
+          .get();
+      final senderData = senderDoc.data() as Map<String, dynamic>?;
+      final senderName = senderData != null
+          ? '${senderData['firstName'] ?? ''} ${senderData['lastName'] ?? ''}'.trim()
+          : 'User';
+
+      // Get recipient's ID from chat room
+      final chatRoomDoc = await FirebaseFirestore.instance
+          .collection('chat_rooms')
+          .doc(widget.chatRoomId)
+          .get();
+      final chatRoomData = chatRoomDoc.data() as Map<String, dynamic>?;
+      final List users = chatRoomData?['users'] ?? [];
+      final String recipientId = users.firstWhere(
+        (id) => id != widget.currentUserId,
+        orElse: () => '',
+      );
+
+      // Send message
       await FirebaseFirestore.instance
           .collection('chat_rooms')
           .doc(widget.chatRoomId)
@@ -148,6 +189,32 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
         'lastTimestamp': FieldValue.serverTimestamp(),
         'lastSenderId': widget.currentUserId,
       }, SetOptions(merge: true));
+
+      // Send notification to the recipient
+      if (recipientId.isNotEmpty) {
+        final messageContent = imageUrl != null ? '📸 Sent an image' : text;
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(recipientId)
+            .collection('notifications')
+            .add({
+          'userId': recipientId,
+          'title': 'New Message from $senderName',
+          'body': messageContent ?? 'Sent a message',
+          'type': 'message',
+          'relatedId': widget.chatRoomId,
+          'isRead': false,
+          'createdAt': DateTime.now(),
+          'data': {
+            'senderId': widget.currentUserId,
+            'senderName': senderName,
+            'chatRoomId': widget.chatRoomId,
+            'messagePreview': messageContent ?? 'Message',
+          },
+        }).catchError((e) {
+          debugPrint("Error saving notification: $e");
+        });
+      }
 
       if (text != null) _messageController.clear();
       if (_scrollController.hasClients) {

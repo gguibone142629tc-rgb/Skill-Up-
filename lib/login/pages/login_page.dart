@@ -11,9 +11,8 @@ import 'package:finaproj/student_sign/pages/signup_page.dart';
 import 'package:finaproj/services/auth_service.dart';
 import 'package:finaproj/home_page/pages/home_page.dart';
 
-import '../widgets/login/login_logo.dart';
-import '../widgets/login/role_switcher.dart';
-import '../widgets/login/remember_forgot_row.dart';
+import '../widgets/login_logo/login_logo.dart';
+import '../widgets/role_switcher/role_switcher.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -24,7 +23,6 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   int _selectedRole = 0;
-  bool _rememberMe = false;
   bool _isLoading = false;
 
   final _emailController = TextEditingController();
@@ -153,12 +151,6 @@ class _LoginPageState extends State<LoginPage> {
                     hintText: '●●●●●●●●',
                     obscure: true,
                     showObscureToggle: true,
-                  ),
-                  const SizedBox(height: 8),
-                  RememberForgotRow(
-                    rememberMe: _rememberMe,
-                    onRememberChanged: (v) => setState(() => _rememberMe = v),
-                    onForgot: () {},
                   ),
                   const SizedBox(height: 20),
                   _isLoading

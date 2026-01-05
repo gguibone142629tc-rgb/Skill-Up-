@@ -1,11 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class SubscriptionService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   /// Check if a subscription has expired and update status
-  Future<String> checkAndUpdateSubscriptionStatus(String subscriptionId) async {
+  Future<String> checkAndUpdateSubscriptionStatus(String subscriptionId, {bool sendNotification = false}) async {
     try {
       final doc = await _firestore.collection('subscriptions').doc(subscriptionId).get();
       
@@ -39,11 +40,37 @@ class SubscriptionService {
           
           // Return slot to mentor
           final mentorId = data['mentorId'];
+          final mentorName = data['mentorName'] ?? 'Mentor';
           final planTitle = data['planTitle'];
+          final menteeId = data['menteeId'];
+          
           if (mentorId != null && planTitle != null) {
             final slotKey = 'slots_${planTitle}_available';
             await _firestore.collection('users').doc(mentorId).update({
               slotKey: FieldValue.increment(1),
+            });
+          }
+          
+          // Send notification to student about expiration
+          if (sendNotification && menteeId != null) {
+            await _firestore
+                .collection('users')
+                .doc(menteeId)
+                .collection('notifications')
+                .add({
+              'userId': menteeId,
+              'title': 'Subscription Expired',
+              'body': 'Your subscription to $mentorName ($planTitle) has expired',
+              'type': 'subscription',
+              'relatedId': mentorId,
+              'isRead': false,
+              'createdAt': DateTime.now(),
+              'data': {
+                'mentorId': mentorId,
+                'mentorName': mentorName,
+                'planTitle': planTitle,
+                'subscriptionId': subscriptionId,
+              },
             });
           }
           
@@ -59,7 +86,7 @@ class SubscriptionService {
   }
 
   /// Check all subscriptions for a user and update statuses
-  Future<void> checkUserSubscriptions(String userId) async {
+  Future<void> checkUserSubscriptions(String userId, {bool sendNotifications = false}) async {
     try {
       final subscriptions = await _firestore
           .collection('subscriptions')
@@ -68,10 +95,30 @@ class SubscriptionService {
           .get();
 
       for (var doc in subscriptions.docs) {
-        await checkAndUpdateSubscriptionStatus(doc.id);
+        await checkAndUpdateSubscriptionStatus(doc.id, sendNotification: sendNotifications);
       }
     } catch (e) {
       debugPrint('Error checking user subscriptions: $e');
+    }
+  }
+
+  /// Check all active subscriptions globally and send expiration notifications
+  Future<void> checkAllSubscriptionsForExpiration() async {
+    try {
+      final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+      if (currentUserId == null) return;
+
+      final subscriptions = await _firestore
+          .collection('subscriptions')
+          .where('menteeId', isEqualTo: currentUserId)
+          .where('status', isEqualTo: 'active')
+          .get();
+
+      for (var doc in subscriptions.docs) {
+        await checkAndUpdateSubscriptionStatus(doc.id, sendNotification: true);
+      }
+    } catch (e) {
+      debugPrint('Error checking all subscriptions: $e');
     }
   }
 

@@ -36,7 +36,7 @@ class MessagesListDecor extends StatelessWidget {
         child: messagesModel.profilePath.isEmpty
             ? ClipOval(
                 child: Image.asset(
-                  'assets/images/default_avatar.png',
+                  'images/default_avatar.png',
                   height: 52,
                   width: 52,
                   fit: BoxFit.cover,

@@ -92,7 +92,7 @@ class _FindMentorPageState extends State<FindMentorPage> {
     final String? displayCategory = _selectedCategory == 'Marketing' ? 'Digital Marketing' : _selectedCategory;
     String title = displayCategory != null 
         ? '$displayCategory Mentors' 
-        : 'Find a Mentor';
+        : 'Find a Mentor & Students';
 
     return Scaffold(
       backgroundColor: Colors.white,

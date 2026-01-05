@@ -12,6 +12,9 @@ import 'services/fresh_start.dart';
 import 'package:finaproj/app_settings/page/profile_page.dart'; // 1. IMPORT THIS
 import 'package:finaproj/Service_Category/category_page/category.dart'; // Category page
 import 'package:finaproj/services/cleanup_duplicates.dart'; // Cleanup script
+import 'package:finaproj/services/notification_service.dart';
+import 'package:finaproj/services/unread_messages_service.dart';
+import 'package:finaproj/services/subscription_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,6 +24,16 @@ void main() async {
   
   // UNCOMMENT TO DELETE ALL SUBSCRIPTIONS AND RATINGS (fresh start)
   // await freshStart();
+  
+  // Initialize notifications
+  await NotificationService().initializeNotifications();
+  
+  // Check for expired subscriptions on app start
+  FirebaseAuth.instance.authStateChanges().listen((user) {
+    if (user != null) {
+      SubscriptionService().checkAllSubscriptionsForExpiration();
+    }
+  });
   
   runApp(const MyApp());
 }
@@ -59,13 +72,18 @@ class MyApp extends StatelessWidget {
 }
 
 // --- CUSTOM BOTTOM NAVIGATION BAR ---
-class CustomBottomNavBar extends StatelessWidget {
+class CustomBottomNavBar extends StatefulWidget {
   final int initialIndex;
   const CustomBottomNavBar({super.key, required this.initialIndex});
 
+  @override
+  State<CustomBottomNavBar> createState() => _CustomBottomNavBarState();
+}
+
+class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
   void _onItemTapped(BuildContext context, int index) {
     // Avoid reloading the same page
-    if (index == initialIndex) return;
+    if (index == widget.initialIndex) return;
 
     Widget nextPage;
     switch (index) {
@@ -104,34 +122,78 @@ class CustomBottomNavBar extends StatelessWidget {
 
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed,
-      currentIndex: initialIndex,
+      currentIndex: widget.initialIndex,
       onTap: (index) => _onItemTapped(context, index),
       selectedItemColor: activeColor,
       unselectedItemColor: inactiveColor,
       showSelectedLabels: true,
       showUnselectedLabels: true,
-      items: const [
-        BottomNavigationBarItem(
+      items: [
+        const BottomNavigationBarItem(
           icon: Icon(Icons.home_outlined),
           activeIcon: Icon(Icons.home),
           label: 'Home',
         ),
-        BottomNavigationBarItem(
+        const BottomNavigationBarItem(
           icon: Icon(Icons.search),
           activeIcon: Icon(Icons.search, weight: 600),
           label: 'Find Mentor',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.chat_bubble_outline),
-          activeIcon: Icon(Icons.chat_bubble),
+          icon: _buildMessagesIconWithBadge(widget.initialIndex == 2),
+          activeIcon: _buildMessagesIconWithBadge(true),
           label: 'Messages',
         ),
-        BottomNavigationBarItem(
+        const BottomNavigationBarItem(
           icon: Icon(Icons.person_outline),
           activeIcon: Icon(Icons.person),
           label: 'Profile', // 3. ENSURE LABEL IS CORRECT
         ),
       ],
+    );
+  }
+
+  Widget _buildMessagesIconWithBadge(bool isActive) {
+    return StreamBuilder<int>(
+      stream: UnreadMessagesService().getUnreadMessagesCount(),
+      builder: (context, snapshot) {
+        final unreadCount = snapshot.data ?? 0;
+        
+        return Stack(
+          children: [
+            Icon(
+              isActive ? Icons.chat_bubble : Icons.chat_bubble_outline,
+            ),
+            if (unreadCount > 0)
+              Positioned(
+                right: 0,
+                top: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                  constraints: const BoxConstraints(
+                    minWidth: 16,
+                    minHeight: 16,
+                  ),
+                  child: Center(
+                    child: Text(
+                      unreadCount > 99 ? '99+' : unreadCount.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }

@@ -41,7 +41,7 @@ class SessionCard extends StatelessWidget {
                         backgroundColor: Colors.grey[200],
                         child: ClipOval(
                           child: Image.asset(
-                            'assets/images/default_avatar.png',
+                            'images/default_avatar.png',
                             height: 48,
                             width: 48,
                             fit: BoxFit.cover,

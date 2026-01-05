@@ -9,6 +9,7 @@ import 'package:finaproj/app_settings/page/edit_profile_page.dart'; // Personal 
 import 'package:finaproj/SessionHistory/pages/session_history_screen.dart'; // My Mentorship
 import 'package:finaproj/SavedMentors/saved_mentors_page.dart'; // Saved Mentors
 import 'package:finaproj/app_settings/page/my_subscribers_page.dart'; // My Subscribers
+import 'package:finaproj/app_settings/page/change_password_page.dart'; // Change Password
 
 class ProfileListDecor extends StatelessWidget {
   const ProfileListDecor({super.key, required this.profileModel});
@@ -46,6 +47,9 @@ class ProfileListDecor extends StatelessWidget {
               break;
             case 'Saved Mentors':
               nextPage = const SavedMentorsPage();
+              break;
+            case 'Change Password':
+              nextPage = const ChangePasswordPage();
               break;
             default:
               // Handle unknown cases or show a "Coming Soon" snackbar

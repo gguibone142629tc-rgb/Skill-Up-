@@ -6,6 +6,9 @@ import 'package:finaproj/Profile_page/pages/mentee_profile_page.dart';
 import 'package:finaproj/membershipPlan/pages/membership_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:finaproj/services/rating_service.dart';
+import 'package:finaproj/services/rating_model.dart';
+import 'package:finaproj/Profile_page/widgets/ratings_display_section.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -26,25 +29,27 @@ class _ProfilePageState extends State<ProfilePage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2)),
-              ),
-              const SizedBox(height: 20),
-              const Text("Account Settings",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 10),
-              ProfileWidget(),
-              const SizedBox(height: 20),
-            ],
+        return SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2)),
+                ),
+                const SizedBox(height: 20),
+                const Text("Account Settings",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 10),
+                ProfileWidget(),
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         );
       },
@@ -92,7 +97,9 @@ class _ProfilePageState extends State<ProfilePage> {
             final String role =
                 (userData['role'] ?? 'student').toString().toLowerCase();
 
-            return Column(
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 100),
+              child: Column(
               children: [
                 // Header Card
                 Container(
@@ -159,9 +166,11 @@ class _ProfilePageState extends State<ProfilePage> {
                   offset: const Offset(0, -30),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
+                    child: SingleChildScrollView(
+                      physics: const NeverScrollableScrollPhysics(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
                         // Avatar and Info Card
                         Container(
                           padding: const EdgeInsets.all(20),
@@ -191,7 +200,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                     (userData['profileImageUrl'] ?? '').isEmpty
                                         ? ClipOval(
                                             child: Image.asset(
-                                              'assets/images/default_avatar.png',
+                                              'images/default_avatar.png',
                                               height: 100,
                                               width: 100,
                                               fit: BoxFit.cover,
@@ -378,6 +387,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                     }).toList(),
                                   ),
                           ),
+                          // Ratings & Reviews Section
+                          _buildRatingsSection(currentUser!.uid),
                         ] else ...[
                           _buildInfoCard(
                             title: 'Interests',
@@ -445,16 +456,70 @@ class _ProfilePageState extends State<ProfilePage> {
                         ],
 
                         const SizedBox(height: 40),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ],
+              ),
             );
           },
         ),
       ),
       bottomNavigationBar: const CustomBottomNavBar(initialIndex: 3),
+    );
+  }
+
+  Widget _buildRatingsSection(String mentorId) {
+    final RatingService _ratingService = RatingService();
+    
+    return StreamBuilder<List<MentorRating>>(
+      stream: _ratingService.getMentorRatings(mentorId),
+      builder: (context, snapshot) {
+        // Show loading while waiting for data
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Container(
+            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.only(bottom: 15),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: const Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        // Get ratings data (empty list if no data)
+        final ratings = snapshot.data ?? [];
+        
+        // Calculate average rating from actual reviews
+        double averageRating = 0.0;
+        if (ratings.isNotEmpty) {
+          double sum = ratings.fold(0, (prev, rating) => prev + rating.rating);
+          averageRating = sum / ratings.length;
+        }
+        
+        final totalRatings = ratings.length;
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 15),
+          child: RatingsDisplaySection(
+            ratings: ratings,
+            averageRating: averageRating,
+            totalRatings: totalRatings,
+          ),
+        );
+      },
     );
   }
 

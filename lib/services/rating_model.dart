@@ -31,10 +31,21 @@ class MentorRating {
   factory MentorRating.fromMap(String id, Map<String, dynamic> map) {
     DateTime createdAt;
     try {
-      // Try parsing as ISO string
-      createdAt = DateTime.parse(map['createdAt']);
+      // Check if createdAt is a Timestamp object (from Firestore)
+      final createdAtValue = map['createdAt'];
+      if (createdAtValue is String) {
+        // Try parsing as ISO string
+        createdAt = DateTime.parse(createdAtValue);
+      } else if (createdAtValue.runtimeType.toString().contains('Timestamp')) {
+        // It's a Firestore Timestamp
+        createdAt = createdAtValue.toDate();
+      } else {
+        // Fallback
+        createdAt = DateTime.now();
+      }
     } catch (e) {
       // Fallback to current time if parsing fails
+      print('Error parsing createdAt: $e');
       createdAt = DateTime.now();
     }
     

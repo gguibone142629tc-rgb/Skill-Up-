@@ -353,7 +353,7 @@ class _MenteeProfilePageState extends State<MenteeProfilePage> {
                                             .isEmpty
                                     ? ClipOval(
                                         child: Image.asset(
-                                          'assets/images/default_avatar.png',
+                                          'images/default_avatar.png',
                                           height: 100,
                                           width: 100,
                                           fit: BoxFit.cover,

@@ -32,14 +32,18 @@ class _MentorCardState extends State<MentorCard> {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId != null) {
       final saved = await _dbService.isMentorSaved(userId, widget.mentor.id);
-      setState(() {
-        _isSaved = saved;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isSaved = saved;
+          _isLoading = false;
+        });
+      }
     } else {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 

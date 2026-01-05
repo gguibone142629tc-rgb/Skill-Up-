@@ -57,8 +57,14 @@ class _ProfileWidgetState extends State<ProfileWidget> {
       ProfileModel(
           iconPath: 'assets/icons/person.svg', title: 'Personal Details'),
       ProfileModel(
-          iconPath: 'assets/icons/history.svg', title: 'My Subscription'),
+          iconPath: 'assets/icons/lock.svg', title: 'Change Password'),
     ];
+
+    // Add "My Subscription" for students only
+    if (!isMentor) {
+      items.add(ProfileModel(
+          iconPath: 'assets/icons/history.svg', title: 'My Subscription'));
+    }
 
     // Add "My Subscribers" for mentors only
     if (isMentor) {

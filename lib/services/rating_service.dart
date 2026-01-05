@@ -83,6 +83,27 @@ class RatingService {
 
     // Update mentor's average rating
     await _updateMentorAverageRating(mentorId);
+
+    // Send notification to mentor
+    await _firestore
+        .collection('users')
+        .doc(mentorId)
+        .collection('notifications')
+        .add({
+      'userId': mentorId,
+      'title': 'New Rating Received!',
+      'body': '${studentName.isEmpty ? 'A student' : studentName} rated you ${rating.toStringAsFixed(1)} stars',
+      'type': 'rating',
+      'relatedId': userId,
+      'isRead': false,
+      'createdAt': DateTime.now(),
+      'data': {
+        'studentId': userId,
+        'studentName': studentName,
+        'rating': rating,
+        'comment': comment,
+      },
+    });
   }
 
   /// Update a mentor's average rating

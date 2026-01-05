@@ -17,7 +17,7 @@ class UploadPhotoField extends StatelessWidget {
           child: imageProvider == null
               ? ClipOval(
                   child: Image.asset(
-                    'assets/images/default_avatar.png',
+                    'images/default_avatar.png',
                     height: 56,
                     width: 56,
                     fit: BoxFit.cover,

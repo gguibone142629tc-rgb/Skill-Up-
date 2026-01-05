@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../model/membership_plan.dart';
+import 'package:finaproj/services/notification_service.dart';
 
 class CheckoutPage extends StatefulWidget {
   final MembershipPlan selectedPlan;
@@ -150,6 +151,27 @@ class _CheckoutPageState extends State<CheckoutPage> {
           'status': 'active',
         },
       }, SetOptions(merge: true));
+
+      // Send notification to mentor about new subscription
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.mentorData['uid'])
+          .collection('notifications')
+          .add({
+        'userId': widget.mentorData['uid'],
+        'title': 'New Subscription!',
+        'body': '$menteeName subscribed to your ${widget.selectedPlan.title} plan',
+        'type': 'booking',
+        'relatedId': currentUser.uid,
+        'isRead': false,
+        'createdAt': DateTime.now(),
+        'data': {
+          'menteeId': currentUser.uid,
+          'menteeName': menteeName,
+          'planTitle': widget.selectedPlan.title,
+          'planPrice': widget.selectedPlan.price,
+        },
+      });
 
       if (mounted) {
         // Show success dialog
