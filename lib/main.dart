@@ -15,6 +15,7 @@ import 'package:finaproj/services/cleanup_duplicates.dart'; // Cleanup script
 import 'package:finaproj/services/notification_service.dart';
 import 'package:finaproj/services/unread_messages_service.dart';
 import 'package:finaproj/services/subscription_service.dart';
+import 'package:finaproj/services/subscription_expiry_checker.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,6 +33,8 @@ void main() async {
   FirebaseAuth.instance.authStateChanges().listen((user) {
     if (user != null) {
       SubscriptionService().checkAllSubscriptionsForExpiration();
+      // Also check for expiring subscriptions
+      SubscriptionExpiryChecker().checkSubscriptionsForExpiration();
     }
   });
   

@@ -39,8 +39,11 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   @override
   void initState() {
     super.initState();
-    // Mark chat room as read when opened
-    UnreadMessagesService().markChatRoomAsRead(widget.chatRoomId);
+    // Mark chat room as read using the service
+    Future.delayed(const Duration(milliseconds: 100), () {
+      UnreadMessagesService().markChatRoomAsRead(widget.chatRoomId);
+      debugPrint('Marked chat room as read via service');
+    });
   }
 
   @override

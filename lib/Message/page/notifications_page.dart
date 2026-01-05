@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:finaproj/services/notification_service.dart';
 import 'package:finaproj/services/notification_model.dart';
+import 'package:finaproj/Message/page/chat_room_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 
 class NotificationsPage extends StatefulWidget {
@@ -20,6 +22,47 @@ class _NotificationsPageState extends State<NotificationsPage> {
     _notificationService.markAllAsRead();
   }
 
+  void _handleNotificationTap(BuildContext context, NotificationModel notification) {
+    // Navigate based on notification type
+    if (notification.type == 'message' && notification.relatedId != null) {
+      // Extract data from notification
+      final chatRoomId = notification.relatedId!;
+      final senderName = notification.data?['senderName'] ?? 'User';
+      final senderProfileImage = notification.data?['senderProfileImage'];
+      final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ChatRoomPage(
+            chatRoomId: chatRoomId,
+            otherUserName: senderName,
+            currentUserId: currentUserId,
+            otherUserProfileImage: senderProfileImage,
+          ),
+        ),
+      );
+    } else if (notification.type == 'booking') {
+      // For booking notifications, navigate to the mentor profile or bookings page
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Navigate to bookings or mentee profile')),
+      );
+      // TODO: Navigate to bookings page when available
+    } else if (notification.type == 'session') {
+      // For session notifications, navigate to sessions page
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Navigate to session details')),
+      );
+      // TODO: Navigate to sessions page when available
+    } else if (notification.type == 'subscription') {
+      // For subscription notifications, navigate to subscription management
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Navigate to subscription details')),
+      );
+      // TODO: Navigate to subscription page when available
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -37,6 +80,29 @@ class _NotificationsPageState extends State<NotificationsPage> {
         elevation: 0,
         centerTitle: false,
         iconTheme: const IconThemeData(color: Colors.black),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Center(
+              child: GestureDetector(
+                onTap: () {
+                  _notificationService.markAllAsRead();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('All notifications marked as read')),
+                  );
+                },
+                child: Text(
+                  'Mark All Read',
+                  style: TextStyle(
+                    color: const Color(0xFF2D6A65),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
       body: StreamBuilder<List<NotificationModel>>(
         stream: _notificationService.getNotificationsStream(),
@@ -88,6 +154,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                 onDelete: () {
                   _notificationService.deleteNotification(notification.id);
                 },
+                onTap: () => _handleNotificationTap(context, notification),
               );
             },
           );
@@ -100,10 +167,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
 class _NotificationTile extends StatelessWidget {
   final NotificationModel notification;
   final VoidCallback onDelete;
+  final VoidCallback? onTap;
 
   const _NotificationTile({
     required this.notification,
     required this.onDelete,
+    this.onTap,
   });
 
   String _getTimeAgo(DateTime dateTime) {
@@ -131,6 +200,8 @@ class _NotificationTile extends StatelessWidget {
         return Icons.calendar_today;
       case 'session':
         return Icons.video_call;
+      case 'subscription':
+        return Icons.card_membership;
       default:
         return Icons.notifications;
     }
@@ -144,6 +215,8 @@ class _NotificationTile extends StatelessWidget {
         return Colors.green;
       case 'session':
         return Colors.purple;
+      case 'subscription':
+        return Colors.orange;
       default:
         return Colors.grey;
     }
@@ -161,10 +234,12 @@ class _NotificationTile extends StatelessWidget {
         color: Colors.red.shade100,
         child: Icon(Icons.delete, color: Colors.red.shade700),
       ),
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
           color: notification.isRead ? Colors.white : Colors.blue.shade50,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
@@ -246,6 +321,7 @@ class _NotificationTile extends StatelessWidget {
               ),
             ),
           ],
+        ),
         ),
       ),
     );

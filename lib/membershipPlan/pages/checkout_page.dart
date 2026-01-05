@@ -173,6 +173,14 @@ class _CheckoutPageState extends State<CheckoutPage> {
         },
       });
 
+      // Also send via notification service to show local notification
+      await NotificationService().sendBookingNotification(
+        mentorId: widget.mentorData['uid'],
+        studentName: menteeName,
+        courseTitle: widget.selectedPlan.title,
+        sessionDate: DateTime.now(),
+      );
+
       if (mounted) {
         // Show success dialog
         showDialog(

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 class UnreadMessagesService {
   static final UnreadMessagesService _instance = UnreadMessagesService._internal();
@@ -34,23 +35,35 @@ class UnreadMessagesService {
         final lastReadKey = 'lastReadBy_${currentUser.uid}';
         final lastReadTimestamp = data[lastReadKey] as Timestamp?;
         
-        // Count chat rooms where:
-        // 1. Last message is from someone else (not current user)
-        // 2. Last message is newer than last read time
-        if (lastSenderId != null && 
-            lastSenderId != currentUser.uid && 
-            lastTimestamp != null) {
+        debugPrint('Chat ${doc.id}: lastSenderId=$lastSenderId, currentUser=$currentUser, lastMsg=$lastTimestamp, lastRead=$lastReadTimestamp');
+        
+        // Only count as unread if:
+        // 1. Last message exists and is from someone else
+        // 2. AND either:
+        //    a) This is the first time reading (no read timestamp)
+        //    b) OR the last message is newer than the last read timestamp
+        if (lastSenderId != null && lastSenderId != currentUser.uid && lastTimestamp != null) {
           
           if (lastReadTimestamp == null) {
-            // Never read this chat room
+            // Never read this chat room before
+            debugPrint('  -> UNREAD (never read)');
             unreadCount++;
-          } else if (lastTimestamp.toDate().isAfter(lastReadTimestamp.toDate())) {
-            // New messages after last read
-            unreadCount++;
+          } else {
+            final lastMsgTime = lastTimestamp.toDate();
+            final lastReadTime = lastReadTimestamp.toDate();
+            
+            // Message is newer than last read
+            if (lastMsgTime.isAfter(lastReadTime)) {
+              debugPrint('  -> UNREAD (new message: $lastMsgTime > $lastReadTime)');
+              unreadCount++;
+            } else {
+              debugPrint('  -> READ (message is older: $lastMsgTime <= $lastReadTime)');
+            }
           }
         }
       }
       
+      debugPrint('Total unread: $unreadCount');
       return unreadCount;
     });
   }

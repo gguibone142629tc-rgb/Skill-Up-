@@ -22,7 +22,7 @@ class MessageListWidget extends StatelessWidget {
       stream: FirebaseFirestore.instance
           .collection('chat_rooms')
           .where('users', arrayContains: currentUserId)
-          .orderBy('lastTimestamp', descending: true)
+          // .orderBy('lastTimestamp', descending: true) // Commented out - requires Firestore index
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
