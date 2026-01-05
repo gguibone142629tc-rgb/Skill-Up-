@@ -5,6 +5,10 @@ import 'package:finaproj/membershipPlan/pages/membership_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:finaproj/services/rating_service.dart';
+import 'package:finaproj/services/rating_model.dart';
+import 'package:finaproj/Profile_page/widgets/rating_dialog.dart';
+import 'package:finaproj/Profile_page/widgets/ratings_display_section.dart';
 
 class ProfileScreen extends StatefulWidget {
   final Map<String, dynamic> mentorData;
@@ -18,6 +22,11 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   late Map<String, dynamic> _displayData;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final RatingService _ratingService = RatingService();
+  
+  bool _canRate = false;
+  bool _hasRated = false;
+  bool _checkingRating = true;
 
   @override
   void initState() {
@@ -26,6 +35,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadFreshDataIfOwnProfile();
     // Also attempt to load fuller data for other users when a uid is provided
     _loadProfileFromUidIfNeeded();
+    _checkRatingEligibility();
   }
 
   /// If a uid is provided in the incoming mentorData, fetch the full user document
@@ -73,6 +83,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
       } catch (e) {
         debugPrint("Error loading fresh profile data: $e");
       }
+    }
+  }
+
+  Future<void> _checkRatingEligibility() async {
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    final mentorId = widget.mentorData['uid'];
+    final isOwnProfile = mentorId == currentUserId;
+
+    if (isOwnProfile || mentorId == null || currentUserId == null) {
+      setState(() => _checkingRating = false);
+      return;
+    }
+
+    try {
+      final canRate = await _ratingService.canRateMentor(mentorId);
+      final hasRated = await _ratingService.hasRatedMentor(mentorId);
+
+      if (mounted) {
+        setState(() {
+          _canRate = canRate;
+          _hasRated = hasRated;
+          _checkingRating = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error checking rating eligibility: $e");
+      if (mounted) {
+        setState(() => _checkingRating = false);
+      }
+    }
+  }
+
+  Future<void> _showRatingDialog() async {
+    final mentorId = widget.mentorData['uid'];
+    final mentorName =
+        '${widget.mentorData['firstName'] ?? ''} ${widget.mentorData['lastName'] ?? ''}'
+            .trim();
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => RatingDialog(
+        mentorId: mentorId,
+        mentorName: mentorName,
+      ),
+    );
+
+    if (result == true && mounted) {
+      // Refresh rating eligibility
+      await _checkRatingEligibility();
+      setState(() {});
     }
   }
 
@@ -232,6 +292,60 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ActionButtons(mentorData: _displayData)
                           else
                             const SizedBox.shrink(),
+                          
+                          // Rate Mentor Button (only for students who are/were subscribed)
+                          if (!isOwnProfile && !_checkingRating && _canRate && !_hasRated) ...[
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: _showRatingDialog,
+                                icon: const Icon(Icons.star_rate),
+                                label: const Text('Rate This Mentor'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: const Color(0xFF2D6A65),
+                                  side: const BorderSide(
+                                    color: Color(0xFF2D6A65),
+                                    width: 1.5,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                          
+                          if (!isOwnProfile && _hasRated) ...[
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE8F5F3),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(
+                                    Icons.check_circle,
+                                    color: Color(0xFF2D6A65),
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'You rated this mentor',
+                                    style: TextStyle(
+                                      color: Colors.grey[700],
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                          
                           const SizedBox(height: 12),
                           // Plan Management Button
                           SizedBox(
@@ -380,6 +494,51 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 );
                               }).toList(),
                             ),
+                    ),
+
+                    // Ratings Section
+                    StreamBuilder<List<MentorRating>>(
+                      stream: _ratingService.getMentorRatings(_displayData['uid'] ?? ''),
+                      builder: (context, snapshot) {
+                        // Show loading while waiting for data
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        }
+
+                        // Get ratings data (empty list if no data)
+                        final ratings = snapshot.data ?? [];
+                        
+                        // Calculate average rating from actual reviews
+                        double averageRating = 0.0;
+                        if (ratings.isNotEmpty) {
+                          double sum = ratings.fold(0, (prev, rating) => prev + rating.rating);
+                          averageRating = sum / ratings.length;
+                        }
+                        
+                        final totalRatings = ratings.length;
+
+                        return RatingsDisplaySection(
+                          ratings: ratings,
+                          averageRating: averageRating,
+                          totalRatings: totalRatings,
+                        );
+                      },
                     ),
 
                     const SizedBox(height: 40),

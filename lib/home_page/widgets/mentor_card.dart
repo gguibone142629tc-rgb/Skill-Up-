@@ -178,12 +178,21 @@ class _MentorCardState extends State<MentorCard> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.star, size: 16, color: Colors.amber),
+                      Icon(
+                        Icons.star, 
+                        size: 16, 
+                        color: widget.mentor.rating > 0 ? Colors.amber : Colors.grey[400]
+                      ),
                       const SizedBox(width: 4),
                       Text(
-                        widget.mentor.rating.toString(),
-                        style: const TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w600),
+                        widget.mentor.rating > 0 
+                            ? widget.mentor.rating.toStringAsFixed(1)
+                            : 'New',
+                        style: TextStyle(
+                          fontSize: 14, 
+                          fontWeight: FontWeight.w600,
+                          color: widget.mentor.rating > 0 ? Colors.black87 : Colors.grey[600],
+                        ),
                       ),
                     ],
                   ),

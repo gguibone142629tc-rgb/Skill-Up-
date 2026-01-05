@@ -59,7 +59,8 @@ class DatabaseService {
         // Saving 'profilePic' as duplicate for safety if other widgets use it
         'profilePic': imageUrl,
         'createdAt': FieldValue.serverTimestamp(),
-        'rating': 5.0,
+        'rating': 0.0,
+        'totalRatings': 0,
         'price': 'Free',
         // Per-plan slot values - mentors can set this when configuring their plan
         'slots_Growth_Starter_max': 10,

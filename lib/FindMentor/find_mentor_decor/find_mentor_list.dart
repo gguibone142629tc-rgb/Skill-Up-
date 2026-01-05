@@ -82,11 +82,20 @@ class FindMentorList extends StatelessWidget {
                 // Rating Star
                 Row(
                   children: [
-                    const Icon(Icons.star, color: Colors.amber, size: 18),
+                    Icon(
+                      Icons.star, 
+                      color: mentor.rating > 0 ? Colors.amber : Colors.grey[400], 
+                      size: 18
+                    ),
                     const SizedBox(width: 4),
                     Text(
-                      mentor.rating.toString(),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      mentor.rating > 0 
+                          ? mentor.rating.toStringAsFixed(1)
+                          : 'New',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: mentor.rating > 0 ? Colors.black87 : Colors.grey[600],
+                      ),
                     ),
                   ],
                 )
