@@ -3,6 +3,8 @@ import 'package:finaproj/services/notification_service.dart';
 import 'package:finaproj/services/notification_model.dart';
 import 'package:finaproj/Message/page/chat_room_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
 class NotificationsPage extends StatefulWidget {
@@ -22,14 +24,35 @@ class _NotificationsPageState extends State<NotificationsPage> {
     _notificationService.markAllAsRead();
   }
 
-  void _handleNotificationTap(BuildContext context, NotificationModel notification) {
+  void _handleNotificationTap(BuildContext context, NotificationModel notification) async {
     // Navigate based on notification type
     if (notification.type == 'message' && notification.relatedId != null) {
       // Extract data from notification
       final chatRoomId = notification.relatedId!;
-      final senderName = notification.data?['senderName'] ?? 'User';
-      final senderProfileImage = notification.data?['senderProfileImage'];
+      final senderName = notification.data?['senderName'] ?? notification.data?['mentorName'] ?? 'User';
       final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+      
+      // Get the other user's ID from the chat room ID
+      // Chat room ID format: mentorId_studentId
+      final userIds = chatRoomId.split('_');
+      final otherUserId = userIds.firstWhere(
+        (id) => id != currentUserId,
+        orElse: () => userIds.first,
+      );
+      
+      // Fetch other user's profile image from Firestore
+      String? senderProfileImage;
+      try {
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(otherUserId)
+            .get();
+        if (userDoc.exists) {
+          senderProfileImage = userDoc.data()?['profileImageUrl'];
+        }
+      } catch (e) {
+        debugPrint('Error fetching user profile: $e');
+      }
 
       Navigator.push(
         context,
