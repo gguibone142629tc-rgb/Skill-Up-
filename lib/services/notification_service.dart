@@ -400,10 +400,13 @@ class NotificationService {
   // Send custom welcome message notification to student
   Future<void> sendWelcomeMessageNotification({
     required String studentId,
+    required String mentorId,
     required String mentorName,
     required String planName,
   }) async {
     try {
+      final chatRoomId = '$mentorId\_$studentId';
+      
       await FirebaseFirestore.instance
           .collection('users')
           .doc(studentId)
@@ -413,12 +416,14 @@ class NotificationService {
         'title': 'Welcome Message from $mentorName',
         'body': 'Your mentor sent you a welcome message. Check your messages!',
         'type': 'message',
-        'relatedId': planName,
+        'relatedId': chatRoomId,
         'isRead': false,
         'createdAt': DateTime.now(),
         'data': {
           'mentorName': mentorName,
+          'mentorId': mentorId,
           'planName': planName,
+          'senderName': mentorName,
         },
       });
 

@@ -194,6 +194,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
       // Send notification to student about welcome message
       await NotificationService().sendWelcomeMessageNotification(
         studentId: currentUser.uid,
+        mentorId: widget.mentorData['uid'],
         mentorName:
             '${widget.mentorData['firstName'] ?? ''} ${widget.mentorData['lastName'] ?? ''}',
         planName: widget.selectedPlan.title,
