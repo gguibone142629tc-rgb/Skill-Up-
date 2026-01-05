@@ -472,10 +472,10 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildRatingsSection(String mentorId) {
-    final RatingService _ratingService = RatingService();
+    final RatingService ratingService = RatingService();
     
     return StreamBuilder<List<MentorRating>>(
-      stream: _ratingService.getMentorRatings(mentorId),
+      stream: ratingService.getMentorRatings(mentorId),
       builder: (context, snapshot) {
         // Show loading while waiting for data
         if (snapshot.connectionState == ConnectionState.waiting) {

@@ -45,29 +45,63 @@ class MessagesListDecor extends StatelessWidget {
               )
             : null,
       ),
-      title: Text(
-        messagesModel.name,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600, // Semi-bold like your image
-          color: Colors.black,
-        ),
+      title: Row(
+        children: [
+          Expanded(
+            child: Text(
+              messagesModel.name,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: messagesModel.isUnread ? FontWeight.w700 : FontWeight.w600,
+                color: Colors.black,
+              ),
+            ),
+          ),
+          // New message indicator (blue dot for unread messages from others)
+          if (messagesModel.isUnread && !messagesModel.isFromCurrentUser)
+            Container(
+              width: 8,
+              height: 8,
+              decoration: const BoxDecoration(
+                color: Colors.blue,
+                shape: BoxShape.circle,
+              ),
+              margin: const EdgeInsets.only(left: 8),
+            ),
+        ],
       ),
-      subtitle: Text(
-  messagesModel.message,
-  maxLines: 1,
-  overflow: TextOverflow.ellipsis,
-  style: TextStyle(
-    fontSize: 14,
-    color: Colors.grey.shade600, // Matches the grey in your reference image
-    fontWeight: FontWeight.w400,
-  ),
-),
+      subtitle: Row(
+        children: [
+          Expanded(
+            child: Text(
+              messagesModel.message,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 14,
+                color: messagesModel.isUnread ? Colors.black87 : Colors.grey.shade600,
+                fontWeight: messagesModel.isUnread ? FontWeight.w500 : FontWeight.w400,
+              ),
+            ),
+          ),
+          // Sent indicator (checkmark for messages from current user)
+          if (messagesModel.isFromCurrentUser)
+            Padding(
+              padding: const EdgeInsets.only(left: 8.0),
+              child: Icon(
+                Icons.check,
+                size: 16,
+                color: Colors.grey.shade500,
+              ),
+            ),
+        ],
+      ),
       trailing: Text(
         messagesModel.time,
         style: TextStyle(
           fontSize: 12,
-          color: Colors.grey.shade500,
+          color: messagesModel.isUnread ? Colors.blue : Colors.grey.shade500,
+          fontWeight: messagesModel.isUnread ? FontWeight.w600 : FontWeight.w400,
         ),
       ),
     );
