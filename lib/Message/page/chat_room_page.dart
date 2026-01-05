@@ -322,10 +322,17 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           if (_isUploading) const LinearProgressIndicator(color: brandGreen),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance.collection('chat_rooms').doc(widget.chatRoomId).collection('messages').orderBy('timestamp', descending: false).snapshots(),
+              stream: FirebaseFirestore.instance.collection('chat_rooms').doc(widget.chatRoomId).collection('messages').snapshots(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) return const SizedBox();
                 var docs = snapshot.data!.docs;
+                
+                // Sort messages by timestamp client-side
+                docs.sort((a, b) {
+                  var aTime = (a['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
+                  var bTime = (b['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
+                  return aTime.compareTo(bTime);
+                });
 
                 return ListView.builder(
                   controller: _scrollController,
