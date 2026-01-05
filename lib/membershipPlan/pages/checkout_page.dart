@@ -172,44 +172,94 @@ class _CheckoutPageState extends State<CheckoutPage> {
         },
       });
 
+      // Also send via notification service to show local notification
+      await NotificationService().sendBookingNotification(
+        mentorId: widget.mentorData['uid'],
+        studentName: menteeName,
+        courseTitle: widget.selectedPlan.title,
+        sessionDate: DateTime.now(),
+      );
+
+      // Send automatic welcome message from mentor to student
+      await _sendWelcomeMessage(
+        mentorId: widget.mentorData['uid'],
+        mentorName:
+            '${widget.mentorData['firstName'] ?? ''} ${widget.mentorData['lastName'] ?? ''}',
+        mentorEmail: widget.mentorData['email'] ?? 'mentor@email.com',
+        studentId: currentUser.uid,
+        planTitle: widget.selectedPlan.title,
+      );
+
+      // Send notification to student about welcome message
+      await NotificationService().sendWelcomeMessageNotification(
+        studentId: currentUser.uid,
+        mentorId: widget.mentorData['uid'],
+        mentorName:
+            '${widget.mentorData['firstName'] ?? ''} ${widget.mentorData['lastName'] ?? ''}',
+        planName: widget.selectedPlan.title,
+      );
+
       if (mounted) {
         // Show success dialog
         showDialog(
           context: context,
           barrierDismissible: false,
-          builder: (context) => AlertDialog(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: const Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.green, size: 28),
-                SizedBox(width: 12),
-                Text('Subscription Successful!'),
-              ],
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('You are now subscribed to ${widget.selectedPlan.title}'),
-                const SizedBox(height: 8),
-                Text(
-                  'Your next billing date is ${DateTime.now().add(const Duration(days: 30)).toString().split(' ')[0]}',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // Close dialog
-                  Navigator.of(context).pop(); // Close checkout
-                  Navigator.of(context).pop(); // Close membership page
-                  Navigator.of(context).pop(); // Close mentor profile
-                },
-                child: const Text('Done'),
+          builder: (context) => Dialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            elevation: 0,
+            backgroundColor: Colors.white,
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.green, size: 48),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Subscription Successful!',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'You are now subscribed to ${widget.selectedPlan.title}',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Your next billing date is ${DateTime.now().add(const Duration(days: 30)).toString().split(' ')[0]}',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(); // Close dialog
+                        Navigator.of(context).pop(); // Close checkout
+                        Navigator.of(context).pop(); // Close membership page
+                        Navigator.of(context).pop(); // Close mentor profile
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2D6A65),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text(
+                        'Done',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         );
       }
@@ -461,5 +511,62 @@ class _CheckoutPageState extends State<CheckoutPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _sendWelcomeMessage({
+    required String mentorId,
+    required String mentorName,
+    required String mentorEmail,
+    required String studentId,
+    required String planTitle,
+  }) async {
+    try {
+      // Find or create chat room between mentor and student
+      final chatRoomsRef = FirebaseFirestore.instance.collection('chat_rooms');
+      
+      // Create a unique chat room ID
+      final chatRoomId = '$mentorId\_$studentId';
+      
+      // Check if chat room exists, create if not
+      final chatRoomDoc = await chatRoomsRef.doc(chatRoomId).get();
+      
+      if (!chatRoomDoc.exists) {
+        // Create new chat room
+        await chatRoomsRef.doc(chatRoomId).set({
+          'users': [mentorId, studentId],
+          'lastMessage': 'Chat started',
+          'lastTimestamp': FieldValue.serverTimestamp(),
+          'lastSenderId': mentorId,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+      
+      // Send welcome message from mentor with Gmail and request for student's Gmail
+      final welcomeMessage = 'Hi! 👋 Welcome to my $planTitle plan! I\'m excited to work with you.\n\n📧 My Email: $mentorEmail\n\nPlease share your Gmail address so we can schedule calls via Google Meet. Feel free to reach out anytime you have questions or need guidance. Let\'s make this a great learning experience!';
+      
+      await chatRoomsRef
+          .doc(chatRoomId)
+          .collection('messages')
+          .add({
+        'senderId': mentorId,
+        'text': welcomeMessage,
+        'imageUrl': '',
+        'timestamp': FieldValue.serverTimestamp(),
+        'type': 'text',
+        'reaction': '',
+      });
+      
+      // Update chat room with latest message
+      await chatRoomsRef.doc(chatRoomId).update({
+        'lastMessage': welcomeMessage,
+        'lastTimestamp': FieldValue.serverTimestamp(),
+        'lastSenderId': mentorId,
+      });
+      
+      debugPrint('Welcome message sent from $mentorName to student');
+    } catch (e) {
+      debugPrint('Error sending welcome message: $e');
+      // Don't throw - subscription should succeed even if message fails
+    }
   }
 }

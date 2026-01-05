@@ -3,6 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:finaproj/services/notification_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -261,6 +262,179 @@ class NotificationService {
       }
     } catch (e) {
       print('Error deleting notification: $e');
+    }
+  }
+
+  // Send booking notification
+  Future<void> sendBookingNotification({
+    required String mentorId,
+    required String studentName,
+    required String courseTitle,
+    required DateTime sessionDate,
+  }) async {
+    try {
+      final dateFormat = DateFormat('MMM d, yyyy h:mm a');
+      final formattedDate = dateFormat.format(sessionDate);
+      
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(mentorId)
+          .collection('notifications')
+          .add({
+        'userId': mentorId,
+        'title': 'New Session Booking',
+        'body': '$studentName booked a session for $courseTitle',
+        'type': 'booking',
+        'relatedId': courseTitle,
+        'isRead': false,
+        'createdAt': DateTime.now(),
+        'data': {
+          'studentName': studentName,
+          'courseTitle': courseTitle,
+          'sessionDate': sessionDate,
+        },
+      });
+
+      // Show local notification
+      await _showLocalNotification(
+        title: 'New Session Booking',
+        body: '$studentName booked a session for $courseTitle on $formattedDate',
+        payload: {'type': 'booking', 'mentorId': mentorId},
+      );
+    } catch (e) {
+      print('Error sending booking notification: $e');
+    }
+  }
+
+  // Send session reminder notification
+  Future<void> sendSessionReminder({
+    required String userId,
+    required String mentorName,
+    required String courseTitle,
+    required DateTime sessionDate,
+  }) async {
+    try {
+      final dateFormat = DateFormat('h:mm a');
+      final formattedTime = dateFormat.format(sessionDate);
+      
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('notifications')
+          .add({
+        'userId': userId,
+        'title': 'Session Reminder',
+        'body': 'Your session with $mentorName for $courseTitle starts at $formattedTime',
+        'type': 'session',
+        'relatedId': courseTitle,
+        'isRead': false,
+        'createdAt': DateTime.now(),
+        'data': {
+          'mentorName': mentorName,
+          'courseTitle': courseTitle,
+          'sessionDate': sessionDate,
+        },
+      });
+
+      // Show local notification
+      await _showLocalNotification(
+        title: 'Session Reminder',
+        body: 'Your session with $mentorName for $courseTitle starts at $formattedTime',
+        payload: {'type': 'session', 'userId': userId},
+      );
+    } catch (e) {
+      print('Error sending session reminder: $e');
+    }
+  }
+
+  // Send subscription expiry notification
+  Future<void> sendSubscriptionNotification({
+    required String userId,
+    required String planName,
+    required int daysRemaining,
+  }) async {
+    try {
+      String title;
+      String body;
+
+      if (daysRemaining <= 0) {
+        title = 'Subscription Expired';
+        body = 'Your $planName subscription has expired. Renew now to continue.';
+      } else if (daysRemaining == 1) {
+        title = 'Subscription Expiring Tomorrow';
+        body = 'Your $planName subscription expires tomorrow. Renew now.';
+      } else {
+        title = 'Subscription Expiring Soon';
+        body = 'Your $planName subscription expires in $daysRemaining days.';
+      }
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('notifications')
+          .add({
+        'userId': userId,
+        'title': title,
+        'body': body,
+        'type': 'subscription',
+        'relatedId': planName,
+        'isRead': false,
+        'createdAt': DateTime.now(),
+        'data': {
+          'planName': planName,
+          'daysRemaining': daysRemaining,
+        },
+      });
+
+      // Show local notification
+      await _showLocalNotification(
+        title: title,
+        body: body,
+        payload: {'type': 'subscription', 'userId': userId},
+      );
+    } catch (e) {
+      print('Error sending subscription notification: $e');
+    }
+  }
+
+  // Send custom welcome message notification to student
+  Future<void> sendWelcomeMessageNotification({
+    required String studentId,
+    required String mentorId,
+    required String mentorName,
+    required String planName,
+  }) async {
+    try {
+      final chatRoomId = '$mentorId\_$studentId';
+      
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(studentId)
+          .collection('notifications')
+          .add({
+        'userId': studentId,
+        'title': 'Welcome Message from $mentorName',
+        'body': 'Your mentor sent you a welcome message. Check your messages!',
+        'type': 'message',
+        'relatedId': chatRoomId,
+        'isRead': false,
+        'createdAt': DateTime.now(),
+        'data': {
+          'mentorName': mentorName,
+          'mentorId': mentorId,
+          'planName': planName,
+          'senderName': mentorName,
+        },
+      });
+
+      // Show local notification
+      await _showLocalNotification(
+        title: 'Welcome Message from $mentorName',
+        body: 'Your mentor sent you a welcome message. Check your messages!',
+        payload: {'type': 'message', 'studentId': studentId},
+      );
+    } catch (e) {
+      print('Error sending welcome message notification: $e');
     }
   }
 }
