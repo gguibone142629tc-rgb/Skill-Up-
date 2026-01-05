@@ -267,37 +267,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               ),
                               if (role == 'mentor') ...[
                                 const SizedBox(height: 10),
-                                // Slot indicator for mentors
-                                Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFE8F5F3),
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                      color: const Color(0xFF2D6A65).withOpacity(0.3),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const Icon(
-                                        Icons.people_outline,
-                                        color: Color(0xFF2D6A65),
-                                        size: 20,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        'Slots: ${userData['planAvailableSlots'] ?? 10}/${userData['planMaxSlots'] ?? 10} available',
-                                        style: const TextStyle(
-                                          color: Color(0xFF2D6A65),
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
+                                // View Plan button
                                 SizedBox(
                                   width: double.infinity,
                                   child: ElevatedButton(
@@ -313,9 +283,11 @@ class _ProfilePageState extends State<ProfilePage> {
                                       );
                                     },
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF2D6A65),
+                                      backgroundColor:
+                                          const Color(0xFF2D6A65),
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
+                                        borderRadius:
+                                            BorderRadius.circular(10),
                                       ),
                                       padding: const EdgeInsets.symmetric(
                                           vertical: 12),

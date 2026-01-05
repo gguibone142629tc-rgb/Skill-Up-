@@ -8,14 +8,20 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 import 'package:finaproj/login/pages/login_page.dart';
 import 'package:finaproj/home_page/pages/home_page.dart';
+import 'services/fresh_start.dart';
 import 'package:finaproj/app_settings/page/profile_page.dart'; // 1. IMPORT THIS
 import 'package:finaproj/Service_Category/category_page/category.dart'; // Category page
+import 'package:finaproj/services/cleanup_duplicates.dart'; // Cleanup script
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  
+  // UNCOMMENT TO DELETE ALL SUBSCRIPTIONS AND RATINGS (fresh start)
+  // await freshStart();
+  
   runApp(const MyApp());
 }
 

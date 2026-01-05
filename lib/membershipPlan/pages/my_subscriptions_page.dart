@@ -2,9 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:finaproj/services/subscription_service.dart';
 
-class MySubscriptionsPage extends StatelessWidget {
+class MySubscriptionsPage extends StatefulWidget {
   const MySubscriptionsPage({super.key});
+
+  @override
+  State<MySubscriptionsPage> createState() => _MySubscriptionsPageState();
+}
+
+class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
+  final SubscriptionService _subscriptionService = SubscriptionService();
+
+  @override
+  void initState() {
+    super.initState();
+    _checkSubscriptions();
+  }
+
+  Future<void> _checkSubscriptions() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      await _subscriptionService.checkUserSubscriptions(currentUser.uid);
+      if (mounted) setState(() {});
+    }
+  }
 
   Future<void> _cancelSubscription(
       BuildContext context, String subscriptionId) async {
@@ -152,7 +174,10 @@ class MySubscriptionsPage extends StatelessWidget {
             itemBuilder: (context, index) {
               final doc = snapshot.data!.docs[index];
               final data = doc.data() as Map<String, dynamic>;
-              final isActive = data['status'] == 'active';
+              final status = data['status'] ?? 'active';
+              final isActive = status == 'active';
+              final statusInfo = _subscriptionService.getStatusInfo(status);
+              final daysRemaining = _subscriptionService.getDaysRemaining(data['expiresAt']);
 
               return Container(
                 margin: const EdgeInsets.only(bottom: 16),
@@ -160,9 +185,10 @@ class MySubscriptionsPage extends StatelessWidget {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color:
-                        isActive ? const Color(0xFF2D6A65) : Colors.grey[300]!,
-                    width: isActive ? 2 : 1,
+                    color: status == 'active' 
+                        ? const Color(0xFF2D6A65) 
+                        : Colors.grey[300]!,
+                    width: status == 'active' ? 2 : 1,
                   ),
                   boxShadow: [
                     BoxShadow(
@@ -177,7 +203,7 @@ class MySubscriptionsPage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Status Badge
+                      // Status Badge and Price
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -187,20 +213,27 @@ class MySubscriptionsPage extends StatelessWidget {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: isActive
-                                  ? const Color(0xFF2D6A65).withOpacity(0.1)
-                                  : Colors.grey[200],
+                              color: statusInfo['backgroundColor'],
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: Text(
-                              isActive ? 'ACTIVE' : 'CANCELLED',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: isActive
-                                    ? const Color(0xFF2D6A65)
-                                    : Colors.grey,
-                              ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  statusInfo['icon'],
+                                  size: 14,
+                                  color: statusInfo['color'],
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  statusInfo['label'].toUpperCase(),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: statusInfo['color'],
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           Text(
@@ -215,6 +248,45 @@ class MySubscriptionsPage extends StatelessWidget {
                       ),
 
                       const SizedBox(height: 16),
+
+                      // Days Remaining (only for active subscriptions)
+                      if (status == 'active' && daysRemaining != null) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: daysRemaining <= 7 
+                                ? const Color(0xFFFFF3E0) 
+                                : const Color(0xFFE8F5F3),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.access_time,
+                                size: 16,
+                                color: daysRemaining <= 7 
+                                    ? const Color(0xFFF57C00) 
+                                    : const Color(0xFF2D6A65),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '$daysRemaining day${daysRemaining == 1 ? '' : 's'} remaining',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: daysRemaining <= 7 
+                                      ? const Color(0xFFF57C00) 
+                                      : const Color(0xFF2D6A65),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
 
                       // Plan Title
                       Text(
@@ -348,8 +420,8 @@ class MySubscriptionsPage extends StatelessWidget {
                         ],
                       ),
 
-                      // Cancel Button
-                      if (isActive) ...[
+                      // Cancel Button (only for active subscriptions)
+                      if (status == 'active') ...[
                         const SizedBox(height: 16),
                         SizedBox(
                           width: double.infinity,

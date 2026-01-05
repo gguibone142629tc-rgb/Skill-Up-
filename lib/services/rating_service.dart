@@ -2,12 +2,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'rating_model.dart';
+import 'subscription_service.dart';
 
 class RatingService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final SubscriptionService _subscriptionService = SubscriptionService();
 
-  /// Check if student is subscribed to mentor (current or past)
+  /// Check if student is subscribed to mentor (current or past, including expired)
+  /// Students can rate mentors they were subscribed to even after expiration
   Future<bool> canRateMentor(String mentorId) async {
     final userId = _auth.currentUser?.uid;
     if (userId == null) return false;
@@ -18,6 +21,11 @@ class RatingService {
           .where('menteeId', isEqualTo: userId)
           .where('mentorId', isEqualTo: mentorId)
           .get();
+
+      // Check each subscription and update status if needed
+      for (var doc in subscription.docs) {
+        await _subscriptionService.checkAndUpdateSubscriptionStatus(doc.id);
+      }
 
       return subscription.docs.isNotEmpty;
     } catch (e) {

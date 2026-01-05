@@ -35,6 +35,19 @@ class _CheckoutPageState extends State<CheckoutPage> {
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser == null) throw 'User not logged in';
 
+      // Check if student already has an active subscription to this specific plan
+      final existingSubscription = await FirebaseFirestore.instance
+          .collection('subscriptions')
+          .where('menteeId', isEqualTo: currentUser.uid)
+          .where('mentorId', isEqualTo: widget.mentorData['uid'])
+          .where('planTitle', isEqualTo: widget.selectedPlan.title)
+          .where('status', isEqualTo: 'active')
+          .get();
+
+      if (existingSubscription.docs.isNotEmpty) {
+        throw 'You are already subscribed to this plan';
+      }
+
       // Check if mentor has available slots
       final mentorDoc = await FirebaseFirestore.instance
           .collection('users')
@@ -95,6 +108,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
       // Create subscription record
       final now = DateTime.now();
+      final expirationDate = now.add(const Duration(days: 30));
+      
       await FirebaseFirestore.instance.collection('subscriptions').add({
         'menteeId': currentUser.uid,
         'menteeName': menteeName,
@@ -108,7 +123,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         'paymentMethod': _selectedPaymentMethod,
         'status': 'active',
         'startDate': now,
-        'nextBillingDate': now.add(const Duration(days: 30)),
+        'expiresAt': expirationDate,
         'createdAt': now,
       });
 

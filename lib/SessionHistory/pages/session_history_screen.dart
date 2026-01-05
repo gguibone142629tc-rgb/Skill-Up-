@@ -72,19 +72,9 @@ class MySubscriptionPage extends StatelessWidget {
                     style: TextStyle(fontSize: 14, color: Colors.grey[500]),
                   ),
                   const SizedBox(height: 20),
-                  Text(
-                    "Debug: Found ${snapshot.data?.docs.length ?? 0} subscriptions",
-                    style: TextStyle(fontSize: 10, color: Colors.red),
-                  ),
                 ],
               ),
             );
-          }
-
-          // Debug info
-          print('Found ${snapshot.data!.docs.length} subscriptions');
-          for (var doc in snapshot.data!.docs) {
-            print('Subscription data: ${doc.data()}');
           }
 
           return ListView.builder(

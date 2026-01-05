@@ -2,9 +2,17 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:finaproj/services/subscription_service.dart';
 
-class MySubscribersPage extends StatelessWidget {
+class MySubscribersPage extends StatefulWidget {
   const MySubscribersPage({super.key});
+
+  @override
+  State<MySubscribersPage> createState() => _MySubscribersPageState();
+}
+
+class _MySubscribersPageState extends State<MySubscribersPage> {
+  final SubscriptionService _subscriptionService = SubscriptionService();
 
   @override
   Widget build(BuildContext context) {
@@ -48,59 +56,6 @@ class MySubscribersPage extends StatelessWidget {
 
           return Column(
             children: [
-              // Slot counter card at the top
-              Container(
-                margin: const EdgeInsets.all(20),
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF2D6A65), Color(0xFF3D8A7D)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildSlotInfo(
-                      icon: Icons.people,
-                      label: 'Total Slots',
-                      value: '$maxSlots',
-                      color: Colors.white,
-                    ),
-                    Container(
-                      width: 1,
-                      height: 40,
-                      color: Colors.white.withOpacity(0.3),
-                    ),
-                    _buildSlotInfo(
-                      icon: Icons.check_circle,
-                      label: 'Used',
-                      value: '$usedSlots',
-                      color: Colors.white,
-                    ),
-                    Container(
-                      width: 1,
-                      height: 40,
-                      color: Colors.white.withOpacity(0.3),
-                    ),
-                    _buildSlotInfo(
-                      icon: Icons.event_available,
-                      label: 'Available',
-                      value: '$availableSlots',
-                      color: Colors.white,
-                    ),
-                  ],
-                ),
-              ),
               // Subscribers list
               Expanded(
                 child: StreamBuilder<QuerySnapshot>(
@@ -156,6 +111,9 @@ class MySubscribersPage extends StatelessWidget {
                         final menteeName = data['menteeName'] ?? 'Student';
                         final planTitle = data['planTitle'] ?? 'Plan';
                         final planPrice = data['planPrice'] ?? 0;
+                        final status = data['status'] ?? 'active';
+                        final statusInfo = _subscriptionService.getStatusInfo(status);
+                        final daysRemaining = _subscriptionService.getDaysRemaining(data['expiresAt']);
 
               DateTime? startDate;
               if (data['startDate'] != null) {
@@ -233,6 +191,82 @@ class MySubscribersPage extends StatelessWidget {
                               ],
                             ),
                           ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: statusInfo['backgroundColor'],
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  statusInfo['icon'],
+                                  size: 14,
+                                  color: statusInfo['color'],
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  statusInfo['label'].toUpperCase(),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: statusInfo['color'],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      // Days Remaining (only for active subscriptions)
+                      if (status == 'active' && daysRemaining != null) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: daysRemaining <= 7 
+                                ? const Color(0xFFFFF3E0) 
+                                : const Color(0xFFE8F5F3),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.access_time,
+                                size: 16,
+                                color: daysRemaining <= 7 
+                                    ? const Color(0xFFF57C00) 
+                                    : const Color(0xFF2D6A65),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '$daysRemaining day${daysRemaining == 1 ? '' : 's'} remaining',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: daysRemaining <= 7 
+                                      ? const Color(0xFFF57C00) 
+                                      : const Color(0xFF2D6A65),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+
+                      const SizedBox(height: 12),
+
+                      // Price Badge
+                      Row(
+                        children: [
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 12,

@@ -25,6 +25,7 @@ class _MembershipPageState extends State<MembershipPage> {
 
   // Plans - will be updated with mentor's custom pricing if viewing as student
   late List<MembershipPlan> plans = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -33,103 +34,29 @@ class _MembershipPageState extends State<MembershipPage> {
   }
 
   Future<void> _initializePlans() async {
-    // Get mentor's custom data from Firestore
-    String? mentorCustomPrice = widget.mentorData?['price'];
-    String? mentorPlanTitle = widget.mentorData?['planTitle'];
-    String? mentorCallDetails = widget.mentorData?['planCallDetails'];
-    List<String>? mentorFeatures;
-    Map<String, int>? planMaxSlots;
-    Map<String, int>? planAvailableSlots;
+    try {
+      // Get mentor's custom data from Firestore
+      String? mentorCustomPrice = widget.mentorData?['price'];
+      String? mentorPlanTitle = widget.mentorData?['planTitle'];
+      String? mentorCallDetails = widget.mentorData?['planCallDetails'];
+      List<String>? mentorFeatures;
+      Map<String, int>? planMaxSlots;
+      Map<String, int>? planAvailableSlots;
 
-    // If mentor is viewing their own plans, load from Firestore
-    if (widget.isMentorView) {
-      final uid = FirebaseAuth.instance.currentUser?.uid;
-      if (uid != null) {
-        try {
-          final doc = await FirebaseFirestore.instance
-              .collection('users')
-              .doc(uid)
-              .get();
-          final data = doc.data();
-          if (data != null) {
-            mentorCustomPrice = data['price'];
-            mentorPlanTitle = data['planTitle'];
-            mentorCallDetails = data['planCallDetails'];
-            
-            // Get per-plan slot data
-            planMaxSlots = {
-              'Growth Starter': data['slots_Growth_Starter_max'] ?? 10,
-              'Career Accelerator': data['slots_Career_Accelerator_max'] ?? 10,
-              'Executive Elite': data['slots_Executive_Elite_max'] ?? 10,
-            };
-            planAvailableSlots = {
-              'Growth Starter': data['slots_Growth_Starter_available'] ?? 10,
-              'Career Accelerator': data['slots_Career_Accelerator_available'] ?? 10,
-              'Executive Elite': data['slots_Executive_Elite_available'] ?? 10,
-            };
-            
-            // Initialize slots if they don't exist
-            if (data['slots_Growth_Starter_max'] == null) {
-              await FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(uid)
-                  .update({
-                'slots_Growth_Starter_max': 10,
-                'slots_Growth_Starter_available': 10,
-                'slots_Career_Accelerator_max': 10,
-                'slots_Career_Accelerator_available': 10,
-                'slots_Executive_Elite_max': 10,
-                'slots_Executive_Elite_available': 10,
-              });
-            }
-            
-            // Sync slots with actual active subscriptions per plan
-            for (final planName in ['Growth Starter', 'Career Accelerator', 'Executive Elite']) {
-              final activeSubscriptions = await FirebaseFirestore.instance
-                  .collection('subscriptions')
-                  .where('mentorId', isEqualTo: uid)
-                  .where('planTitle', isEqualTo: planName)
-                  .where('status', isEqualTo: 'active')
-                  .get();
-              
-              final activeCount = activeSubscriptions.docs.length;
-              final maxSlots = planMaxSlots[planName] ?? 10;
-              final correctAvailableSlots = maxSlots - activeCount;
-              
-              if (correctAvailableSlots != planAvailableSlots[planName]) {
-                planAvailableSlots[planName] = correctAvailableSlots;
-                await FirebaseFirestore.instance
-                    .collection('users')
-                    .doc(uid)
-                    .update({
-                  'slots_${planName}_available': correctAvailableSlots,
-                });
-              }
-            }
-            
-            if (data['planFeatures'] != null) {
-              mentorFeatures = List<String>.from(data['planFeatures']);
-            }
-          }
-        } catch (e) {
-          debugPrint("Error loading mentor data: $e");
-        }
-      }
-    } else {
-      // Student viewing mentor's plan - load mentor's per-plan slot data
-      if (widget.mentorData != null) {
-        final mentorId = widget.mentorData?['uid'];
-        
-        // Fetch fresh mentor data from Firestore to get latest slot info
-        if (mentorId != null) {
+      // If mentor is viewing their own plans, load from Firestore
+      if (widget.isMentorView) {
+        final uid = FirebaseAuth.instance.currentUser?.uid;
+        if (uid != null) {
           try {
-            final mentorDoc = await FirebaseFirestore.instance
+            final doc = await FirebaseFirestore.instance
                 .collection('users')
-                .doc(mentorId)
+                .doc(uid)
                 .get();
-            
-            if (mentorDoc.exists) {
-              final data = mentorDoc.data() as Map<String, dynamic>;
+            final data = doc.data();
+            if (data != null) {
+              mentorCustomPrice = data['price'];
+              mentorPlanTitle = data['planTitle'];
+              mentorCallDetails = data['planCallDetails'];
               
               // Get per-plan slot data
               planMaxSlots = {
@@ -143,11 +70,86 @@ class _MembershipPageState extends State<MembershipPage> {
                 'Executive Elite': data['slots_Executive_Elite_available'] ?? 10,
               };
               
+              // Initialize slots if they don't exist
+              if (data['slots_Growth_Starter_max'] == null) {
+                await FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(uid)
+                    .update({
+                  'slots_Growth_Starter_max': 10,
+                  'slots_Growth_Starter_available': 10,
+                  'slots_Career_Accelerator_max': 10,
+                  'slots_Career_Accelerator_available': 10,
+                  'slots_Executive_Elite_max': 10,
+                  'slots_Executive_Elite_available': 10,
+                });
+              }
+              
               // Sync slots with actual active subscriptions per plan
               for (final planName in ['Growth Starter', 'Career Accelerator', 'Executive Elite']) {
                 final activeSubscriptions = await FirebaseFirestore.instance
                     .collection('subscriptions')
-                    .where('mentorId', isEqualTo: mentorId)
+                    .where('mentorId', isEqualTo: uid)
+                    .where('planTitle', isEqualTo: planName)
+                    .where('status', isEqualTo: 'active')
+                    .get();
+                
+                final activeCount = activeSubscriptions.docs.length;
+                final maxSlots = planMaxSlots[planName] ?? 10;
+                final correctAvailableSlots = maxSlots - activeCount;
+                
+                if (correctAvailableSlots != planAvailableSlots[planName]) {
+                  planAvailableSlots[planName] = correctAvailableSlots;
+                  await FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(uid)
+                      .update({
+                    'slots_${planName}_available': correctAvailableSlots,
+                  });
+                }
+              }
+              
+              if (data['planFeatures'] != null) {
+                mentorFeatures = List<String>.from(data['planFeatures']);
+              }
+            }
+          } catch (e) {
+            debugPrint("Error loading mentor data: $e");
+          }
+        }
+      } else {
+        // Student viewing mentor's plan - load mentor's per-plan slot data
+        if (widget.mentorData != null) {
+          final mentorId = widget.mentorData?['uid'];
+          
+          // Fetch fresh mentor data from Firestore to get latest slot info
+          if (mentorId != null) {
+            try {
+              final mentorDoc = await FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(mentorId)
+                  .get();
+              
+              if (mentorDoc.exists) {
+                final data = mentorDoc.data() as Map<String, dynamic>;
+                
+                // Get per-plan slot data
+                planMaxSlots = {
+                  'Growth Starter': data['slots_Growth_Starter_max'] ?? 10,
+                  'Career Accelerator': data['slots_Career_Accelerator_max'] ?? 10,
+                  'Executive Elite': data['slots_Executive_Elite_max'] ?? 10,
+                };
+                planAvailableSlots = {
+                  'Growth Starter': data['slots_Growth_Starter_available'] ?? 10,
+                  'Career Accelerator': data['slots_Career_Accelerator_available'] ?? 10,
+                  'Executive Elite': data['slots_Executive_Elite_available'] ?? 10,
+                };
+                
+                // Sync slots with actual active subscriptions per plan
+                for (final planName in ['Growth Starter', 'Career Accelerator', 'Executive Elite']) {
+                  final activeSubscriptions = await FirebaseFirestore.instance
+                      .collection('subscriptions')
+                      .where('mentorId', isEqualTo: mentorId)
                     .where('planTitle', isEqualTo: planName)
                     .where('status', isEqualTo: 'active')
                     .get();
@@ -227,7 +229,17 @@ class _MembershipPageState extends State<MembershipPage> {
     }
 
     if (mounted) {
-      setState(() {});
+      setState(() {
+        _isLoading = false;
+      });
+    }
+    } catch (e) {
+      debugPrint("Error initializing plans: $e");
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -396,7 +408,15 @@ class _MembershipPageState extends State<MembershipPage> {
         elevation: 0,
         centerTitle: true,
       ),
-      body: Column(
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  Color(0xFF2D6A65),
+                ),
+              ),
+            )
+          : Column(
         children: [
           Expanded(
             child: ListView.builder(
