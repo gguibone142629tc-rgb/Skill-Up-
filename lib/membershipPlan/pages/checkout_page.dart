@@ -186,6 +186,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         mentorId: widget.mentorData['uid'],
         mentorName:
             '${widget.mentorData['firstName'] ?? ''} ${widget.mentorData['lastName'] ?? ''}',
+        mentorEmail: widget.mentorData['email'] ?? 'mentor@email.com',
         studentId: currentUser.uid,
         planTitle: widget.selectedPlan.title,
       );
@@ -492,6 +493,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   Future<void> _sendWelcomeMessage({
     required String mentorId,
     required String mentorName,
+    required String mentorEmail,
     required String studentId,
     required String planTitle,
   }) async {
@@ -516,8 +518,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
         });
       }
       
-      // Send welcome message from mentor
-      final welcomeMessage = 'Hi! 👋 Welcome to my $planTitle plan! I\'m excited to work with you. Feel free to reach out anytime you have questions or need guidance. Let\'s make this a great learning experience!';
+      // Send welcome message from mentor with Gmail and request for student's Gmail
+      final welcomeMessage = 'Hi! 👋 Welcome to my $planTitle plan! I\'m excited to work with you.\n\n📧 My Email: $mentorEmail\n\nPlease share your Gmail address so we can schedule calls via Google Meet. Feel free to reach out anytime you have questions or need guidance. Let\'s make this a great learning experience!';
       
       await chatRoomsRef
           .doc(chatRoomId)
