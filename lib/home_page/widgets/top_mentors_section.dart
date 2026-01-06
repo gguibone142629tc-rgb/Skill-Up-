@@ -56,9 +56,15 @@ class TopMentorsSection extends StatelessWidget {
             }).toList();
             
             // Only show mentors who have configured at least Plan 1 (price > 0)
-            final mentors = allMentors.where((mentor) {
+            final configuredMentors = allMentors.where((mentor) {
               return mentor.plan1Price != null && mentor.plan1Price! > 0;
-            }).take(5).toList();
+            }).toList();
+            
+            // Sort by rating (highest first)
+            configuredMentors.sort((a, b) => b.rating.compareTo(a.rating));
+            
+            // Take top 5
+            final mentors = configuredMentors.take(5).toList();
 
             return ListView.builder(
               padding: EdgeInsets.zero,
