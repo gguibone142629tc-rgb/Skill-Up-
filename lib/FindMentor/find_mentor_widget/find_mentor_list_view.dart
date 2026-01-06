@@ -352,15 +352,6 @@ class StudentSearchCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // Bookmark Icon
-                  GestureDetector(
-                    onTap: () {},
-                    child: Icon(
-                      Icons.bookmark_border,
-                      color: Colors.grey[400],
-                      size: 24,
-                    ),
-                  ),
                 ],
               ),
               const SizedBox(height: 12),
