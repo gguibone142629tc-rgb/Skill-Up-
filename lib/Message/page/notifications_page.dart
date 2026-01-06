@@ -7,7 +7,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:finaproj/app_settings/page/my_subscribers_page.dart';
-import 'package:finaproj/Profile_page/pages/student_profile_view.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});

@@ -113,31 +113,28 @@ class MySubscriptionPage extends StatelessWidget {
                         ),
                       ),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            children: [
-                              Icon(
-                                isActive ? Icons.check_circle : Icons.cancel,
+                          Icon(
+                            isActive ? Icons.check_circle : Icons.cancel,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              isActive ? 'ACTIVE SUBSCRIPTION' : 'CANCELLED',
+                              style: const TextStyle(
                                 color: Colors.white,
-                                size: 24,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                                letterSpacing: 0.3,
                               ),
-                              const SizedBox(width: 12),
-                              Text(
-                                isActive ? 'ACTIVE SUBSCRIPTION' : 'CANCELLED',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                           if (isActive)
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
+                                horizontal: 10,
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
@@ -149,7 +146,7 @@ class MySubscriptionPage extends StatelessWidget {
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 13,
+                                  fontSize: 12,
                                 ),
                               ),
                             ),
@@ -273,7 +270,6 @@ class MySubscriptionPage extends StatelessWidget {
 
                           // Billing Information
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               _buildDateCard(
                                 'Started',
@@ -284,7 +280,8 @@ class MySubscriptionPage extends StatelessWidget {
                                     : 'N/A',
                                 Icons.calendar_today,
                               ),
-                              if (isActive)
+                              if (isActive) ...[ 
+                                const SizedBox(width: 12),
                                 _buildDateCard(
                                   'Expires',
                                   data['expiresAt'] != null
@@ -294,6 +291,7 @@ class MySubscriptionPage extends StatelessWidget {
                                       : 'N/A',
                                   Icons.event,
                                 ),
+                              ],
                             ],
                           ),
                         ],

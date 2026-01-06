@@ -1,14 +1,12 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart'; // Required for kIsWeb
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:finaproj/Profile_page/pages/pofile_page.dart';
 import 'package:finaproj/Profile_page/pages/student_profile_view.dart';
-import 'package:finaproj/services/notification_service.dart';
 import 'package:finaproj/services/unread_messages_service.dart';
 
 
@@ -153,7 +151,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           .collection('users')
           .doc(widget.currentUserId)
           .get();
-      final senderData = senderDoc.data() as Map<String, dynamic>?;
+      final senderData = senderDoc.data();
       final senderName = senderData != null
           ? '${senderData['firstName'] ?? ''} ${senderData['lastName'] ?? ''}'.trim()
           : 'User';
@@ -163,7 +161,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           .collection('chat_rooms')
           .doc(widget.chatRoomId)
           .get();
-      final chatRoomData = chatRoomDoc.data() as Map<String, dynamic>?;
+      final chatRoomData = chatRoomDoc.data();
       final List users = chatRoomData?['users'] ?? [];
       final String recipientId = users.firstWhere(
         (id) => id != widget.currentUserId,
@@ -216,6 +214,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           },
         }).catchError((e) {
           debugPrint("Error saving notification: $e");
+          throw e;
         });
       }
 
@@ -412,27 +411,29 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
               },
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                IconButton(onPressed: _onPlusTap, icon: const Icon(Icons.add_circle, color: brandGreen, size: 30)),
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30)),
-                    child: TextField(
-                      controller: _messageController,
-                      decoration: const InputDecoration(hintText: "Write a message...", border: InputBorder.none),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              child: Row(
+                children: [
+                  IconButton(onPressed: _onPlusTap, icon: const Icon(Icons.add_circle, color: brandGreen, size: 30)),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30)),
+                      child: TextField(
+                        controller: _messageController,
+                        decoration: const InputDecoration(hintText: "Write a message...", border: InputBorder.none),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () => _sendMessage(text: _messageController.text),
-                  child: const CircleAvatar(backgroundColor: brandGreen, child: Icon(Icons.send, color: Colors.white)),
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () => _sendMessage(text: _messageController.text),
+                    child: const CircleAvatar(backgroundColor: brandGreen, child: Icon(Icons.send, color: Colors.white)),
+                  ),
+                ],
+              ),
             ),
           ),
         ],

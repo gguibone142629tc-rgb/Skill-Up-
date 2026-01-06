@@ -48,12 +48,6 @@ class _MySubscribersPageState extends State<MySubscribersPage> {
             .doc(currentUser.uid)
             .snapshots(),
         builder: (context, userSnapshot) {
-          // Get mentor's slot data
-          final mentorData = userSnapshot.data?.data() as Map<String, dynamic>?;
-          final maxSlots = mentorData?['planMaxSlots'] ?? 10;
-          final availableSlots = mentorData?['planAvailableSlots'] ?? maxSlots;
-          final usedSlots = maxSlots - availableSlots;
-
           return Column(
             children: [
               // Subscribers list
@@ -109,7 +103,6 @@ class _MySubscribersPageState extends State<MySubscribersPage> {
                         final data = doc.data() as Map<String, dynamic>;
 
                         final menteeName = data['menteeName'] ?? 'Student';
-                        final planTitle = data['planTitle'] ?? 'Plan';
                         final planPrice = data['planPrice'] ?? 0;
                         final status = data['status'] ?? 'active';
                         final statusInfo = _subscriptionService.getStatusInfo(status);
@@ -357,33 +350,4 @@ class _MySubscribersPageState extends State<MySubscribersPage> {
     );
   }
 
-  Widget _buildSlotInfo({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
-  }) {
-    return Column(
-      children: [
-        Icon(icon, color: color, size: 28),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: TextStyle(
-            color: color,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            color: color.withOpacity(0.9),
-            fontSize: 12,
-          ),
-        ),
-      ],
-    );
-  }
 }

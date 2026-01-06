@@ -29,7 +29,7 @@ class UnreadMessagesService {
       int unreadCount = 0;
       
       for (var doc in snapshot.docs) {
-        final data = doc.data() as Map<String, dynamic>;
+        final data = doc.data();
         final lastSenderId = data['lastSenderId'] as String?;
         final lastTimestamp = data['lastTimestamp'] as Timestamp?;
         final lastReadKey = 'lastReadBy_${currentUser.uid}';

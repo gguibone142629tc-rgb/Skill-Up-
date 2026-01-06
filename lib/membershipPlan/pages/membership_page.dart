@@ -205,13 +205,14 @@ class _MembershipPageState extends State<MembershipPage> {
       // Base plans - for mentors, start blank; for students, load mentor's plans
       if (widget.isMentorView && mentorDocData != null) {
         // Mentor view: Load their saved plans or start with blank templates
+        final md = mentorDocData;
         plans = [
           MembershipPlan(
-            title: mentorDocData?['plan_Growth_Starter_title'] ?? "Plan 1",
-            callDetails: mentorDocData?['plan_Growth_Starter_callDetails'] ?? "Add call details",
-            features: (mentorDocData?['plan_Growth_Starter_features'] as List?)?.map((e) => e.toString()).toList() ?? ["Add features"],
+            title: md['plan_Growth_Starter_title'] ?? "Plan 1",
+            callDetails: md['plan_Growth_Starter_callDetails'] ?? "Add call details",
+            features: (md['plan_Growth_Starter_features'] as List?)?.map((e) => e.toString()).toList() ?? ["Add features"],
             price: (() {
-              final raw = mentorDocData?['plan_Growth_Starter_price']?.toString() ?? '';
+              final raw = md['plan_Growth_Starter_price']?.toString() ?? '';
               final digits = raw.replaceAll(RegExp(r'[^0-9]'), '');
               return digits.isEmpty ? 0 : (int.tryParse(digits) ?? 0);
             })(),
@@ -219,11 +220,11 @@ class _MembershipPageState extends State<MembershipPage> {
             availableSlots: planAvailableSlots?['Growth Starter'] ?? 10,
           ),
           MembershipPlan(
-            title: mentorDocData?['plan_Career_Accelerator_title'] ?? "Plan 2",
-            callDetails: mentorDocData?['plan_Career_Accelerator_callDetails'] ?? "Add call details",
-            features: (mentorDocData?['plan_Career_Accelerator_features'] as List?)?.map((e) => e.toString()).toList() ?? ["Add features"],
+            title: md['plan_Career_Accelerator_title'] ?? "Plan 2",
+            callDetails: md['plan_Career_Accelerator_callDetails'] ?? "Add call details",
+            features: (md['plan_Career_Accelerator_features'] as List?)?.map((e) => e.toString()).toList() ?? ["Add features"],
             price: (() {
-              final raw = mentorDocData?['plan_Career_Accelerator_price']?.toString() ?? '';
+              final raw = md['plan_Career_Accelerator_price']?.toString() ?? '';
               final digits = raw.replaceAll(RegExp(r'[^0-9]'), '');
               return digits.isEmpty ? 0 : (int.tryParse(digits) ?? 0);
             })(),
@@ -231,11 +232,11 @@ class _MembershipPageState extends State<MembershipPage> {
             availableSlots: planAvailableSlots?['Career Accelerator'] ?? 10,
           ),
           MembershipPlan(
-            title: mentorDocData?['plan_Executive_Elite_title'] ?? "Plan 3",
-            callDetails: mentorDocData?['plan_Executive_Elite_callDetails'] ?? "Add call details",
-            features: (mentorDocData?['plan_Executive_Elite_features'] as List?)?.map((e) => e.toString()).toList() ?? ["Add features"],
+            title: md['plan_Executive_Elite_title'] ?? "Plan 3",
+            callDetails: md['plan_Executive_Elite_callDetails'] ?? "Add call details",
+            features: (md['plan_Executive_Elite_features'] as List?)?.map((e) => e.toString()).toList() ?? ["Add features"],
             price: (() {
-              final raw = mentorDocData?['plan_Executive_Elite_price']?.toString() ?? '';
+              final raw = md['plan_Executive_Elite_price']?.toString() ?? '';
               final digits = raw.replaceAll(RegExp(r'[^0-9]'), '');
               return digits.isEmpty ? 0 : (int.tryParse(digits) ?? 0);
             })(),
@@ -245,13 +246,14 @@ class _MembershipPageState extends State<MembershipPage> {
         ];
       } else if (!widget.isMentorView && mentorDocData != null) {
         // Student view: Load mentor's configured plans
+        final md = mentorDocData;
         plans = [
           MembershipPlan(
-            title: mentorDocData?['plan_Growth_Starter_title'] ?? "Plan 1",
-            callDetails: mentorDocData?['plan_Growth_Starter_callDetails'] ?? "Not configured",
-            features: (mentorDocData?['plan_Growth_Starter_features'] as List?)?.map((e) => e.toString()).toList() ?? ["Not configured"],
+            title: md['plan_Growth_Starter_title'] ?? "Plan 1",
+            callDetails: md['plan_Growth_Starter_callDetails'] ?? "Not configured",
+            features: (md['plan_Growth_Starter_features'] as List?)?.map((e) => e.toString()).toList() ?? ["Not configured"],
             price: (() {
-              final raw = mentorDocData?['plan_Growth_Starter_price']?.toString() ?? '';
+              final raw = md['plan_Growth_Starter_price']?.toString() ?? '';
               final digits = raw.replaceAll(RegExp(r'[^0-9]'), '');
               return digits.isEmpty ? 0 : (int.tryParse(digits) ?? 0);
             })(),
@@ -259,11 +261,11 @@ class _MembershipPageState extends State<MembershipPage> {
             availableSlots: planAvailableSlots?['Growth Starter'] ?? 10,
           ),
           MembershipPlan(
-            title: mentorDocData?['plan_Career_Accelerator_title'] ?? "Plan 2",
-            callDetails: mentorDocData?['plan_Career_Accelerator_callDetails'] ?? "Not configured",
-            features: (mentorDocData?['plan_Career_Accelerator_features'] as List?)?.map((e) => e.toString()).toList() ?? ["Not configured"],
+            title: md['plan_Career_Accelerator_title'] ?? "Plan 2",
+            callDetails: md['plan_Career_Accelerator_callDetails'] ?? "Not configured",
+            features: (md['plan_Career_Accelerator_features'] as List?)?.map((e) => e.toString()).toList() ?? ["Not configured"],
             price: (() {
-              final raw = mentorDocData?['plan_Career_Accelerator_price']?.toString() ?? '';
+              final raw = md['plan_Career_Accelerator_price']?.toString() ?? '';
               final digits = raw.replaceAll(RegExp(r'[^0-9]'), '');
               return digits.isEmpty ? 0 : (int.tryParse(digits) ?? 0);
             })(),
@@ -271,11 +273,11 @@ class _MembershipPageState extends State<MembershipPage> {
             availableSlots: planAvailableSlots?['Career Accelerator'] ?? 10,
           ),
           MembershipPlan(
-            title: mentorDocData?['plan_Executive_Elite_title'] ?? "Plan 3",
-            callDetails: mentorDocData?['plan_Executive_Elite_callDetails'] ?? "Not configured",
-            features: (mentorDocData?['plan_Executive_Elite_features'] as List?)?.map((e) => e.toString()).toList() ?? ["Not configured"],
+            title: md['plan_Executive_Elite_title'] ?? "Plan 3",
+            callDetails: md['plan_Executive_Elite_callDetails'] ?? "Not configured",
+            features: (md['plan_Executive_Elite_features'] as List?)?.map((e) => e.toString()).toList() ?? ["Not configured"],
             price: (() {
-              final raw = mentorDocData?['plan_Executive_Elite_price']?.toString() ?? '';
+              final raw = md['plan_Executive_Elite_price']?.toString() ?? '';
               final digits = raw.replaceAll(RegExp(r'[^0-9]'), '');
               return digits.isEmpty ? 0 : (int.tryParse(digits) ?? 0);
             })(),
