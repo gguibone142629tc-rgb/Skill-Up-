@@ -28,12 +28,14 @@ void main() async {
   // Initialize notifications
   await NotificationService().initializeNotifications();
   
-  // Check for expired subscriptions on app start
+  // Check for expired subscriptions on app start (run async without blocking)
   FirebaseAuth.instance.authStateChanges().listen((user) {
     if (user != null) {
-      SubscriptionService().checkAllSubscriptionsForExpiration();
-      // Also check for expiring subscriptions
-      SubscriptionExpiryChecker().checkSubscriptionsForExpiration();
+      // Run in background without blocking UI
+      Future.delayed(const Duration(milliseconds: 500), () {
+        SubscriptionService().checkAllSubscriptionsForExpiration();
+        SubscriptionExpiryChecker().checkSubscriptionsForExpiration();
+      });
     }
   });
   

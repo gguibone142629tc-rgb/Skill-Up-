@@ -35,9 +35,9 @@ class CategoriesSection extends StatelessWidget {
             crossAxisCount: 4,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            childAspectRatio: 0.85,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+            childAspectRatio: 0.9,
             children: [
               _buildCategory(context, Icons.computer, 'Technology'),
               _buildCategory(context, Icons.palette, 'Design'),

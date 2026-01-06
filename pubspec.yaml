@@ -31,6 +31,16 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: 
+  flutter_launcher_icons: ^0.13.1
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  web:
+    generate: true
+  image_path: "assets/images/skillup_logo.png"
+  adaptive_icon_background: "#2D6A65"
+  adaptive_icon_foreground: "assets/images/skillup_logo.png"
 
 flutter:
   uses-material-design: true

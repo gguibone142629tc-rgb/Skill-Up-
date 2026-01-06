@@ -78,11 +78,17 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       if (mounted) {
-        // 2. Fetch the user's document
+        // 2. Fetch the user's document with timeout
         final userDoc = await FirebaseFirestore.instance
             .collection('users')
             .doc(userCredential.user!.uid)
-            .get();
+            .get()
+            .timeout(
+              const Duration(seconds: 10),
+              onTimeout: () {
+                throw 'Connection timeout. Please check your internet and try again.';
+              },
+            );
 
         if (!userDoc.exists) {
           throw "User profile not found.";
@@ -94,11 +100,15 @@ class _LoginPageState extends State<LoginPage> {
 
         // 3. Compare Roles (using lowercase to avoid mismatch)
         if (actualRole.toLowerCase() == selectedRoleString.toLowerCase()) {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const HomePage()),
-            (route) => false,
-          );
+          // Small delay to let widgets settle before navigation
+          await Future.delayed(const Duration(milliseconds: 100));
+          if (mounted) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const HomePage()),
+              (route) => false,
+            );
+          }
         } else {
           // Wrong Role: Must sign out immediately
           await _authService.signOut();
@@ -109,7 +119,9 @@ class _LoginPageState extends State<LoginPage> {
     } catch (e) {
       // Catching Firebase Auth errors (wrong password, etc.)
       _showErrorDialog(
-          "Incorrect credentials. Please check your email and password.");
+          e.toString().contains('timeout') 
+            ? e.toString() 
+            : "Incorrect credentials. Please check your email and password.");
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
