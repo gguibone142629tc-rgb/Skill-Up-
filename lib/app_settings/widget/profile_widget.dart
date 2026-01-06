@@ -72,11 +72,16 @@ class _ProfileWidgetState extends State<ProfileWidget> {
           iconPath: 'assets/icons/favorite.svg', title: 'My Subscribers'));
     }
 
-    items.addAll([
-      ProfileModel(
-          iconPath: 'assets/icons/favorite.svg', title: 'Saved Mentors'),
-      ProfileModel(iconPath: 'assets/icons/logout.svg', title: 'Log Out'),
-    ]);
+    // Add "Saved Mentors" for students only
+    if (!isMentor) {
+      items.add(ProfileModel(
+          iconPath: 'assets/icons/favorite.svg', title: 'Saved Mentors'));
+    }
+
+    // Privacy Policy available to all users
+    items.add(ProfileModel(iconPath: 'assets/icons/note.svg', title: 'Privacy Policy'));
+
+    items.add(ProfileModel(iconPath: 'assets/icons/logout.svg', title: 'Log Out'));
 
     return items;
   }

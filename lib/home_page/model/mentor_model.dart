@@ -12,6 +12,8 @@ class Mentor {
   // Optional fields for membership plan data stored on the user document
   final String? planTitle;
   final int? planPrice;
+  final String? plan1Title; // Growth Starter (Plan 1) title
+  final int? plan1Price; // Growth Starter (Plan 1) price
 
   Mentor({
     required this.id,
@@ -25,9 +27,18 @@ class Mentor {
     required this.pricePerMonth,
     this.planTitle,
     this.planPrice,
+    this.plan1Title,
+    this.plan1Price,
   });
 
   factory Mentor.fromFirestore(Map<String, dynamic> data, String id) {
+    int? _parsePrice(dynamic value) {
+      if (value == null) return null;
+      final digits = value.toString().replaceAll(RegExp(r'[^0-9]'), '');
+      if (digits.isEmpty) return null;
+      return int.tryParse(digits);
+    }
+
     return Mentor(
       id: id,
       name: '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}',
@@ -39,9 +50,11 @@ class Mentor {
       categories: List<String>.from(data['categories'] ?? []), 
       // 4. Fetch expertise safely
       expertise: List<String>.from(data['expertise'] ?? []),
-      pricePerMonth: data['price'] ?? 'Free',
-      planTitle: data['planTitle'] as String?,
-      planPrice: data['price'] != null ? int.tryParse(data['price'].toString()) : null,
+      pricePerMonth: (data['price'] ?? 'Free').toString(),
+      planTitle: data['planTitle']?.toString(),
+      planPrice: _parsePrice(data['price']),
+      plan1Title: data['plan_Growth_Starter_title']?.toString(),
+      plan1Price: _parsePrice(data['plan_Growth_Starter_price']),
     );
   }
 }

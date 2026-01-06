@@ -46,6 +46,17 @@ class CustomAppBar extends StatelessWidget {
                         .doc(uid)
                         .get(),
                     builder: (context, snapshot) {
+                      if (snapshot.hasError) {
+                        return const Text(
+                          'Welcome',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        );
+                      }
+
                       if (snapshot.hasData && snapshot.data!.exists) {
                         var userData =
                             snapshot.data!.data() as Map<String, dynamic>;
@@ -86,57 +97,17 @@ class CustomAppBar extends StatelessWidget {
                         ),
                       );
                     },
-                    child: Stack(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.white, width: 2),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.notifications_outlined,
-                            color: Colors.white,
-                            size: 24,
-                          ),
-                        ),
-                        // Unread badge
-                        StreamBuilder<int>(
-                          stream: NotificationService().getUnreadCountStream(),
-                          builder: (context, snapshot) {
-                            final unreadCount = snapshot.data ?? 0;
-                            if (unreadCount == 0) {
-                              return const SizedBox.shrink();
-                            }
-                            return Positioned(
-                              right: 0,
-                              top: 0,
-                              child: Container(
-                                padding: const EdgeInsets.all(2),
-                                decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  shape: BoxShape.circle,
-                                ),
-                                constraints: const BoxConstraints(
-                                  minWidth: 20,
-                                  minHeight: 20,
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    unreadCount > 99 ? '99+' : unreadCount.toString(),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.white, width: 2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.notifications_outlined,
+                        color: Colors.white,
+                        size: 24,
+                      ),
                     ),
                   ),
                 ],

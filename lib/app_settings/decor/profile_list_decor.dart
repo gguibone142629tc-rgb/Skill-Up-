@@ -10,6 +10,7 @@ import 'package:finaproj/SessionHistory/pages/session_history_screen.dart'; // M
 import 'package:finaproj/SavedMentors/saved_mentors_page.dart'; // Saved Mentors
 import 'package:finaproj/app_settings/page/my_subscribers_page.dart'; // My Subscribers
 import 'package:finaproj/app_settings/page/change_password_page.dart'; // Change Password
+import 'package:finaproj/app_settings/page/privacy_policy_page.dart'; // Privacy Policy
 
 class ProfileListDecor extends StatelessWidget {
   const ProfileListDecor({super.key, required this.profileModel});
@@ -50,6 +51,9 @@ class ProfileListDecor extends StatelessWidget {
               break;
             case 'Change Password':
               nextPage = const ChangePasswordPage();
+              break;
+            case 'Privacy Policy':
+              nextPage = const PrivacyPolicyPage();
               break;
             default:
               // Handle unknown cases or show a "Coming Soon" snackbar

@@ -6,6 +6,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
+import 'package:finaproj/app_settings/page/my_subscribers_page.dart';
+import 'package:finaproj/Profile_page/pages/student_profile_view.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
@@ -66,11 +68,13 @@ class _NotificationsPageState extends State<NotificationsPage> {
         ),
       );
     } else if (notification.type == 'booking') {
-      // For booking notifications, navigate to the mentor profile or bookings page
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Navigate to bookings or mentee profile')),
+      // For booking notifications, navigate to subscribers page to see who subscribed
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const MySubscribersPage(),
+        ),
       );
-      // TODO: Navigate to bookings page when available
     } else if (notification.type == 'session') {
       // For session notifications, navigate to sessions page
       ScaffoldMessenger.of(context).showSnackBar(
@@ -167,11 +171,48 @@ class _NotificationsPageState extends State<NotificationsPage> {
           }
 
           final notifications = snapshot.data!;
+          
+          // Filter out message-type notifications
+          final filteredNotifications = notifications
+              .where((notification) => notification.type != 'message')
+              .toList();
+
+          if (filteredNotifications.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.notifications_none,
+                    size: 64,
+                    color: Colors.grey[300],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No Notifications',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'You\'re all caught up!',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[400],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
 
           return ListView.builder(
-            itemCount: notifications.length,
+            itemCount: filteredNotifications.length,
             itemBuilder: (context, index) {
-              final notification = notifications[index];
+              final notification = filteredNotifications[index];
               return _NotificationTile(
                 notification: notification,
                 onDelete: () {

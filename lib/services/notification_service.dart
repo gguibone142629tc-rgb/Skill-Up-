@@ -397,6 +397,94 @@ class NotificationService {
     }
   }
 
+  // Send notification when a mentee successfully subscribes (to the mentee)
+  Future<void> sendSubscriptionCreatedForMentee({
+    required String menteeId,
+    required String mentorName,
+    required String planName,
+    required int planPrice,
+  }) async {
+    try {
+      final title = 'Subscription Confirmed';
+      final body = 'You subscribed to $mentorName\'s $planName for ₱$planPrice/month.';
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(menteeId)
+          .collection('notifications')
+          .add({
+        'userId': menteeId,
+        'title': title,
+        'body': body,
+        'type': 'subscription',
+        'relatedId': planName,
+        'isRead': false,
+        'createdAt': DateTime.now(),
+        'data': {
+          'mentorName': mentorName,
+          'planName': planName,
+          'planPrice': planPrice,
+        },
+      });
+
+      await _showLocalNotification(
+        title: title,
+        body: body,
+        payload: {
+          'type': 'subscription',
+          'userId': menteeId,
+          'planName': planName,
+        },
+      );
+    } catch (e) {
+      print('Error sending subscription created notification to mentee: $e');
+    }
+  }
+
+  // Send notification when a mentee subscribes (to the mentor)
+  Future<void> sendSubscriptionCreatedForMentor({
+    required String mentorId,
+    required String menteeName,
+    required String planName,
+    required int planPrice,
+  }) async {
+    try {
+      final title = 'New Subscription';
+      final body = '$menteeName subscribed to your $planName plan (₱$planPrice/month).';
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(mentorId)
+          .collection('notifications')
+          .add({
+        'userId': mentorId,
+        'title': title,
+        'body': body,
+        'type': 'subscription',
+        'relatedId': planName,
+        'isRead': false,
+        'createdAt': DateTime.now(),
+        'data': {
+          'menteeName': menteeName,
+          'planName': planName,
+          'planPrice': planPrice,
+        },
+      });
+
+      await _showLocalNotification(
+        title: title,
+        body: body,
+        payload: {
+          'type': 'subscription',
+          'mentorId': mentorId,
+          'planName': planName,
+        },
+      );
+    } catch (e) {
+      print('Error sending subscription created notification to mentor: $e');
+    }
+  }
+
   // Send custom welcome message notification to student
   Future<void> sendWelcomeMessageNotification({
     required String studentId,

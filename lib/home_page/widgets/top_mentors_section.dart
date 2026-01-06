@@ -28,9 +28,16 @@ class TopMentorsSection extends StatelessWidget {
           stream: FirebaseFirestore.instance
               .collection('users')
               .where('role', isEqualTo: 'mentor') // Only show mentors
-              .limit(5) // Just show the top 5 on the home page
+              .limit(10) // Fetch more to filter out unconfigured mentors
               .snapshots(),
           builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return const Padding(
+                padding: EdgeInsets.all(20.0),
+                child: Text('Unable to load mentors right now.'),
+              );
+            }
+
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
@@ -42,11 +49,16 @@ class TopMentorsSection extends StatelessWidget {
               );
             }
 
-            // Convert Firestore documents into your Mentor model
-            final mentors = snapshot.data!.docs.map((doc) {
+            // Convert Firestore documents into your Mentor model and filter configured mentors
+            final allMentors = snapshot.data!.docs.map((doc) {
               return Mentor.fromFirestore(
                   doc.data() as Map<String, dynamic>, doc.id);
             }).toList();
+            
+            // Only show mentors who have configured at least Plan 1 (price > 0)
+            final mentors = allMentors.where((mentor) {
+              return mentor.plan1Price != null && mentor.plan1Price! > 0;
+            }).take(5).toList();
 
             return ListView.builder(
               padding: EdgeInsets.zero,

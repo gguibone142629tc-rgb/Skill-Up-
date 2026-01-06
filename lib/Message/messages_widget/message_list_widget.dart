@@ -91,6 +91,19 @@ class MessageListWidget extends StatelessWidget {
                 final userData = userSnap.data!;
                 String lastMsg = chatData['lastMessage'] ?? "";
                 String lastSenderId = chatData['lastSenderId'] ?? "";
+                final lastReadKey = 'lastReadBy_$currentUserId';
+                final lastReadTimestamp = chatData[lastReadKey] as Timestamp?;
+                final lastTimestamp = chatData['lastTimestamp'] as Timestamp?;
+                
+                // Check if chat room has unread messages
+                bool isUnread = false;
+                if (lastSenderId != currentUserId && lastTimestamp != null) {
+                  if (lastReadTimestamp == null) {
+                    isUnread = true;
+                  } else if (lastTimestamp.toDate().isAfter(lastReadTimestamp.toDate())) {
+                    isUnread = true;
+                  }
+                }
 
                 // ADD "YOU: " PREFIX LOGIC
                 if (lastMsg.isNotEmpty && lastSenderId == currentUserId) {
@@ -106,6 +119,8 @@ class MessageListWidget extends StatelessWidget {
                     message: lastMsg,
                     time: _formatTime(chatData['lastTimestamp']),
                     chatRoomId: chatDoc.id,
+                    isFromCurrentUser: lastSenderId == currentUserId,
+                    isUnread: isUnread,
                   ),
                 );
               },

@@ -7,11 +7,13 @@ import 'package:finaproj/services/notification_service.dart';
 class CheckoutPage extends StatefulWidget {
   final MembershipPlan selectedPlan;
   final Map<String, dynamic> mentorData;
+  final String planKey; // e.g., Growth_Starter / Career_Accelerator / Executive_Elite
 
   const CheckoutPage({
     super.key,
     required this.selectedPlan,
     required this.mentorData,
+    required this.planKey,
   });
 
   @override
@@ -59,8 +61,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
       
       final mentorData = mentorDoc.data() as Map<String, dynamic>;
       final selectedPlanTitle = widget.selectedPlan.title;
-      final selectedSlotKey = 'slots_${selectedPlanTitle}_available';
-      final selectedMaxKey = 'slots_${selectedPlanTitle}_max';
+      final planKey = widget.planKey; // canonical key with underscores
+      final selectedSlotKey = 'slots_${planKey}_available';
+      final selectedMaxKey = 'slots_${planKey}_max';
 
       // Fallback: compute availability if fields are missing or stale
       int maxSlots = mentorData[selectedMaxKey] is int
@@ -118,6 +121,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         'mentorName':
             '${widget.mentorData['firstName'] ?? ''} ${widget.mentorData['lastName'] ?? ''}',
         'planTitle': widget.selectedPlan.title,
+        'planKey': planKey,
         'planPrice': widget.selectedPlan.price,
         'callDetails': widget.selectedPlan.callDetails,
         'features': widget.selectedPlan.features,
@@ -129,7 +133,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
       });
 
       // Decrement available slots for the specific plan
-      final decrementSlotKey = 'slots_${widget.selectedPlan.title}_available';
+      final decrementSlotKey = 'slots_${planKey}_available';
       await FirebaseFirestore.instance
           .collection('users')
           .doc(widget.mentorData['uid'])
@@ -173,12 +177,21 @@ class _CheckoutPageState extends State<CheckoutPage> {
         },
       });
 
-      // Also send via notification service to show local notification
-      await NotificationService().sendBookingNotification(
+      // Notify mentor (local + inbox)
+      await NotificationService().sendSubscriptionCreatedForMentor(
         mentorId: widget.mentorData['uid'],
-        studentName: menteeName,
-        courseTitle: widget.selectedPlan.title,
-        sessionDate: DateTime.now(),
+        menteeName: menteeName,
+        planName: widget.selectedPlan.title,
+        planPrice: widget.selectedPlan.price,
+      );
+
+      // Notify mentee (local + inbox)
+      await NotificationService().sendSubscriptionCreatedForMentee(
+        menteeId: currentUser.uid,
+        mentorName:
+            '${widget.mentorData['firstName'] ?? ''} ${widget.mentorData['lastName'] ?? ''}',
+        planName: widget.selectedPlan.title,
+        planPrice: widget.selectedPlan.price,
       );
 
       // Send automatic welcome message from mentor to student

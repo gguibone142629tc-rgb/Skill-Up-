@@ -96,6 +96,11 @@ class _MentorCardState extends State<MentorCard> {
 
   // Compute a display price derived from plan data if available, falling back to stored price or default
   String _displayPrice(Mentor mentor) {
+    // Priority 0: Plan 1 (Growth Starter) price saved on mentor document
+    if (mentor.plan1Price != null && mentor.plan1Price! > 0) {
+      return '₱${mentor.plan1Price}/month';
+    }
+
     // Priority 1: explicit planPrice saved as integer
     if (mentor.planPrice != null && mentor.planPrice! > 0) {
       return '₱${mentor.planPrice}/month';
