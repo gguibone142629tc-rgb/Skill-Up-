@@ -120,6 +120,20 @@ class _MenteeProfilePageState extends State<MenteeProfilePage> {
       final userId = _auth.currentUser?.uid;
       if (userId == null) return;
 
+      // ✅ FIX: Add any pending text in controllers to their lists before saving
+      if (_interestsController.text.trim().isNotEmpty) {
+        _interests.add(_interestsController.text.trim());
+        _interestsController.clear();
+      }
+      if (_goalsController.text.trim().isNotEmpty) {
+        _goals.add(_goalsController.text.trim());
+        _goalsController.clear();
+      }
+      if (_learningStyleController.text.trim().isNotEmpty) {
+        _learningStyles.add(_learningStyleController.text.trim());
+        _learningStyleController.clear();
+      }
+
       // Show loading indicator
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -157,9 +171,11 @@ class _MenteeProfilePageState extends State<MenteeProfilePage> {
           ),
         );
 
-        // Exit edit mode and reload profile
-        setState(() => _isEditing = false);
-        await _loadProfile();
+        // Redirect back to previous page after a short delay
+        await Future.delayed(const Duration(seconds: 1));
+        if (mounted) {
+          Navigator.pop(context);
+        }
       }
     } catch (e) {
       if (mounted) {

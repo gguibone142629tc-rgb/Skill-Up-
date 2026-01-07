@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:finaproj/Message/page/chat_room_page.dart';
 import 'package:finaproj/services/database_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -16,6 +17,7 @@ class _ActionButtonsState extends State<ActionButtons> {
   final DatabaseService _dbService = DatabaseService();
   bool _isSaved = false;
   bool _isLoading = true;
+  String? _userRole;
 
   @override
   void initState() {
@@ -28,9 +30,19 @@ class _ActionButtonsState extends State<ActionButtons> {
     final mentorId = widget.mentorData['uid'];
 
     if (userId != null && mentorId != null) {
+      String? role;
+      try {
+        final userDoc =
+            await FirebaseFirestore.instance.collection('users').doc(userId).get();
+        role = userDoc.data()?['role'] as String?;
+      } catch (_) {
+        role = null;
+      }
+
       final saved = await _dbService.isMentorSaved(userId, mentorId);
       if (mounted) {
         setState(() {
+          _userRole = role;
           _isSaved = saved;
           _isLoading = false;
         });
@@ -47,10 +59,18 @@ class _ActionButtonsState extends State<ActionButtons> {
   Future<void> _toggleSaved() async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     final mentorId = widget.mentorData['uid'];
+    final isMentorUser = _userRole == 'mentor';
 
     if (userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please log in to save mentors')),
+      );
+      return;
+    }
+
+    if (isMentorUser) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mentors cannot save other mentors')),
       );
       return;
     }
@@ -138,6 +158,7 @@ class _ActionButtonsState extends State<ActionButtons> {
 
   @override
   Widget build(BuildContext context) {
+    final isMentorUser = _userRole == 'mentor';
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Row(
@@ -184,24 +205,29 @@ class _ActionButtonsState extends State<ActionButtons> {
                     ),
                   )
                 : ElevatedButton.icon(
-                    onPressed: _toggleSaved,
+                    onPressed: isMentorUser ? null : _toggleSaved,
                     icon: Icon(
                       _isSaved ? Icons.bookmark : Icons.bookmark_border,
                       size: 20,
-                      color: _isSaved ? const Color(0xFF2D6A65) : Colors.black,
+                      color: _isSaved
+                          ? const Color(0xFF2D6A65)
+                          : (isMentorUser ? Colors.grey[400] : Colors.black),
                     ),
                     label: Text(
                       _isSaved ? "Saved" : "Save Mentor",
                       style: TextStyle(
-                        color:
-                            _isSaved ? const Color(0xFF2D6A65) : Colors.black,
+                        color: _isSaved
+                            ? const Color(0xFF2D6A65)
+                            : (isMentorUser ? Colors.grey[400] : Colors.black),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _isSaved
                           ? const Color(0xFF2D6A65).withOpacity(0.1)
-                          : const Color(0xFFF5F5F5),
+                          : (isMentorUser
+                              ? Colors.grey[200]
+                              : const Color(0xFFF5F5F5)),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: const StadiumBorder(),
                       elevation: 0,

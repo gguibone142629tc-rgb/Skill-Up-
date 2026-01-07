@@ -4,9 +4,10 @@ import 'package:finaproj/services/notification_model.dart';
 import 'package:finaproj/Message/page/chat_room_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:finaproj/app_settings/page/my_subscribers_page.dart';
+import 'package:finaproj/Profile_page/pages/pofile_page.dart';
+import 'package:finaproj/SessionHistory/pages/session_history_screen.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
@@ -26,6 +27,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
   }
 
   void _handleNotificationTap(BuildContext context, NotificationModel notification) async {
+    // Always mark the tapped notification as read before navigating
+    await _notificationService.markAsRead(notification.id);
+
     // Navigate based on notification type
     if (notification.type == 'message' && notification.relatedId != null) {
       // Extract data from notification
@@ -75,17 +79,96 @@ class _NotificationsPageState extends State<NotificationsPage> {
         ),
       );
     } else if (notification.type == 'session') {
-      // For session notifications, navigate to sessions page
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Navigate to session details')),
+      // For session notifications, show session details
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SessionReminderPage(notification: notification),
+        ),
       );
-      // TODO: Navigate to sessions page when available
     } else if (notification.type == 'subscription') {
-      // For subscription notifications, navigate to subscription management
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Navigate to subscription details')),
+      final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+      final data = notification.data ?? {};
+      String? mentorId = data['mentorId'] ?? data['mentor_id'] ?? data['mentorID'];
+
+      // Fallback lookup: find the most recent subscription with this plan for the current user
+      if (mentorId == null && currentUserId != null) {
+        try {
+          Query<Map<String, dynamic>> query = FirebaseFirestore.instance
+              .collection('subscriptions')
+              .where('menteeId', isEqualTo: currentUserId);
+
+          if (data['planName'] != null) {
+            query = query.where('planTitle', isEqualTo: data['planName']);
+          }
+
+          final subSnap = await query.limit(1).get();
+          if (subSnap.docs.isNotEmpty) {
+            mentorId = subSnap.docs.first.data()['mentorId'] as String?;
+          }
+        } catch (e) {
+          debugPrint('Error finding mentor for subscription: $e');
+        }
+      }
+
+      if (mentorId != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MySubscriptionPage(focusMentorId: mentorId),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Mentor info not available for this subscription')),
+        );
+      }
+    }
+  }
+
+  Future<void> _navigateToMentorProfile(BuildContext context, String mentorId) async {
+    try {
+      final mentorDoc = await FirebaseFirestore.instance.collection('users').doc(mentorId).get();
+      if (!mentorDoc.exists) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Mentor profile not found')),
+        );
+        return;
+      }
+
+      final data = mentorDoc.data() ?? {};
+      final double rating = (data['rating'] is num) ? (data['rating'] as num).toDouble() : 0.0;
+      final List<String> skills = data['skills'] is List ? List<String>.from(data['skills']) : <String>[];
+      final List<String> expertise = data['expertise'] is List ? List<String>.from(data['expertise']) : <String>[];
+      final List<String> languages = data['languages'] is List ? List<String>.from(data['languages']) : <String>[];
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ProfileScreen(
+            mentorData: {
+              'uid': mentorId,
+              'firstName': data['firstName'] ?? '',
+              'lastName': data['lastName'] ?? '',
+              'jobTitle': data['jobTitle'] ?? 'Mentor',
+              'profileImageUrl': data['profileImageUrl'] ?? '',
+              'rating': rating,
+              'skills': skills,
+              'expertise': expertise,
+              'languages': languages,
+              'bio': data['bio'] ?? '',
+              'price': data['price'] ?? '',
+              'planTitle': data['planTitle'],
+              'planPrice': data['planPrice'],
+            },
+          ),
+        ),
       );
-      // TODO: Navigate to subscription page when available
+    } catch (e) {
+      debugPrint('Error navigating to mentor profile: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open mentor profile')),
+      );
     }
   }
 
@@ -170,13 +253,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
           }
 
           final notifications = snapshot.data!;
-          
-          // Filter out message-type notifications
-          final filteredNotifications = notifications
-              .where((notification) => notification.type != 'message')
-              .toList();
 
-          if (filteredNotifications.isEmpty) {
+          if (notifications.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -209,9 +287,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
           }
 
           return ListView.builder(
-            itemCount: filteredNotifications.length,
+            itemCount: notifications.length,
             itemBuilder: (context, index) {
-              final notification = filteredNotifications[index];
+              final notification = notifications[index];
               return _NotificationTile(
                 notification: notification,
                 onDelete: () {
@@ -385,6 +463,140 @@ class _NotificationTile extends StatelessWidget {
             ),
           ],
         ),
+        ),
+      ),
+    );
+  }
+}
+
+class SessionReminderPage extends StatelessWidget {
+  final NotificationModel notification;
+
+  const SessionReminderPage({super.key, required this.notification});
+
+  @override
+  Widget build(BuildContext context) {
+    final data = notification.data ?? {};
+    final mentorName = data['mentorName'] ?? 'Your mentor';
+    final courseTitle = data['courseTitle'] ?? 'Session';
+    final rawDate = data['sessionDate'];
+    DateTime? sessionDate;
+
+    if (rawDate is Timestamp) {
+      sessionDate = rawDate.toDate();
+    } else if (rawDate is DateTime) {
+      sessionDate = rawDate;
+    } else if (rawDate is String) {
+      sessionDate = DateTime.tryParse(rawDate);
+    }
+
+    final formattedDate = sessionDate != null
+        ? DateFormat('MMM d, y • h:mm a').format(sessionDate)
+        : 'Scheduled soon';
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Session Details',
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.black),
+        elevation: 0,
+      ),
+      backgroundColor: const Color(0xFFF9F9F9),
+      body: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    courseTitle,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2D6A65),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      const Icon(Icons.person, color: Color(0xFF2D6A65)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          mentorName,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      const Icon(Icons.calendar_today, color: Colors.black54, size: 18),
+                      const SizedBox(width: 8),
+                      Text(
+                        formattedDate,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    notification.body,
+                    style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2D6A65),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const MySubscriptionPage(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.list_alt),
+                label: const Text(
+                  'View My Subscriptions',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

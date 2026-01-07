@@ -10,7 +10,7 @@ import 'package:finaproj/mentor_sign/widget/mentor_signup/mentor_basic_info_step
 import 'package:finaproj/mentor_sign/widget/mentor_signup/mentor_experience_step.dart';
 import 'package:finaproj/services/auth_service.dart';
 import 'package:finaproj/services/database_service.dart';
-import 'package:finaproj/home_page/pages/home_page.dart';
+import 'package:finaproj/login/pages/login_page.dart';
 
 class MentorSignUpPage extends StatefulWidget {
   const MentorSignUpPage({super.key});
@@ -136,11 +136,19 @@ class _MentorSignUpPageState extends State<MentorSignUpPage> {
           'categories': [_category], // Save as a List
         });
 
-        // 4. Success! Go to Home
+        // 4. Logout after registration
+        await _authService.signOut();
+
         if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Registration successful! Please log in.'),
+              backgroundColor: Colors.green,
+            ),
+          );
           Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(builder: (_) => const HomePage()),
+            MaterialPageRoute(builder: (_) => const LoginPage()),
             (route) => false,
           );
         }

@@ -3,8 +3,24 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-class MySubscriptionPage extends StatelessWidget {
-  const MySubscriptionPage({super.key});
+class MySubscriptionPage extends StatefulWidget {
+  final String? focusMentorId;
+
+  const MySubscriptionPage({super.key, this.focusMentorId});
+
+  @override
+  State<MySubscriptionPage> createState() => _MySubscriptionPageState();
+}
+
+class _MySubscriptionPageState extends State<MySubscriptionPage> {
+  final ScrollController _scrollController = ScrollController();
+  bool _didScrollToMentor = false;
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,19 +93,48 @@ class MySubscriptionPage extends StatelessWidget {
             );
           }
 
+          final docs = snapshot.data!.docs;
+
+          // Auto-scroll to the mentor specified by the notification, once.
+          if (!_didScrollToMentor && widget.focusMentorId != null) {
+            final targetIndex = docs.indexWhere((doc) {
+              final data = doc.data() as Map<String, dynamic>;
+              return data['mentorId'] == widget.focusMentorId;
+            });
+
+            if (targetIndex >= 0) {
+              _didScrollToMentor = true;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                final estimatedHeight = 320.0; // approximate card height
+                _scrollController.animateTo(
+                  targetIndex * estimatedHeight,
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.easeOut,
+                );
+              });
+            }
+          }
+
           return ListView.builder(
+            controller: _scrollController,
             padding: const EdgeInsets.all(20),
-            itemCount: snapshot.data!.docs.length,
+            itemCount: docs.length,
             itemBuilder: (context, index) {
-              final doc = snapshot.data!.docs[index];
+              final doc = docs[index];
               final data = doc.data() as Map<String, dynamic>;
               final isActive = data['status'] == 'active';
+              final isFocused = widget.focusMentorId != null &&
+                  data['mentorId'] == widget.focusMentorId;
 
               return Container(
                 margin: const EdgeInsets.only(bottom: 20),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isFocused ? const Color(0xFF2D6A65) : Colors.transparent,
+                    width: isFocused ? 2 : 0,
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.08),

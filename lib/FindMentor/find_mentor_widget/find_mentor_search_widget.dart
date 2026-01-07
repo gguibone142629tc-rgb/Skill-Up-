@@ -1,17 +1,53 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
-class FindMentorSearchWidget extends StatelessWidget {
+class FindMentorSearchWidget extends StatefulWidget {
   final ValueChanged<String> onSearchChanged;
-  final VoidCallback onFilterTap; // ✅ Added Callback
+  final VoidCallback onFilterTap;
   final String initialText;
 
   const FindMentorSearchWidget({
     super.key,
     required this.onSearchChanged,
-    required this.onFilterTap, // ✅ Required
+    required this.onFilterTap,
     this.initialText = '',
   });
+
+  @override
+  State<FindMentorSearchWidget> createState() => _FindMentorSearchWidgetState();
+}
+
+class _FindMentorSearchWidgetState extends State<FindMentorSearchWidget> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialText);
+    _moveCursorToEnd();
+  }
+
+  @override
+  void didUpdateWidget(covariant FindMentorSearchWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialText != oldWidget.initialText &&
+        widget.initialText != _controller.text) {
+      _controller.text = widget.initialText;
+      _moveCursorToEnd();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _moveCursorToEnd() {
+    _controller.selection = TextSelection.fromPosition(
+      TextPosition(offset: _controller.text.length),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +55,6 @@ class FindMentorSearchWidget extends StatelessWidget {
       margin: const EdgeInsets.all(20),
       child: Row(
         children: [
-          // Search Field
           Expanded(
             child: Container(
               height: 50,
@@ -27,30 +62,23 @@ class FindMentorSearchWidget extends StatelessWidget {
                 color: const Color(0xFFF3F4F6),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: Builder(
-                builder: (context) {
-                  final controller = TextEditingController(text: initialText);
-                  return TextField(
-                    controller: controller,
-                    onChanged: onSearchChanged,
-                    decoration: const InputDecoration(
-                      prefixIcon: Icon(Icons.search, color: Colors.grey),
-                      hintText: 'Search mentors or students...',
-                      hintStyle: TextStyle(color: Colors.grey),
-                      border: InputBorder.none,
-                      contentPadding:
-                          EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                    ),
-                  );
-                },
+              child: TextField(
+                controller: _controller,
+                onChanged: widget.onSearchChanged,
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.search, color: Colors.grey),
+                  hintText: 'Search mentors or students...',
+                  hintStyle: TextStyle(color: Colors.grey),
+                  border: InputBorder.none,
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                ),
               ),
             ),
           ),
           const SizedBox(width: 12),
-
-          // Filter Button
           GestureDetector(
-            onTap: onFilterTap, // ✅ Opens the Filter Modal
+            onTap: widget.onFilterTap,
             child: Container(
               height: 50,
               width: 50,

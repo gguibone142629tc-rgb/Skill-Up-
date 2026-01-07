@@ -156,27 +156,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         },
       }, SetOptions(merge: true));
 
-      // Send notification to mentor about new subscription
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.mentorData['uid'])
-          .collection('notifications')
-          .add({
-        'userId': widget.mentorData['uid'],
-        'title': 'New Subscription!',
-        'body': '$menteeName subscribed to your ${widget.selectedPlan.title} plan',
-        'type': 'booking',
-        'relatedId': currentUser.uid,
-        'isRead': false,
-        'createdAt': DateTime.now(),
-        'data': {
-          'menteeId': currentUser.uid,
-          'menteeName': menteeName,
-          'planTitle': widget.selectedPlan.title,
-          'planPrice': widget.selectedPlan.price,
-        },
-      });
-
+      // ✅ FIXED: Removed duplicate notification - using service function instead
       // Notify mentor (local + inbox)
       await NotificationService().sendSubscriptionCreatedForMentor(
         mentorId: widget.mentorData['uid'],
@@ -188,6 +168,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
       // Notify mentee (local + inbox)
       await NotificationService().sendSubscriptionCreatedForMentee(
         menteeId: currentUser.uid,
+        mentorId: widget.mentorData['uid'],
         mentorName:
             '${widget.mentorData['firstName'] ?? ''} ${widget.mentorData['lastName'] ?? ''}',
         planName: widget.selectedPlan.title,
@@ -539,7 +520,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
       final chatRoomsRef = FirebaseFirestore.instance.collection('chat_rooms');
       
       // Create a unique chat room ID
-      final chatRoomId = '$mentorId\_$studentId';
+      final chatRoomId = '${mentorId}_$studentId';
       
       // Check if chat room exists, create if not
       final chatRoomDoc = await chatRoomsRef.doc(chatRoomId).get();

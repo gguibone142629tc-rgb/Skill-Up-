@@ -16,7 +16,7 @@ class MentorExperienceStep extends StatefulWidget {
     this.onBioChanged,
     this.onSkillsChanged,
     this.onExpertiseChanged,
-    this.onCategoryChanged, // ✅ Initialize it
+    this.onCategoryChanged,
   });
 
   @override
@@ -63,6 +63,10 @@ class _MentorExperienceStepState extends State<MentorExperienceStep> {
       'skills': ['SQL', 'Excel', 'Tableau', 'Power BI', 'Python', 'R', 'SAS'],
       'expertise': ['Data Analysis', 'Data Science', 'Business Intelligence', 'Big Data', 'Statistical Analysis'],
     },
+    'Business': {
+      'skills': ['Business Strategy', 'Marketing', 'Sales', 'Finance', 'Operations', 'Project Management'],
+      'expertise': ['Entrepreneurship', 'Growth Strategy', 'Go-to-Market', 'Fundraising', 'Product Management', 'Team Leadership'],
+    },
   };
 
   String? _selectedCategory;
@@ -98,6 +102,7 @@ class _MentorExperienceStepState extends State<MentorExperienceStep> {
     widget.onSkillsChanged?.call([]);
     widget.onExpertiseChanged?.call([]);
   }
+
 
   void _addSkill(String? value) {
     if (value != null && !_selectedSkills.contains(value)) {
@@ -174,6 +179,7 @@ class _MentorExperienceStepState extends State<MentorExperienceStep> {
           onChanged: _onCategoryChanged,
         ),
         const SizedBox(height: 20),
+
 
         if (_selectedCategory != null) ...[
           const Text("Select Skills", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),

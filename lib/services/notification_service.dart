@@ -190,11 +190,12 @@ class NotificationService {
         .map((snapshot) {
       return snapshot.docs
           .map((doc) => NotificationModel.fromFirestore(doc))
+          .where((n) => n.type != 'message') // hide chat/message alerts from Notifications page
           .toList();
     });
   }
 
-  // Get unread notification count
+  // Get unread notification count (excluding message type notifications)
   Stream<int> getUnreadCountStream() {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
@@ -207,7 +208,13 @@ class NotificationService {
         .collection('notifications')
         .where('isRead', isEqualTo: false)
         .snapshots()
-        .map((snapshot) => snapshot.docs.length);
+        .map((snapshot) {
+      // ✅ FIXED: Filter out message-type notifications to match notifications page display
+      final filtered = snapshot.docs
+          .where((doc) => doc['type'] != 'message')
+          .toList();
+      return filtered.length;
+    });
   }
 
   // Mark notification as read
@@ -352,6 +359,7 @@ class NotificationService {
     required String userId,
     required String planName,
     required int daysRemaining,
+    String? mentorId,
   }) async {
     try {
       String title;
@@ -383,6 +391,7 @@ class NotificationService {
         'data': {
           'planName': planName,
           'daysRemaining': daysRemaining,
+          if (mentorId != null) 'mentorId': mentorId,
         },
       });
 
@@ -390,7 +399,11 @@ class NotificationService {
       await _showLocalNotification(
         title: title,
         body: body,
-        payload: {'type': 'subscription', 'userId': userId},
+        payload: {
+          'type': 'subscription',
+          'userId': userId,
+          if (mentorId != null) 'mentorId': mentorId,
+        },
       );
     } catch (e) {
       print('Error sending subscription notification: $e');
@@ -400,6 +413,7 @@ class NotificationService {
   // Send notification when a mentee successfully subscribes (to the mentee)
   Future<void> sendSubscriptionCreatedForMentee({
     required String menteeId,
+    required String mentorId,
     required String mentorName,
     required String planName,
     required int planPrice,
@@ -421,6 +435,7 @@ class NotificationService {
         'isRead': false,
         'createdAt': DateTime.now(),
         'data': {
+          'mentorId': mentorId,
           'mentorName': mentorName,
           'planName': planName,
           'planPrice': planPrice,
@@ -433,6 +448,7 @@ class NotificationService {
         payload: {
           'type': 'subscription',
           'userId': menteeId,
+          'mentorId': mentorId,
           'planName': planName,
         },
       );
@@ -493,7 +509,7 @@ class NotificationService {
     required String planName,
   }) async {
     try {
-      final chatRoomId = '$mentorId\_$studentId';
+      final chatRoomId = '${mentorId}_$studentId';
       
       await FirebaseFirestore.instance
           .collection('users')

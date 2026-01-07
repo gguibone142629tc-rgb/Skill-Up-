@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 // Import your services
 import 'package:finaproj/services/auth_service.dart';
 import 'package:finaproj/services/database_service.dart';
-import 'package:finaproj/home_page/pages/home_page.dart';
+import 'package:finaproj/login/pages/login_page.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -68,10 +68,19 @@ class _SignUpPageState extends State<SignUpPage> {
         gender: _gender,
       );
 
+      // Logout after registration
+      await _authService.signOut();
+
       if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Registration successful! Please log in.'),
+            backgroundColor: Colors.green,
+          ),
+        );
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => const HomePage()),
+          MaterialPageRoute(builder: (context) => const LoginPage()),
           (route) => false,
         );
       }

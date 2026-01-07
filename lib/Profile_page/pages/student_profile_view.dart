@@ -67,6 +67,11 @@ class _StudentProfileViewState extends State<StudentProfileView> {
 
     final fullName = _studentData?['fullName'] ?? 'Student';
     final location = _studentData?['location'] ?? 'Remote';
+    final profileImage = (_studentData?['profileImageUrl'] ??
+        _studentData?['photoUrl'] ??
+        _studentData?['photoURL'] ??
+        '')
+      .toString();
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     final isOwnProfile = currentUserId == widget.studentId;
 
@@ -161,7 +166,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
                         children: [
                           MentorAvatar(
                             name: fullName,
-                            image: '',
+                            image: profileImage,
                             size: 80,
                           ),
                           const SizedBox(height: 16),

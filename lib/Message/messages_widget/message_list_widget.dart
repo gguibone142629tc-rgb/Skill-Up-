@@ -71,12 +71,27 @@ class MessageListWidget extends StatelessWidget {
           );
         }
 
+        // ✅ FIXED: Sort chat rooms by lastTimestamp (newest first)
+        var sortedDocs = snapshot.data!.docs.toList();
+        sortedDocs.sort((a, b) {
+          final aData = a.data() as Map<String, dynamic>;
+          final bData = b.data() as Map<String, dynamic>;
+          final aTime = aData['lastTimestamp'] as Timestamp?;
+          final bTime = bData['lastTimestamp'] as Timestamp?;
+          
+          if (aTime == null && bTime == null) return 0;
+          if (aTime == null) return 1;
+          if (bTime == null) return -1;
+          
+          return bTime.compareTo(aTime); // Descending order (newest first)
+        });
+
         return ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: snapshot.data!.docs.length,
+          itemCount: sortedDocs.length,
           itemBuilder: (context, index) {
-            var chatDoc = snapshot.data!.docs[index];
+            var chatDoc = sortedDocs[index];
             var chatData = chatDoc.data() as Map<String, dynamic>;
 
             List users = chatData['users'] ?? [];

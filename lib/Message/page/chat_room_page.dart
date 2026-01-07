@@ -326,17 +326,17 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                 if (!snapshot.hasData) return const SizedBox();
                 var docs = snapshot.data!.docs;
                 
-                // Sort messages by timestamp client-side
+                // ✅ FIXED: Sort messages by timestamp in descending order (newest first)
                 docs.sort((a, b) {
                   var aTime = (a['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
                   var bTime = (b['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
-                  return aTime.compareTo(bTime);
+                  return bTime.compareTo(aTime); // Descending - newest first
                 });
 
                 return ListView.builder(
                   controller: _scrollController,
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-                  reverse: false,
+                  reverse: true, // ✅ Newest message appears at top
                   itemCount: docs.length,
                   itemBuilder: (context, index) {
                     var doc = docs[index];

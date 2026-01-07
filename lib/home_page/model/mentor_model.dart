@@ -32,7 +32,7 @@ class Mentor {
   });
 
   factory Mentor.fromFirestore(Map<String, dynamic> data, String id) {
-    int? _parsePrice(dynamic value) {
+    int? parsePrice(dynamic value) {
       if (value == null) return null;
       final digits = value.toString().replaceAll(RegExp(r'[^0-9]'), '');
       if (digits.isEmpty) return null;
@@ -52,9 +52,9 @@ class Mentor {
       expertise: List<String>.from(data['expertise'] ?? []),
       pricePerMonth: (data['price'] ?? 'Free').toString(),
       planTitle: data['planTitle']?.toString(),
-      planPrice: _parsePrice(data['price']),
+      planPrice: parsePrice(data['price']),
       plan1Title: data['plan_Growth_Starter_title']?.toString(),
-      plan1Price: _parsePrice(data['plan_Growth_Starter_price']),
+      plan1Price: parsePrice(data['plan_Growth_Starter_price']),
     );
   }
 }

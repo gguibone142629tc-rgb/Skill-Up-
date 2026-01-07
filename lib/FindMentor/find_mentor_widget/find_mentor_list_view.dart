@@ -267,6 +267,11 @@ class StudentSearchCard extends StatelessWidget {
     final lastName = studentData['lastName'] ?? '';
     final fullName = '$firstName $lastName';
     final location = studentData['location'] ?? 'Remote';
+    final profileImage = (studentData['profileImageUrl'] ??
+            studentData['photoUrl'] ??
+            studentData['photoURL'] ??
+            '')
+        .toString();
     final interests = List<String>.from(studentData['interests'] ?? []);
     final goals = List<String>.from(studentData['goals'] ?? []);
 
@@ -317,7 +322,7 @@ class StudentSearchCard extends StatelessWidget {
                   // Avatar
                   MentorAvatar(
                     name: fullName,
-                    image: '',
+                    image: profileImage,
                     size: 64,
                   ),
                   const SizedBox(width: 12),

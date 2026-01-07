@@ -14,7 +14,6 @@ import 'package:finaproj/Service_Category/category_page/category.dart'; // Categ
 import 'package:finaproj/services/notification_service.dart';
 import 'package:finaproj/services/unread_messages_service.dart';
 import 'package:finaproj/services/subscription_service.dart';
-import 'package:finaproj/services/subscription_expiry_checker.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,9 +31,9 @@ void main() async {
   FirebaseAuth.instance.authStateChanges().listen((user) {
     if (user != null) {
       // Run in background without blocking UI
+      // Only check the current user's subscriptions to avoid permission errors
       Future.delayed(const Duration(milliseconds: 500), () {
-        SubscriptionService().checkAllSubscriptionsForExpiration();
-        SubscriptionExpiryChecker().checkSubscriptionsForExpiration();
+        SubscriptionService().checkUserSubscriptions(user.uid, sendNotifications: true);
       });
     }
   });

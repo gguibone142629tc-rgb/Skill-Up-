@@ -32,6 +32,7 @@ class SubscriptionExpiryChecker {
         final data = doc.data();
         final endDate = (data['endDate'] as Timestamp).toDate();
         final planName = data['planName'] ?? 'Your subscription';
+        final mentorId = data['mentorId'] as String?;
         final daysRemaining = endDate.difference(now).inDays;
 
         // Send notification if:
@@ -62,6 +63,7 @@ class SubscriptionExpiryChecker {
               userId: user.uid,
               planName: planName,
               daysRemaining: daysRemaining,
+              mentorId: mentorId,
             );
           }
         }

@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:finaproj/home_page/model/mentor_model.dart';
 import 'package:finaproj/Profile_page/pages/pofile_page.dart';
 import 'package:finaproj/app_settings/page/profile_page.dart';
@@ -21,6 +22,7 @@ class _MentorCardState extends State<MentorCard> {
   final DatabaseService _dbService = DatabaseService();
   bool _isSaved = false;
   bool _isLoading = true;
+  String? _userRole;
 
   @override
   void initState() {
@@ -31,9 +33,19 @@ class _MentorCardState extends State<MentorCard> {
   Future<void> _checkSavedStatus() async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId != null) {
+      String? role;
+      try {
+        final userDoc =
+            await FirebaseFirestore.instance.collection('users').doc(userId).get();
+        role = userDoc.data()?['role'] as String?;
+      } catch (_) {
+        role = null;
+      }
+
       final saved = await _dbService.isMentorSaved(userId, widget.mentor.id);
       if (mounted) {
         setState(() {
+          _userRole = role;
           _isSaved = saved;
           _isLoading = false;
         });
@@ -49,9 +61,17 @@ class _MentorCardState extends State<MentorCard> {
 
   Future<void> _toggleSaved() async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
+    final isMentorUser = _userRole == 'mentor';
     if (userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please log in to save mentors')),
+      );
+      return;
+    }
+
+    if (isMentorUser) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mentors cannot save other mentors')),
       );
       return;
     }
@@ -125,6 +145,7 @@ class _MentorCardState extends State<MentorCard> {
 
   @override
   Widget build(BuildContext context) {
+    final isMentorUser = _userRole == 'mentor';
     return Container(
       padding: const EdgeInsets.all(18),
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -214,7 +235,7 @@ class _MentorCardState extends State<MentorCard> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : InkWell(
-                          onTap: _toggleSaved,
+                          onTap: isMentorUser ? null : _toggleSaved,
                           borderRadius: BorderRadius.circular(20),
                           child: Container(
                             padding: const EdgeInsets.all(6),
@@ -229,7 +250,7 @@ class _MentorCardState extends State<MentorCard> {
                               size: 20,
                               color: _isSaved
                                   ? const Color(0xFF2D6A65)
-                                  : Colors.grey[600],
+                                  : (isMentorUser ? Colors.grey[400] : Colors.grey[600]),
                             ),
                           ),
                         ),
