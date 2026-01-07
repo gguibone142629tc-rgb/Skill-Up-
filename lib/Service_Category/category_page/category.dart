@@ -8,11 +8,10 @@ class Category extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          onPressed: () {
-            Navigator.of(context).pop(); // This will now return to Home
-          },
-          icon: const Icon(Icons.arrow_back, size: 24),
+        leading: InkWell(
+          onTap: () => Navigator.of(context).pop(),
+          borderRadius: BorderRadius.circular(24),
+          child: const Icon(Icons.arrow_back, size: 24),
         ),
         title: const Text(
           'Service Category',

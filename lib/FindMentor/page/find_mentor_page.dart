@@ -19,6 +19,7 @@ class _FindMentorPageState extends State<FindMentorPage> {
   String _searchQuery = "";
   String? _selectedCategory;
   List<String>? _selectedCategories;
+  String _selectedRole = 'Mentors'; // New: Role filter (Mentors or Students)
 
   // Same categories as Sign Up for consistency
   final List<String> _categories = [
@@ -88,11 +89,10 @@ class _FindMentorPageState extends State<FindMentorPage> {
   @override
   Widget build(BuildContext context) {
     // Title Logic
-    // Map concise category labels to more specific display labels when appropriate
     final String? displayCategory = _selectedCategory == 'Marketing' ? 'Digital Marketing' : _selectedCategory;
     String title = displayCategory != null 
-        ? '$displayCategory Mentors' 
-        : 'Find a Mentor & Students';
+        ? '$displayCategory ${_selectedRole}' 
+        : 'Search $_selectedRole';
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -111,6 +111,62 @@ class _FindMentorPageState extends State<FindMentorPage> {
             iconTheme: const IconThemeData(color: Colors.black),
           ),
           
+          // Role filter tabs
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _selectedRole = 'Mentors'),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: _selectedRole == 'Mentors' ? const Color(0xFF2D6A65) : Colors.grey[200],
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Mentors',
+                            style: TextStyle(
+                              color: _selectedRole == 'Mentors' ? Colors.white : Colors.black87,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _selectedRole = 'Students'),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: _selectedRole == 'Students' ? const Color(0xFF2D6A65) : Colors.grey[200],
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Students',
+                            style: TextStyle(
+                              color: _selectedRole == 'Students' ? Colors.white : Colors.black87,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
           SliverToBoxAdapter(
             child: FindMentorSearchWidget(
               initialText: _searchQuery,
@@ -119,15 +175,17 @@ class _FindMentorPageState extends State<FindMentorPage> {
                   _searchQuery = value;
                 });
               },
-              onFilterTap: _showFilterModal, // ✅ Connects the filter button
+              onFilterTap: _showFilterModal,
+              showFilter: _selectedRole == 'Mentors', // Hide filter when viewing students
             ),
           ),
 
           SliverToBoxAdapter(
             child: FindMentorListView(
               searchQuery: _searchQuery,
-              categories: _selectedCategories ?? (_selectedCategory != null ? [_selectedCategory!] : null), // pass multi or single category
-              hideStudents: widget.hideStudents || (_selectedCategory != null) || (_selectedCategories != null && _selectedCategories!.isNotEmpty),
+              categories: _selectedCategories ?? (_selectedCategory != null ? [_selectedCategory!] : null),
+              hideStudents: _selectedRole == 'Mentors',
+              hideMentors: _selectedRole == 'Students',
             ),
           ),
           

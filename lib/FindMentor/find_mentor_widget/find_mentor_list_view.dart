@@ -11,12 +11,14 @@ class FindMentorListView extends StatelessWidget {
   final String searchQuery;
   final List<String>? categories; // supports multiple selected categories
   final bool hideStudents;
+  final bool hideMentors;
 
   const FindMentorListView({
     super.key,
     required this.searchQuery,
     this.categories,
     this.hideStudents = false,
+    this.hideMentors = false,
   });
 
   @override
@@ -209,9 +211,12 @@ class FindMentorListView extends StatelessWidget {
               location.contains(query);
         }).toList();
 
-        // If requested to hide students (navigated from categories) or categories are active, clear students
-        if (hideStudents || (categories != null && categories!.isNotEmpty)) {
+        // If requested to hide students or mentors, filter accordingly
+        if (hideStudents) {
           filteredStudents = [];
+        }
+        if (hideMentors) {
+          filteredMentors.clear();
         }
 
         // Combine results (mentors first, then students)

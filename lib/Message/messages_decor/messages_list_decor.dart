@@ -35,13 +35,7 @@ class MessagesListDecor extends StatelessWidget {
         backgroundColor: Colors.grey[200],
         child: messagesModel.profilePath.isEmpty
             ? ClipOval(
-                child: Image.asset(
-                  'images/default_avatar.png',
-                  height: 52,
-                  width: 52,
-                  fit: BoxFit.cover,
-                  errorBuilder: (c, e, s) => const Icon(Icons.person, color: Colors.grey),
-                ),
+              child: const Icon(Icons.person, size: 24, color: Colors.grey),
               )
             : null,
       ),

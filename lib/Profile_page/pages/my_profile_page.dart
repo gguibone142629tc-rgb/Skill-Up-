@@ -353,17 +353,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
                                 child: _newImageBytes == null &&
                                         (_profileData?['profileImageUrl'] ?? '')
                                             .isEmpty
-                                    ? ClipOval(
-                                        child: Image.asset(
-                                          'images/default_avatar.png',
-                                          height: 100,
-                                          width: 100,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (c, e, s) => const Icon(
-                                              Icons.person,
-                                              size: 50),
-                                        ),
-                                      )
+                                    ? const Icon(Icons.person, size: 50, color: Colors.grey)
                                     : null,
                               ),
                               if (_isEditing)

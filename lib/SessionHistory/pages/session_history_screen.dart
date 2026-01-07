@@ -40,9 +40,10 @@ class _MySubscriptionPageState extends State<MySubscriptionPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
+        leading: InkWell(
+          onTap: () => Navigator.pop(context),
+          borderRadius: BorderRadius.circular(24),
+          child: const Icon(Icons.arrow_back, color: Colors.black),
         ),
         title: const Text(
           "My Subscription",

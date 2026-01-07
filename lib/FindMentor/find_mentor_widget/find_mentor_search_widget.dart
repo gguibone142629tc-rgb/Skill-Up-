@@ -5,12 +5,14 @@ class FindMentorSearchWidget extends StatefulWidget {
   final ValueChanged<String> onSearchChanged;
   final VoidCallback onFilterTap;
   final String initialText;
+  final bool showFilter;
 
   const FindMentorSearchWidget({
     super.key,
     required this.onSearchChanged,
     required this.onFilterTap,
     this.initialText = '',
+    this.showFilter = true,
   });
 
   @override
@@ -76,25 +78,27 @@ class _FindMentorSearchWidgetState extends State<FindMentorSearchWidget> {
               ),
             ),
           ),
-          const SizedBox(width: 12),
-          GestureDetector(
-            onTap: widget.onFilterTap,
-            child: Container(
-              height: 50,
-              width: 50,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFF2D6A65).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(15),
+          if (widget.showFilter) ...[
+            const SizedBox(width: 12),
+            GestureDetector(
+              onTap: widget.onFilterTap,
+              child: Container(
+                height: 50,
+                width: 50,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2D6A65).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: SvgPicture.asset(
+                  'assets/icons/tune.svg',
+                  color: const Color(0xFF2D6A65),
+                  placeholderBuilder: (_) =>
+                      const Icon(Icons.tune, color: Color(0xFF2D6A65)),
+                ),
               ),
-              child: SvgPicture.asset(
-                'assets/icons/tune.svg',
-                color: const Color(0xFF2D6A65),
-                placeholderBuilder: (_) =>
-                    const Icon(Icons.tune, color: Color(0xFF2D6A65)),
-              ),
-            ),
-          )
+            )
+          ]
         ],
       ),
     );

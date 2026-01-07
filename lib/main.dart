@@ -111,9 +111,21 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
     Navigator.pushReplacement(
       context,
       PageRouteBuilder(
-        pageBuilder: (context, animation1, animation2) => nextPage,
-        transitionDuration: Duration.zero,
-        reverseTransitionDuration: Duration.zero,
+        pageBuilder: (context, animation, secondaryAnimation) => nextPage,
+        transitionDuration: const Duration(milliseconds: 320),
+        reverseTransitionDuration: const Duration(milliseconds: 260),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          const begin = Offset(0.08, 0); // subtle horizontal slide
+          const end = Offset.zero;
+          final curve = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+          return FadeTransition(
+            opacity: curve,
+            child: SlideTransition(
+              position: Tween(begin: begin, end: end).animate(curve),
+              child: child,
+            ),
+          );
+        },
       ),
     );
   }
@@ -140,7 +152,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
         const BottomNavigationBarItem(
           icon: Icon(Icons.search),
           activeIcon: Icon(Icons.search, weight: 600),
-          label: 'Find Mentor',
+          label: 'Search',
         ),
         BottomNavigationBarItem(
           icon: _buildMessagesIconWithBadge(widget.initialIndex == 2),

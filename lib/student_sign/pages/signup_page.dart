@@ -111,10 +111,13 @@ class _SignUpPageState extends State<SignUpPage> {
               children: [
                 Row(
                   children: [
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.arrow_back),
-                      padding: EdgeInsets.zero,
+                    InkWell(
+                      onTap: () => Navigator.pop(context),
+                      borderRadius: BorderRadius.circular(24),
+                      child: const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Icon(Icons.arrow_back),
+                      ),
                     ),
                     const Expanded(child: Center(child: LoginLogo(height: 40))),
                     const SizedBox(width: 40),

@@ -1,10 +1,14 @@
 import 'dart:io';
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart'; // Required for kIsWeb
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:http/http.dart' as http;
 import 'package:finaproj/Profile_page/pages/pofile_page.dart';
 import 'package:finaproj/Profile_page/pages/student_profile_view.dart';
 import 'package:finaproj/services/unread_messages_service.dart';
@@ -33,6 +37,48 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   final ScrollController _scrollController = ScrollController();
   final ImagePicker _picker = ImagePicker();
   bool _isUploading = false;
+  
+  // Selected image state
+  XFile? _selectedImage;
+  Uint8List? _selectedImageBytes;
+
+  // Cloudinary config (same as profile uploads)
+  final String cloudName = 'dagnamipk';
+  final String uploadPreset = 'skillup_preset';
+
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  Future<String> _uploadToCloudinary(Uint8List fileBytes, String fileName) async {
+    try {
+      final url = Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/upload');
+      final request = http.MultipartRequest('POST', url)
+        ..fields['upload_preset'] = uploadPreset;
+
+      request.files.add(http.MultipartFile.fromBytes(
+        'file',
+        fileBytes,
+        filename: fileName,
+      ));
+
+      final response = await request.send();
+      final responseData = await response.stream.bytesToString();
+      final jsonResponse = json.decode(responseData);
+
+      if (response.statusCode == 200) {
+        return jsonResponse['secure_url'] ?? '';
+      } else {
+        throw Exception('Upload failed: ${jsonResponse['error']?['message'] ?? 'Unknown error'}');
+      }
+    } catch (e) {
+      debugPrint('Cloudinary upload error: $e');
+      rethrow;
+    }
+  }
 
   bool _isSameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
@@ -185,9 +231,17 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     );
   }
 
-  void _sendMessage({String? text, String? imageUrl}) async {
-    if ((text == null || text.trim().isEmpty) && imageUrl == null) return;
-    final String displayMessage = text ?? (imageUrl != null ? 'Sent an image' : '');
+  Future<void> _sendMessage({String? text, String? imageUrl, String? fileUrl, String? fileName}) async {
+    if ((text == null || text.trim().isEmpty) && imageUrl == null && fileUrl == null) return;
+
+    String displayMessage;
+    if (fileUrl != null) {
+      displayMessage = 'Sent a file: ${fileName ?? 'Attachment'}';
+    } else if (imageUrl != null) {
+      displayMessage = 'Sent an image';
+    } else {
+      displayMessage = text!.trim();
+    }
 
     try {
       // Get sender's name
@@ -221,8 +275,14 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
         'senderId': widget.currentUserId,
         'text': text ?? "",
         'imageUrl': imageUrl ?? "",
+        'fileUrl': fileUrl ?? "",
+        'fileName': fileName ?? "",
         'timestamp': FieldValue.serverTimestamp(),
-        'type': imageUrl != null ? 'image' : 'text',
+        'type': fileUrl != null
+            ? 'file'
+            : imageUrl != null
+                ? 'image'
+                : 'text',
         'reaction': '', // Initialize with empty reaction
       });
 
@@ -237,7 +297,14 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
 
       // Send notification to the recipient
       if (recipientId.isNotEmpty) {
-        final messageContent = imageUrl != null ? '📸 Sent an image' : text;
+        String? messageContent;
+        if (fileUrl != null) {
+          messageContent = '📎 Sent a file: ${fileName ?? 'Attachment'}';
+        } else if (imageUrl != null) {
+          messageContent = '📸 Sent an image';
+        } else {
+          messageContent = text;
+        }
         await FirebaseFirestore.instance
             .collection('users')
             .doc(recipientId)
@@ -268,29 +335,60 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
       }
     } catch (e) {
       debugPrint("Error sending message: $e");
+      _showError('Could not send message. Please try again.');
     }
   }
 
-  Future<void> _onPlusTap() async {
+  Future<void> _pickImage() async {
+    debugPrint('📸 Picking image...');
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
-    if (image != null) {
+    if (image == null) {
+      debugPrint('❌ Image picker cancelled');
+      return;
+    }
+
+    debugPrint('✅ Image picked, loading preview...');
+    final bytes = await image.readAsBytes();
+    setState(() {
+      _selectedImage = image;
+      _selectedImageBytes = bytes;
+    });
+  }
+
+  void _clearSelectedImage() {
+    setState(() {
+      _selectedImage = null;
+      _selectedImageBytes = null;
+    });
+  }
+
+  Future<void> _sendMessageWithAttachment() async {
+    // Check if there's an image to send
+    if (_selectedImage != null && _selectedImageBytes != null) {
       setState(() => _isUploading = true);
       try {
-        String fileName = DateTime.now().millisecondsSinceEpoch.toString();
-        Reference ref = FirebaseStorage.instance.ref().child('chat_images').child('${widget.chatRoomId}_$fileName.jpg');
-        if (kIsWeb) {
-          Uint8List bytes = await image.readAsBytes();
-          await ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
-        } else {
-          await ref.putFile(File(image.path));
-        }
-        String downloadUrl = await ref.getDownloadURL();
-        _sendMessage(imageUrl: downloadUrl);
+        debugPrint('📤 Uploading image to Cloudinary...');
+        final downloadUrl = await _uploadToCloudinary(_selectedImageBytes!, _selectedImage!.name);
+        
+        debugPrint('✅ Got URL: $downloadUrl');
+        debugPrint('📨 Sending message with image...');
+        await _sendMessage(
+          text: _messageController.text.trim().isEmpty ? null : _messageController.text.trim(),
+          imageUrl: downloadUrl,
+        );
+        
+        // Clear selected image after successful send
+        _clearSelectedImage();
+        debugPrint('✅ Message sent!');
       } catch (e) {
-        debugPrint("Upload Error: $e");
+        debugPrint("❌ Upload Error: $e");
+        _showError('Image upload failed: ${e.toString()}');
       } finally {
-        setState(() => _isUploading = false);
+        if (mounted) setState(() => _isUploading = false);
       }
+    } else {
+      // No image, just send text
+      await _sendMessage(text: _messageController.text);
     }
   }
 
@@ -304,7 +402,11 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
       backgroundColor: bgGrey,
       appBar: AppBar(
         backgroundColor: bgGrey, elevation: 0,
-        leading: IconButton(icon: const Icon(Icons.chevron_left, color: Colors.black, size: 28), onPressed: () => Navigator.pop(context)),
+        leading: InkWell(
+          onTap: () => Navigator.pop(context),
+          borderRadius: BorderRadius.circular(24),
+          child: const Icon(Icons.chevron_left, color: Colors.black, size: 28),
+        ),
         titleSpacing: 0,
         title: GestureDetector(
           onTap: () async {
@@ -386,7 +488,9 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                     var doc = docs[index];
                     var data = doc.data() as Map<String, dynamic>;
                     bool isMe = data['senderId'] == widget.currentUserId;
-                    bool isImage = (data['type'] ?? 'text') == 'image';
+                    final messageType = (data['type'] ?? 'text') as String;
+                    bool isImage = messageType == 'image';
+                    bool isFile = messageType == 'file';
                     String reaction = data['reaction'] ?? '';
                     DateTime messageDate = data['timestamp'] != null ? (data['timestamp'] as Timestamp).toDate() : DateTime.now();
                     String time = DateFormat('hh:mm a').format(messageDate);
@@ -435,9 +539,43 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                                               bottomRight: Radius.circular(isMe ? 20 : 4),
                                             ),
                                           ),
-                                          child: isImage 
-                                            ? ClipRRect(borderRadius: BorderRadius.circular(15), child: Image.network(data['imageUrl'], fit: BoxFit.cover))
-                                            : Text(data['text'] ?? "", style: TextStyle(color: isMe ? Colors.white : Colors.black87)),
+                                          child: isImage
+                                              ? ClipRRect(
+                                                  borderRadius: BorderRadius.circular(15),
+                                                  child: Image.network(data['imageUrl'], fit: BoxFit.cover),
+                                                )
+                                              : isFile
+                                                  ? GestureDetector(
+                                                      onTap: () async {
+                                                        final url = (data['fileUrl'] ?? '') as String;
+                                                        if (url.isEmpty) return;
+                                                        final uri = Uri.parse(url);
+                                                        if (await canLaunchUrl(uri)) {
+                                                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                                        }
+                                                      },
+                                                      child: Row(
+                                                        mainAxisSize: MainAxisSize.min,
+                                                        children: [
+                                                          Icon(Icons.insert_drive_file, color: isMe ? Colors.white : Colors.black54),
+                                                          const SizedBox(width: 10),
+                                                          Flexible(
+                                                            child: Text(
+                                                              (data['fileName'] ?? 'Attachment') as String,
+                                                              style: TextStyle(
+                                                                color: isMe ? Colors.white : Colors.black87,
+                                                                fontWeight: FontWeight.w600,
+                                                              ),
+                                                              overflow: TextOverflow.ellipsis,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    )
+                                                  : Text(
+                                                      data['text'] ?? "",
+                                                      style: TextStyle(color: isMe ? Colors.white : Colors.black87),
+                                                    ),
                                         ),
                                         // --- REACTION BADGE ---
                                         if (reaction.isNotEmpty)
@@ -482,28 +620,79 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
             ),
           ),
           SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              child: Row(
-                children: [
-                  IconButton(onPressed: _onPlusTap, icon: const Icon(Icons.add_circle, color: brandGreen, size: 30)),
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30)),
-                      child: TextField(
-                        controller: _messageController,
-                        decoration: const InputDecoration(hintText: "Write a message...", border: InputBorder.none),
-                      ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Image preview
+                if (_selectedImageBytes != null)
+                  Container(
+                    margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: brandGreen.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.memory(
+                            _selectedImageBytes!,
+                            width: 60,
+                            height: 60,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Text(
+                            'Image selected',
+                            style: TextStyle(fontSize: 14, color: Colors.black87),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, size: 20),
+                          onPressed: _clearSelectedImage,
+                          color: Colors.grey[600],
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  GestureDetector(
-                    onTap: () => _sendMessage(text: _messageController.text),
-                    child: const CircleAvatar(backgroundColor: brandGreen, child: Icon(Icons.send, color: Colors.white)),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                  child: Row(
+                    children: [
+                      IconButton(onPressed: _pickImage, icon: const Icon(Icons.image, color: brandGreen, size: 30)),
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30)),
+                          child: TextField(
+                            controller: _messageController,
+                            decoration: const InputDecoration(hintText: "Write a message...", border: InputBorder.none),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      InkWell(
+                        onTap: _sendMessageWithAttachment,
+                        borderRadius: BorderRadius.circular(50),
+                        child: Ink(
+                          decoration: const BoxDecoration(
+                            color: brandGreen,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Padding(
+                            padding: EdgeInsets.all(12.0),
+                            child: Icon(Icons.send, color: Colors.white, size: 24),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],

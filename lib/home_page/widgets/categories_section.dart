@@ -52,28 +52,34 @@ class CategoriesSection extends StatelessWidget {
 
   // 2. Helper method to make cards clickable
   Widget _buildCategory(BuildContext context, IconData icon, String label) {
-    return GestureDetector(
-      onTap: () {
-        // Map simple labels to one or more search categories
-        List<String>? mapped;
-        if (label == 'Technology') {
-          mapped = ['Program & Tech', 'Build AI Service', 'Data'];
-        } else if (label == 'Design') {
-          mapped = ['Graphic Design'];
-        } else if (label == 'Marketing') {
-          mapped = ['Digital Marketing'];
-        } else {
-          mapped = null;
-        }
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        splashColor: const Color(0xFF2D6A65).withOpacity(0.15),
+        highlightColor: const Color(0xFF2D6A65).withOpacity(0.08),
+        onTap: () {
+          // Map simple labels to one or more search categories
+          List<String>? mapped;
+          if (label == 'Technology') {
+            mapped = ['Program & Tech', 'Build AI Service', 'Data'];
+          } else if (label == 'Design') {
+            mapped = ['Graphic Design'];
+          } else if (label == 'Marketing') {
+            mapped = ['Digital Marketing'];
+          } else {
+            mapped = null;
+          }
 
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => FindMentorPage(initialCategory: label, initialCategories: mapped, hideStudents: true),
-          ),
-        );
-      },
-      child: CategoryCard(icon: icon, label: label),
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => FindMentorPage(initialCategory: label, initialCategories: mapped, hideStudents: true),
+            ),
+          );
+        },
+        child: CategoryCard(icon: icon, label: label),
+      ),
     );
   }
 }

@@ -33,25 +33,10 @@ class SessionCard extends StatelessWidget {
                   );
                 } else {
                   // Try project default asset first, otherwise show initials
-                  return FutureBuilder<bool>(
-                    future: Future<bool>.delayed(Duration.zero, () => true), // quick microtask to allow errorBuilder handling
-                    builder: (context, snap) {
-                      return CircleAvatar(
-                        radius: 24,
-                        backgroundColor: Colors.grey[200],
-                        child: ClipOval(
-                          child: Image.asset(
-                            'images/default_avatar.png',
-                            height: 48,
-                            width: 48,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Center(child: Text(initials, style: const TextStyle(color: Color(0xFF2D6A65), fontWeight: FontWeight.bold)));
-                            },
-                          ),
-                        ),
-                      );
-                    },
+                  return CircleAvatar(
+                    radius: 24,
+                    backgroundColor: Colors.grey[200],
+                    child: Text(initials, style: const TextStyle(color: Color(0xFF2D6A65), fontWeight: FontWeight.bold)),
                   );
                 }
               }),
