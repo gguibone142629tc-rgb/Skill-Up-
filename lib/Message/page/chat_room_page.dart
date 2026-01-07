@@ -34,6 +34,50 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   final ImagePicker _picker = ImagePicker();
   bool _isUploading = false;
 
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  String _formatDayLabel(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final that = DateTime(date.year, date.month, date.day);
+    final diffDays = today.difference(that).inDays;
+    if (diffDays == 0) return 'Today';
+    if (diffDays == 1) return 'Yesterday';
+    return DateFormat('EEE, MMM d, yyyy').format(date);
+  }
+
+  Widget _buildDateHeader(DateTime date) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16.0),
+      child: Row(
+        children: [
+          const Expanded(child: Divider(thickness: 1, color: Colors.grey)),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12.0),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFF356966).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                _formatDayLabel(date),
+                style: const TextStyle(
+                  color: Color(0xFF356966),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ),
+          const Expanded(child: Divider(thickness: 1, color: Colors.grey)),
+        ],
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -344,65 +388,91 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                     bool isMe = data['senderId'] == widget.currentUserId;
                     bool isImage = (data['type'] ?? 'text') == 'image';
                     String reaction = data['reaction'] ?? '';
-                    String time = data['timestamp'] != null ? DateFormat('hh:mm a').format((data['timestamp'] as Timestamp).toDate()) : "...";
+                    DateTime messageDate = data['timestamp'] != null ? (data['timestamp'] as Timestamp).toDate() : DateTime.now();
+                    String time = DateFormat('hh:mm a').format(messageDate);
 
                     bool isLastMessage = index == 0;
                     String? nextMessageInList = docs.length > 1 ? (docs[1].data() as Map<String, dynamic>)['text'] : null;
 
-                    return Row(
-                      mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+                    // Check if we need to show date header
+                    bool showDateHeader = false;
+                    if (index == docs.length - 1) {
+                      showDateHeader = true;
+                    } else {
+                      var nextDoc = docs[index + 1];
+                      var nextData = nextDoc.data() as Map<String, dynamic>;
+                      DateTime nextMessageDate = nextData['timestamp'] != null ? (nextData['timestamp'] as Timestamp).toDate() : DateTime.now();
+                      if (!_isSameDay(messageDate, nextMessageDate)) {
+                        showDateHeader = true;
+                      }
+                    }
+
+                    return Column(
                       children: [
-                        GestureDetector(
-                          onLongPress: () => _showOptions(doc.id, isMe, isLastMessage, nextMessageInList),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 4),
-                            child: Column(
-                              crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                              children: [
-                                Stack(
-                                  clipBehavior: Clip.none,
+                        if (showDateHeader) _buildDateHeader(messageDate),
+                        Row(
+                          mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+                          children: [
+                            GestureDetector(
+                              onLongPress: () => _showOptions(doc.id, isMe, isLastMessage, nextMessageInList),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 4),
+                                child: Column(
+                                  crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                                   children: [
-                                    Container(
-                                      constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
-                                      padding: isImage ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                      decoration: BoxDecoration(
-                                        color: isMe ? brandGreen : bubbleGrey,
-                                        borderRadius: BorderRadius.only(
-                                          topLeft: const Radius.circular(20),
-                                          topRight: const Radius.circular(20),
-                                          bottomLeft: Radius.circular(isMe ? 4 : 20),
-                                          bottomRight: Radius.circular(isMe ? 20 : 4),
-                                        ),
-                                      ),
-                                      child: isImage 
-                                        ? ClipRRect(borderRadius: BorderRadius.circular(15), child: Image.network(data['imageUrl'], fit: BoxFit.cover))
-                                        : Text(data['text'] ?? "", style: TextStyle(color: isMe ? Colors.white : Colors.black87)),
-                                    ),
-                                    // --- REACTION BADGE ---
-                                    if (reaction.isNotEmpty)
-                                      Positioned(
-                                        bottom: -8,
-                                        right: isMe ? -8 : null,
-                                        left: isMe ? null : -8,
-                                        child: Container(
-                                          padding: const EdgeInsets.all(4),
+                                    Stack(
+                                      clipBehavior: Clip.none,
+                                      children: [
+                                        Container(
+                                          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+                                          padding: isImage ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                                           decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            shape: BoxShape.circle,
-                                            boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))],
+                                            color: isMe ? brandGreen : bubbleGrey,
+                                            borderRadius: BorderRadius.only(
+                                              topLeft: const Radius.circular(20),
+                                              topRight: const Radius.circular(20),
+                                              bottomLeft: Radius.circular(isMe ? 4 : 20),
+                                              bottomRight: Radius.circular(isMe ? 20 : 4),
+                                            ),
                                           ),
-                                          child: Text(reaction, style: const TextStyle(fontSize: 12)),
+                                          child: isImage 
+                                            ? ClipRRect(borderRadius: BorderRadius.circular(15), child: Image.network(data['imageUrl'], fit: BoxFit.cover))
+                                            : Text(data['text'] ?? "", style: TextStyle(color: isMe ? Colors.white : Colors.black87)),
+                                        ),
+                                        // --- REACTION BADGE ---
+                                        if (reaction.isNotEmpty)
+                                          Positioned(
+                                            bottom: -8,
+                                            right: isMe ? -8 : null,
+                                            left: isMe ? null : -8,
+                                            child: Container(
+                                              padding: const EdgeInsets.all(4),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                shape: BoxShape.circle,
+                                                boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))],
+                                              ),
+                                              child: Text(reaction, style: const TextStyle(fontSize: 12)),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 10, left: 4, right: 4),
+                                      child: Text(
+                                        time,
+                                        style: const TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
                                         ),
                                       ),
+                                    ),
                                   ],
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 10, left: 4, right: 4),
-                                  child: Text(time, style: const TextStyle(color: Colors.grey, fontSize: 10)),
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
+                          ],
                         ),
                       ],
                     );
