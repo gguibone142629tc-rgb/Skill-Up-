@@ -275,30 +275,7 @@ class StudentSearchCard extends StatelessWidget {
     final interests = List<String>.from(studentData['interests'] ?? []);
     final goals = List<String>.from(studentData['goals'] ?? []);
 
-    return GestureDetector(
-      onTap: () {
-        final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-        final isOwnProfile = studentId == currentUserId;
-
-        if (isOwnProfile) {
-          // Navigate to own profile page (from nav bar)
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const ProfilePage(),
-            ),
-          );
-        } else {
-          // Navigate to other student's profile
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => StudentProfileView(studentId: studentId),
-            ),
-          );
-        }
-      },
-      child: Container(
+    return Container(
         margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
             color: Colors.white,
@@ -416,10 +393,54 @@ class StudentSearchCard extends StatelessWidget {
                   'No goals listed',
                   style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                 ),
+              const SizedBox(height: 16),
+              // View Profile Button
+              Align(
+                alignment: Alignment.centerRight,
+                child: ElevatedButton(
+                  onPressed: () {
+                    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+                    final isOwnProfile = studentId == currentUserId;
+
+                    if (isOwnProfile) {
+                      // Navigate to own profile page (from nav bar)
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ProfilePage(),
+                        ),
+                      );
+                    } else {
+                      // Navigate to other student's profile
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => StudentProfileView(studentId: studentId),
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2D6A65),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                    elevation: 2,
+                  ),
+                  child: const Text(
+                    "View Profile",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
-      ),
     );
   }
 }
