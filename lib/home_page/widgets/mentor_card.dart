@@ -11,8 +11,9 @@ import 'package:finaproj/membershipPlan/model/membership_plan.dart';
 
 class MentorCard extends StatefulWidget {
   final Mentor mentor;
+  final EdgeInsetsGeometry margin;
 
-  const MentorCard({super.key, required this.mentor});
+  const MentorCard({super.key, required this.mentor, this.margin = const EdgeInsets.symmetric(horizontal: 20, vertical: 8)});
 
   @override
   State<MentorCard> createState() => _MentorCardState();
@@ -148,7 +149,7 @@ class _MentorCardState extends State<MentorCard> {
     final isMentorUser = _userRole == 'mentor';
     return Container(
       padding: const EdgeInsets.all(18),
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      margin: widget.margin,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),

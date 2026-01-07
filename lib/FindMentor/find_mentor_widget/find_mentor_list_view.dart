@@ -1,11 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
 import 'package:finaproj/FindMentor/find_mentor_decor/find_mentor_list.dart';
-import 'package:finaproj/home_page/model/mentor_model.dart';
 import 'package:finaproj/common/mentor_avatar.dart';
+import 'package:finaproj/common/responsive_layout.dart';
 import 'package:finaproj/Profile_page/pages/student_profile_view.dart';
 import 'package:finaproj/app_settings/page/profile_page.dart';
+import 'package:finaproj/home_page/model/mentor_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 
 class FindMentorListView extends StatelessWidget {
   final String searchQuery;
@@ -25,25 +26,37 @@ class FindMentorListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = ResponsiveLayout.verticalSpacing(
+      context,
+      mobile: 20,
+      tablet: 28,
+      desktop: 36,
+    );
+
     return StreamBuilder<QuerySnapshot>(
       // Fetch both mentors and students
       stream: FirebaseFirestore.instance.collection('users').snapshots(),
       builder: (context, snapshot) {
+        Widget content;
+
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-              child: Padding(
-            padding: EdgeInsets.all(20.0),
-            child: CircularProgressIndicator(),
-          ));
+          content = const Center(
+            child: Padding(
+              padding: EdgeInsets.all(20.0),
+              child: CircularProgressIndicator(),
+            ),
+          );
+          return ResponsiveLayout.constrain(context: context, child: content);
         }
 
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Center(
+          content = const Center(
             child: Padding(
               padding: EdgeInsets.only(top: 50),
               child: Text("No users found."),
             ),
           );
+          return ResponsiveLayout.constrain(context: context, child: content);
         }
 
         // 1. Convert Firestore documents to Mentor objects (for mentors) or get student data
@@ -250,18 +263,21 @@ class FindMentorListView extends StatelessWidget {
         final combinedCount = filteredMentors.length + filteredStudents.length;
 
         if (combinedCount == 0) {
-          return Center(
+          content = Center(
             child: Padding(
               padding: const EdgeInsets.only(top: 50),
               child: Text(
-                  searchQuery.isEmpty ? "No users found." : "No matches found.",
-                  style: const TextStyle(color: Colors.grey)),
+                searchQuery.isEmpty ? "No users found." : "No matches found.",
+                style: const TextStyle(color: Colors.grey),
+              ),
             ),
           );
+          return ResponsiveLayout.constrain(context: context, child: content);
         }
 
-        return ListView.builder(
+        content = ListView.builder(
           shrinkWrap: true,
+          padding: EdgeInsets.only(bottom: bottomInset),
           physics: const NeverScrollableScrollPhysics(),
           itemCount: combinedCount,
           itemBuilder: (context, index) {
@@ -277,6 +293,8 @@ class FindMentorListView extends StatelessWidget {
             }
           },
         );
+
+        return ResponsiveLayout.constrain(context: context, child: content);
       },
     );
   }
@@ -295,6 +313,8 @@ class StudentSearchCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final side = ResponsiveLayout.horizontalPadding(context);
+    final vertical = ResponsiveLayout.verticalSpacing(context, mobile: 10, tablet: 12, desktop: 14);
     final firstName = studentData['firstName'] ?? 'Student';
     final lastName = studentData['lastName'] ?? '';
     final fullName = '$firstName $lastName';
@@ -308,7 +328,7 @@ class StudentSearchCard extends StatelessWidget {
     final goals = List<String>.from(studentData['goals'] ?? []);
 
     return Container(
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      margin: EdgeInsets.symmetric(horizontal: side, vertical: vertical),
         decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(15),

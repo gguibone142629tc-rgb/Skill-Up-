@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart'; // Add this
+import 'package:finaproj/common/responsive_layout.dart';
 import 'package:finaproj/home_page/model/mentor_model.dart';
 import 'package:flutter/material.dart';
 import 'mentor_card.dart';
@@ -66,13 +67,39 @@ class TopMentorsSection extends StatelessWidget {
             // Take top 5
             final mentors = configuredMentors.take(5).toList();
 
-            return ListView.builder(
-              padding: EdgeInsets.zero,
-              physics: const NeverScrollableScrollPhysics(),
-              shrinkWrap: true,
-              itemCount: mentors.length,
-              itemBuilder: (context, index) {
-                return MentorCard(mentor: mentors[index]);
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final spacing = ResponsiveLayout.verticalSpacing(
+                  context,
+                  mobile: 12,
+                  tablet: 14,
+                  desktop: 16,
+                );
+
+                final columns = ResponsiveLayout.gridColumns(
+                  context,
+                  mobile: 1,
+                  tablet: 2,
+                  desktop: 3,
+                );
+
+                final cardWidth = (constraints.maxWidth - spacing * (columns - 1)) / columns;
+
+                return Wrap(
+                  spacing: spacing,
+                  runSpacing: spacing,
+                  children: mentors
+                      .map(
+                        (mentor) => SizedBox(
+                          width: cardWidth,
+                          child: MentorCard(
+                            mentor: mentor,
+                            margin: EdgeInsets.zero,
+                          ),
+                        ),
+                      )
+                      .toList(),
+                );
               },
             );
           },

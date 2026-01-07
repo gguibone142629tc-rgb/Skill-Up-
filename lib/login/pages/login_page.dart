@@ -75,7 +75,7 @@ class _LoginPageState extends State<LoginPage> {
       UserCredential? userCredential = await _authService.login(
         _emailController.text.trim(),
         _passwordController.text.trim(),
-      );
+      );  
 
       if (mounted) {
         // 2. Fetch the user's document with timeout

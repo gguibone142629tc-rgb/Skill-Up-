@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:finaproj/FindMentor/page/find_mentor_page.dart';
 import 'package:finaproj/Message/page/notifications_page.dart';
 import 'package:finaproj/services/notification_service.dart';
+import 'package:finaproj/common/responsive_layout.dart';
 
 class CustomAppBar extends StatelessWidget {
   const CustomAppBar({super.key});
@@ -12,13 +13,19 @@ class CustomAppBar extends StatelessWidget {
   Widget build(BuildContext context) {
     // Get the current user's ID
     final String? uid = FirebaseAuth.instance.currentUser?.uid;
+    final side = ResponsiveLayout.horizontalPadding(context);
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+      width: double.infinity,
       decoration: const BoxDecoration(
         color: Color(0xFF4A8B85),
       ),
-      child: Column(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1100),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(side, 20, side, 24),
+            child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Top row with greeting and notification icon
@@ -199,6 +206,9 @@ class CustomAppBar extends StatelessWidget {
             ),
           ),
         ],
+      ),
+          ),
+        ),
       ),
     );
   }

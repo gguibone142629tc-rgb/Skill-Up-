@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:finaproj/common/auth_text_field.dart';
+import 'package:finaproj/common/responsive_layout.dart';
 import 'package:finaproj/membershipPlan/model/membership_plan.dart';
 import 'package:finaproj/membershipPlan/pages/checkout_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -21,7 +22,7 @@ class MembershipPage extends StatefulWidget {
 }
 
 class _MembershipPageState extends State<MembershipPage> {
-  int selectedIndex = 1;
+  int selectedIndex = 0;
 
   // Plans - will be updated with mentor's custom pricing if viewing as student
   late List<MembershipPlan> plans = [];
@@ -518,6 +519,15 @@ class _MembershipPageState extends State<MembershipPage> {
 
   @override
   Widget build(BuildContext context) {
+    final side = ResponsiveLayout.horizontalPadding(context);
+    final gap = ResponsiveLayout.verticalSpacing(context, mobile: 10, tablet: 14, desktop: 16);
+    final maxCardWidth = ResponsiveLayout.value<double>(
+      context,
+      mobile: 520,
+      tablet: 640,
+      desktop: 760,
+    );
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -542,95 +552,129 @@ class _MembershipPageState extends State<MembershipPage> {
               ),
             )
           : Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              itemCount: plans.length,
-              itemBuilder: (context, index) {
-                return PlanCard(
-                  plan: plans[index],
-                  isSelected: selectedIndex == index,
-                  onTap: () => setState(() => selectedIndex = index),
-                );
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: () {
-                  if (widget.isMentorView) {
-                    _showEditSheet(plans[selectedIndex], selectedIndex);
-                  } else {
-                    // Check if plan is configured before proceeding
-                    final selectedPlan = plans[selectedIndex];
-                    if (selectedPlan.price <= 0) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('This mentor hasn\'t configured this plan yet. Please select another plan or mentor.'),
-                          backgroundColor: Colors.orange,
+              children: [
+                Expanded(
+                  child: plans.isEmpty
+                      ? const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(24),
+                            child: Text('No plans available right now.'),
+                          ),
+                        )
+                      : ListView.builder(
+                          padding:
+                              EdgeInsets.symmetric(horizontal: side, vertical: gap),
+                          itemCount: plans.length,
+                          itemBuilder: (context, index) {
+                            return Center(
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(maxWidth: maxCardWidth),
+                                child: PlanCard(
+                                  plan: plans[index],
+                                  isSelected: selectedIndex == index,
+                                  onTap: () => setState(() => selectedIndex = index),
+                                ),
+                              ),
+                            );
+                          },
                         ),
-                      );
-                      return;
-                    }
-                    
-                    // Check if slots are available before proceeding
-                    if (selectedPlan.availableSlots != null && 
-                        selectedPlan.availableSlots! <= 0) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Sorry, no slots available for this plan. Please try another mentor.'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                      return;
-                    }
-                    
-                    // Navigate to Checkout
-                    const planKeys = [
-                      'Growth_Starter',
-                      'Career_Accelerator',
-                      'Executive_Elite',
-                    ];
-                    final planKey = planKeys[selectedIndex];
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => CheckoutPage(
-                          selectedPlan: selectedPlan,
-                          mentorData: widget.mentorData!,
-                          planKey: planKey,
+                ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(side, gap, side, gap * 1.2),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: maxCardWidth),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: plans.isEmpty
+                              ? null
+                              : () {
+                                  final safeIndex = selectedIndex.clamp(0, plans.length - 1);
+                                  final selectedPlan = plans[safeIndex];
+
+                                  if (widget.isMentorView) {
+                                    _showEditSheet(selectedPlan, safeIndex);
+                                    return;
+                                  }
+
+                                  if (selectedPlan.price <= 0) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                            "This mentor hasn't configured this plan yet. Please select another plan or mentor."),
+                                        backgroundColor: Colors.orange,
+                                      ),
+                                    );
+                                    return;
+                                  }
+
+                                  if (selectedPlan.availableSlots != null &&
+                                      selectedPlan.availableSlots! <= 0) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                            'Sorry, no slots available for this plan. Please try another mentor.'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                    return;
+                                  }
+
+                                  const planKeys = [
+                                    'Growth_Starter',
+                                    'Career_Accelerator',
+                                    'Executive_Elite',
+                                  ];
+                                  final planKey = planKeys[safeIndex];
+
+                                  if (widget.mentorData == null) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                            'Missing mentor details. Please reopen the mentor profile and try again.'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                    return;
+                                  }
+
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => CheckoutPage(
+                                        selectedPlan: selectedPlan,
+                                        mentorData: widget.mentorData!,
+                                        planKey: planKey,
+                                      ),
+                                    ),
+                                  );
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF5D70F3),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: Text(
+                            widget.isMentorView
+                                ? "Edit Plan Details"
+                                : "Proceed to Checkout",
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
                       ),
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF5D70F3),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  elevation: 0,
-                ),
-                child: Text(
-                  widget.isMentorView
-                      ? "Edit Plan Details"
-                      : "Proceed to Checkout",
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
-          ),
-        ],
-      ),
     );
   }
 }

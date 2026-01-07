@@ -1,4 +1,5 @@
 import 'package:finaproj/FindMentor/page/find_mentor_page.dart';
+import 'package:finaproj/common/responsive_layout.dart';
 import 'package:flutter/material.dart';
 import 'category_card.dart';
 
@@ -7,8 +8,10 @@ class CategoriesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final side = ResponsiveLayout.horizontalPadding(context);
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+      padding: EdgeInsets.fromLTRB(side, 16, side, 12),
       child: Column(
         children: [
           Row(
@@ -30,7 +33,6 @@ class CategoriesSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          // 1. Removed "const" and used GridView with children
           GridView.count(
             crossAxisCount: 4,
             shrinkWrap: true,

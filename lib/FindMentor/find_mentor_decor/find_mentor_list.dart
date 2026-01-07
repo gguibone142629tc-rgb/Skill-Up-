@@ -1,10 +1,11 @@
-import 'package:finaproj/home_page/model/mentor_model.dart'; // Use the shared Mentor model
-import 'package:flutter/material.dart';
+import 'package:finaproj/common/mentor_avatar.dart'; // Shared avatar widget
+import 'package:finaproj/common/responsive_layout.dart';
 import 'package:finaproj/Profile_page/pages/pofile_page.dart'; // Import Profile Page
 import 'package:finaproj/app_settings/page/profile_page.dart';
+import 'package:finaproj/home_page/model/mentor_model.dart'; // Use the shared Mentor model
 import 'package:finaproj/membershipPlan/model/membership_plan.dart'; // Membership plan helper
-import 'package:finaproj/common/mentor_avatar.dart'; // Shared avatar widget
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 
 class FindMentorList extends StatelessWidget {
   const FindMentorList({super.key, required this.mentor});
@@ -13,6 +14,8 @@ class FindMentorList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final side = ResponsiveLayout.horizontalPadding(context);
+    final vertical = ResponsiveLayout.verticalSpacing(context, mobile: 10, tablet: 12, desktop: 14);
     // Helper to get skills safely
     String skill1 = mentor.skills.isNotEmpty ? mentor.skills[0] : 'Mentoring';
     String? skill2 = mentor.skills.length > 1 ? mentor.skills[1] : null;
@@ -33,7 +36,7 @@ class FindMentorList extends StatelessWidget {
     }
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      margin: EdgeInsets.symmetric(horizontal: side, vertical: vertical),
       // height removed to let it grow dynamically
       decoration: BoxDecoration(
           color: Colors.white,

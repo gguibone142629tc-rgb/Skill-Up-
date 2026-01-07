@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:finaproj/FindMentor/page/find_mentor_page.dart';
 import 'package:finaproj/Message/page/messages_page.dart';
+import 'package:finaproj/common/responsive_layout.dart';
+import 'package:flutter/material.dart';
 
 class BrandingBanner extends StatelessWidget {
   final VoidCallback onTopRatedTap;
@@ -9,9 +10,42 @@ class BrandingBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bannerPadding = ResponsiveLayout.value<double>(
+      context,
+      mobile: 20,
+      tablet: 24,
+      desktop: 28,
+    );
+
+    final titleSize = ResponsiveLayout.value<double>(
+      context,
+      mobile: 24,
+      tablet: 26,
+      desktop: 28,
+    );
+
+    final subtitleSize = ResponsiveLayout.value<double>(
+      context,
+      mobile: 12,
+      tablet: 13,
+      desktop: 14,
+    );
+
+    final descriptionSize = ResponsiveLayout.value<double>(
+      context,
+      mobile: 14,
+      tablet: 15,
+      desktop: 16,
+    );
+
+    final gap = ResponsiveLayout.verticalSpacing(context);
+
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      padding: const EdgeInsets.all(24),
+      margin: EdgeInsets.symmetric(
+        horizontal: ResponsiveLayout.horizontalPadding(context),
+        vertical: gap,
+      ),
+      padding: EdgeInsets.all(bannerPadding),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF2D6A65), Color(0xFF4A8B85)],
@@ -45,7 +79,7 @@ class BrandingBanner extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -53,7 +87,7 @@ class BrandingBanner extends StatelessWidget {
                       'SkillUp',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 26,
+                        fontSize: titleSize,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 0.5,
                       ),
@@ -62,7 +96,7 @@ class BrandingBanner extends StatelessWidget {
                       'Connect. Learn. Grow.',
                       style: TextStyle(
                         color: Colors.white70,
-                        fontSize: 13,
+                        fontSize: subtitleSize,
                         fontWeight: FontWeight.w500,
                         letterSpacing: 0.3,
                       ),
@@ -72,17 +106,17 @@ class BrandingBanner extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: gap),
           Text(
             'Find expert mentors across various fields and accelerate your learning journey. Get personalized guidance from professionals.',
             style: TextStyle(
               color: Colors.white.withAlpha(230),
-              fontSize: 14,
+              fontSize: descriptionSize,
               height: 1.5,
               letterSpacing: 0.2,
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: gap),
           Wrap(
             spacing: 8,
             runSpacing: 8,
