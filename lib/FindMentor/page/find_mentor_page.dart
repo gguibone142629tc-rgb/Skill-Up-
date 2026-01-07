@@ -20,6 +20,7 @@ class _FindMentorPageState extends State<FindMentorPage> {
   String? _selectedCategory;
   List<String>? _selectedCategories;
   String _selectedRole = 'Mentors'; // New: Role filter (Mentors or Students)
+  String _sortBy = 'default'; // New: Sort option
 
   // Same categories as Sign Up for consistency
   final List<String> _categories = [
@@ -177,6 +178,12 @@ class _FindMentorPageState extends State<FindMentorPage> {
               },
               onFilterTap: _showFilterModal,
               showFilter: _selectedRole == 'Mentors', // Hide filter when viewing students
+              sortBy: _sortBy,
+              onSortChanged: (value) {
+                setState(() {
+                  _sortBy = value;
+                });
+              },
             ),
           ),
 
@@ -186,6 +193,7 @@ class _FindMentorPageState extends State<FindMentorPage> {
               categories: _selectedCategories ?? (_selectedCategory != null ? [_selectedCategory!] : null),
               hideStudents: _selectedRole == 'Mentors',
               hideMentors: _selectedRole == 'Students',
+              sortBy: _sortBy,
             ),
           ),
           

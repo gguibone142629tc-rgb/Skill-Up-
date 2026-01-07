@@ -12,6 +12,7 @@ class FindMentorListView extends StatelessWidget {
   final List<String>? categories; // supports multiple selected categories
   final bool hideStudents;
   final bool hideMentors;
+  final String sortBy;
 
   const FindMentorListView({
     super.key,
@@ -19,6 +20,7 @@ class FindMentorListView extends StatelessWidget {
     this.categories,
     this.hideStudents = false,
     this.hideMentors = false,
+    this.sortBy = 'default',
   });
 
   @override
@@ -65,7 +67,7 @@ class FindMentorListView extends StatelessWidget {
         }).toList();
 
         // 2. FILTERING LOGIC
-        final filteredMentors = mentors.where((mentor) {
+        var filteredMentors = mentors.where((mentor) {
           final query = searchQuery.toLowerCase().trim();
 
           // If no search query, apply only category filter
@@ -217,6 +219,31 @@ class FindMentorListView extends StatelessWidget {
         }
         if (hideMentors) {
           filteredMentors.clear();
+        }
+
+        // Apply sorting
+        switch (sortBy) {
+          case 'rating':
+            filteredMentors.sort((a, b) => b.rating.compareTo(a.rating));
+            break;
+          case 'price_low':
+            filteredMentors.sort((a, b) {
+              final aPrice = a.planPrice ?? 0;
+              final bPrice = b.planPrice ?? 0;
+              return aPrice.compareTo(bPrice);
+            });
+            break;
+          case 'price_high':
+            filteredMentors.sort((a, b) {
+              final aPrice = a.planPrice ?? 0;
+              final bPrice = b.planPrice ?? 0;
+              return bPrice.compareTo(aPrice);
+            });
+            break;
+          case 'default':
+          default:
+            // Keep default order
+            break;
         }
 
         // Combine results (mentors first, then students)

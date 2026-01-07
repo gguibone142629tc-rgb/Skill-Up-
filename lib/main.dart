@@ -1,6 +1,7 @@
 import 'package:finaproj/FindMentor/page/find_mentor_page.dart';
 import 'package:finaproj/Message/page/messages_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -132,43 +133,50 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
 
   @override
   Widget build(BuildContext context) {
-    const activeColor = Color(0xFF2D6A65);
-    const inactiveColor = Colors.grey;
+    final theme = Theme.of(context);
+    final primaryColor = theme.primaryColor;
 
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      currentIndex: widget.initialIndex,
-      onTap: (index) => _onItemTapped(context, index),
-      selectedItemColor: activeColor,
-      unselectedItemColor: inactiveColor,
-      showSelectedLabels: true,
-      showUnselectedLabels: true,
-      items: [
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.home_outlined),
-          activeIcon: Icon(Icons.home),
+    return NavigationBar(
+      selectedIndex: widget.initialIndex,
+      onDestinationSelected: (index) {
+        HapticFeedback.selectionClick();
+        _onItemTapped(context, index);
+      },
+      elevation: 3,
+      height: 64,
+      indicatorColor: primaryColor,
+      backgroundColor: primaryColor.withAlpha(25),
+      surfaceTintColor: Colors.transparent,
+      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+      indicatorShape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      destinations: [
+        NavigationDestination(
+          icon: Icon(Icons.home_outlined, color: primaryColor.withAlpha(180)),
+          selectedIcon: Icon(Icons.home, color: Colors.white),
           label: 'Home',
         ),
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.search),
-          activeIcon: Icon(Icons.search, weight: 600),
+        NavigationDestination(
+          icon: Icon(Icons.search, color: primaryColor.withAlpha(180)),
+          selectedIcon: Icon(Icons.search, weight: 600, color: Colors.white),
           label: 'Search',
         ),
-        BottomNavigationBarItem(
-          icon: _buildMessagesIconWithBadge(widget.initialIndex == 2),
-          activeIcon: _buildMessagesIconWithBadge(true),
+        NavigationDestination(
+          icon: _buildMessagesIconWithBadge(widget.initialIndex == 2, primaryColor.withAlpha(180)),
+          selectedIcon: _buildMessagesIconWithBadge(true, Colors.white),
           label: 'Messages',
         ),
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.person_outline),
-          activeIcon: Icon(Icons.person),
-          label: 'Profile', // 3. ENSURE LABEL IS CORRECT
+        NavigationDestination(
+          icon: Icon(Icons.person_outline, color: primaryColor.withAlpha(180)),
+          selectedIcon: Icon(Icons.person, color: Colors.white),
+          label: 'Profile',
         ),
       ],
     );
   }
 
-  Widget _buildMessagesIconWithBadge(bool isActive) {
+  Widget _buildMessagesIconWithBadge(bool isActive, Color iconColor) {
     return StreamBuilder<int>(
       stream: UnreadMessagesService().getUnreadMessagesCount(),
       builder: (context, snapshot) {
@@ -178,6 +186,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
           children: [
             Icon(
               isActive ? Icons.chat_bubble : Icons.chat_bubble_outline,
+              color: iconColor,
             ),
             if (unreadCount > 0)
               Positioned(
