@@ -9,7 +9,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class MessageListWidget extends StatelessWidget {
-  MessageListWidget({super.key});
+  final String searchQuery;
+  
+  MessageListWidget({super.key, this.searchQuery = ''});
 
   final DatabaseService _db = DatabaseService();
   final String currentUserId = FirebaseAuth.instance.currentUser?.uid ?? "";
@@ -127,6 +129,17 @@ class MessageListWidget extends StatelessWidget {
 
                 if (lastMsg.isEmpty) lastMsg = "No messages yet...";
 
+                // Filter based on search query
+                if (searchQuery.isNotEmpty) {
+                  final query = searchQuery.toLowerCase();
+                  final name = userData['fullName']?.toString().toLowerCase() ?? '';
+                  final message = lastMsg.toLowerCase();
+                  
+                  if (!name.contains(query) && !message.contains(query)) {
+                    return const SizedBox.shrink();
+                  }
+                }
+
                 return MessagesListDecor(
                   messagesModel: MessagesModel(
                     profilePath: userData['profileImageUrl'] ?? '',
@@ -148,6 +161,21 @@ class MessageListWidget extends StatelessWidget {
 
   String _formatTime(dynamic timestamp) {
     if (timestamp == null || timestamp is! Timestamp) return "";
-    return DateFormat.jm().format(timestamp.toDate());
+    
+    final messageTime = timestamp.toDate();
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = DateTime(now.year, now.month, now.day - 1);
+    final messageDate = DateTime(messageTime.year, messageTime.month, messageTime.day);
+    
+    if (messageDate == today) {
+      return DateFormat.jm().format(messageTime); // Just time for today
+    } else if (messageDate == yesterday) {
+      return 'Yesterday';
+    } else if (now.difference(messageTime).inDays < 7) {
+      return DateFormat.E().format(messageTime); // Day name for this week
+    } else {
+      return DateFormat.MMMd().format(messageTime); // Month/Day for older
+    }
   }
 }

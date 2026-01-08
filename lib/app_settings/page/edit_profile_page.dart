@@ -17,6 +17,7 @@ class EditProfilePage extends StatefulWidget {
 class _EditProfilePageState extends State<EditProfilePage> {
   bool _isLoading = false;
   bool _isFetchingData = true;
+  bool _isMentor = false;
 
   // Controllers
   final _firstNameController = TextEditingController();
@@ -45,7 +46,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
+        final role = (data['role'] ?? '').toString().toLowerCase();
         setState(() {
+          _isMentor = role == 'mentor';
           _firstNameController.text = data['firstName'] ?? '';
           _lastNameController.text = data['lastName'] ?? '';
           _jobTitleController.text = data['jobTitle'] ?? '';
@@ -128,6 +131,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
               ],
             ),
             const SizedBox(height: 16),
+
+            if (_isMentor) ...[
+              AuthTextField(
+                label: "Job Title",
+                controller: _jobTitleController,
+                hintText: "e.g. Senior Product Designer",
+              ),
+              const SizedBox(height: 16),
+            ],
 
             AuthTextField(
               label: "Location",

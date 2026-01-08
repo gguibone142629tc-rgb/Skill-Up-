@@ -493,10 +493,6 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const Text(
-                    "Online",
-                    style: TextStyle(color: Colors.grey, fontSize: 12),
-                  ),
                 ],
               ),
             ],

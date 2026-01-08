@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:finaproj/app_settings/page/my_subscribers_page.dart';
 import 'package:finaproj/SessionHistory/pages/session_history_screen.dart';
 import 'package:finaproj/app_settings/page/profile_page.dart';
+import 'package:finaproj/common/loading_dialog.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
@@ -27,10 +28,16 @@ class _NotificationsPageState extends State<NotificationsPage> {
   }
 
   void _handleNotificationTap(BuildContext context, NotificationModel notification) async {
+    // Show loading indicator
+    LoadingDialog.show(context);
+    
     // Always mark the tapped notification as read before navigating
     await _notificationService.markAsRead(notification.id);
 
-    if (!mounted) return;
+    if (!mounted) {
+      LoadingDialog.hide(context);
+      return;
+    }
 
     final type = notification.type.toLowerCase().trim();
 
@@ -63,8 +70,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
         debugPrint('Error fetching user profile: $e');
       }
 
-      if (!mounted) return;
+      if (!mounted) {
+        LoadingDialog.hide(context);
+        return;
+      }
 
+      LoadingDialog.hide(context);
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -78,6 +89,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       );
     } else if (type == 'booking') {
       // For booking notifications, navigate to subscribers page to see who subscribed
+      LoadingDialog.hide(context);
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -86,6 +98,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       );
     } else if (type == 'session') {
       // For session notifications, show session details
+      LoadingDialog.hide(context);
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -94,6 +107,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       );
     } else if (type == 'rating' || type.contains('rating')) {
       // For rating notifications, navigate to profile and focus the ratings section
+      LoadingDialog.hide(context);
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -104,6 +118,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       final currentUserId = FirebaseAuth.instance.currentUser?.uid;
       final data = notification.data ?? {};
       if (currentUserId == null) {
+        LoadingDialog.hide(context);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Please sign in to view this subscription')),
         );
@@ -133,7 +148,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
         }
       }
 
-      if (!mounted) return;
+      if (!mounted) {
+        LoadingDialog.hide(context);
+        return;
+      }
 
       // Load user role to decide mentor/student path
       bool isMentorAccount = false;
@@ -149,7 +167,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
         debugPrint('Error loading user role: $e');
       }
 
-      if (!mounted) return;
+      if (!mounted) {
+        LoadingDialog.hide(context);
+        return;
+      }
 
       // If you are the mentor (explicitly or inferred), go to subscribers
       final bool isMentorRecipient = (mentorId == currentUserId) ||
@@ -157,6 +178,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
           isMentorAccount;
 
       if (isMentorRecipient) {
+        LoadingDialog.hide(context);
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -190,9 +212,13 @@ class _NotificationsPageState extends State<NotificationsPage> {
         }
       }
 
-      if (!mounted) return;
+      if (!mounted) {
+        LoadingDialog.hide(context);
+        return;
+      }
 
       // Always navigate; if mentorId is still null, show list without focus
+      LoadingDialog.hide(context);
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -201,6 +227,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       );
     } else {
       // Unknown/system notification types: still provide a tap action.
+      LoadingDialog.hide(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(notification.title.isNotEmpty ? notification.title : 'Notification opened')),
       );

@@ -5,26 +5,52 @@ import 'package:finaproj/main.dart';
 
 import 'package:flutter/material.dart';
 
-class MessagesPage extends StatelessWidget {
+class MessagesPage extends StatefulWidget {
   const MessagesPage({super.key});
+
+  @override
+  State<MessagesPage> createState() => _MessagesPageState();
+}
+
+class _MessagesPageState extends State<MessagesPage> {
+  String _searchQuery = '';
+  final GlobalKey<RefreshIndicatorState> _refreshKey = GlobalKey<RefreshIndicatorState>();
+
+  Future<void> _handleRefresh() async {
+    // Wait a moment to allow Firestore stream to update
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (mounted) setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: CustomScrollView(
-        slivers: [
-          const SliverAppBar(
-            title: Text('Messages', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-            backgroundColor: Colors.white,
-            pinned: true,
-            elevation: 0,
-          ),
-          const SliverToBoxAdapter(child: MessagesSearchWidget()),
-          SliverToBoxAdapter(child: MessageListWidget()), // Use BoxAdapter for lists
-        ],
+      body: RefreshIndicator(
+        key: _refreshKey,
+        onRefresh: _handleRefresh,
+        color: const Color(0xFF2D6A65),
+        child: CustomScrollView(
+          slivers: [
+            const SliverAppBar(
+              title: Text('Messages', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+              backgroundColor: Colors.white,
+              pinned: true,
+              elevation: 0,
+            ),
+            SliverToBoxAdapter(
+              child: MessagesSearchWidget(
+                onSearchChanged: (value) {
+                  setState(() {
+                    _searchQuery = value;
+                  });
+                },
+              ),
+            ),
+            SliverToBoxAdapter(child: MessageListWidget(searchQuery: _searchQuery)),
+          ],
+        ),
       ),
-      // Pass index 2 so "Messages" turns blue
       bottomNavigationBar: const CustomBottomNavBar(initialIndex: 2), 
     );
   }
