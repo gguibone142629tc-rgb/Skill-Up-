@@ -11,6 +11,7 @@ import 'package:finaproj/SavedMentors/saved_mentors_page.dart'; // Saved Mentors
 import 'package:finaproj/app_settings/page/my_subscribers_page.dart'; // My Subscribers
 import 'package:finaproj/app_settings/page/change_password_page.dart'; // Change Password
 import 'package:finaproj/app_settings/page/privacy_policy_page.dart'; // Privacy Policy
+import 'package:finaproj/mentor_dashboard/pages/mentor_dashboard_page.dart';
 
 class ProfileListDecor extends StatelessWidget {
   const ProfileListDecor({super.key, required this.profileModel});
@@ -45,6 +46,9 @@ class ProfileListDecor extends StatelessWidget {
               break;
             case 'My Subscribers':
               nextPage = const MySubscribersPage();
+              break;
+            case 'Dashboard':
+              nextPage = const MentorDashboardPage();
               break;
             case 'Saved Mentors':
               nextPage = const SavedMentorsPage();

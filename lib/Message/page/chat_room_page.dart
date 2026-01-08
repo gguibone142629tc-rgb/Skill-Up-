@@ -8,8 +8,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
 import 'package:finaproj/Profile_page/pages/pofile_page.dart';
 import 'package:finaproj/Profile_page/pages/student_profile_view.dart';
+import 'package:finaproj/common/loading_dialog.dart';
 import 'package:finaproj/services/unread_messages_service.dart';
-
 
 class ChatRoomPage extends StatefulWidget {
   final String chatRoomId;
@@ -34,7 +34,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   final ScrollController _scrollController = ScrollController();
   final ImagePicker _picker = ImagePicker();
   bool _isUploading = false;
-  
+
   // Selected image state
   XFile? _selectedImage;
   Uint8List? _selectedImageBytes;
@@ -50,9 +50,11 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     );
   }
 
-  Future<String> _uploadToCloudinary(Uint8List fileBytes, String fileName) async {
+  Future<String> _uploadToCloudinary(
+      Uint8List fileBytes, String fileName) async {
     try {
-      final url = Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/upload');
+      final url =
+          Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/upload');
       final request = http.MultipartRequest('POST', url)
         ..fields['upload_preset'] = uploadPreset;
 
@@ -69,7 +71,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
       if (response.statusCode == 200) {
         return jsonResponse['secure_url'] ?? '';
       } else {
-        throw Exception('Upload failed: ${jsonResponse['error']?['message'] ?? 'Unknown error'}');
+        throw Exception(
+            'Upload failed: ${jsonResponse['error']?['message'] ?? 'Unknown error'}');
       }
     } catch (e) {
       debugPrint('Cloudinary upload error: $e');
@@ -153,7 +156,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   }
 
   // --- DELETE MESSAGE FUNCTION ---
-  void _deleteMessage(String messageId, bool isLastMessage, String? newLastMsg) async {
+  void _deleteMessage(
+      String messageId, bool isLastMessage, String? newLastMsg) async {
     try {
       await FirebaseFirestore.instance
           .collection('chat_rooms')
@@ -177,7 +181,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   }
 
   // --- UPDATED: SHOW OPTIONS DIALOG (EMOJIS + DELETE) ---
-  void _showOptions(String messageId, bool isMe, bool isLastMessage, String? prevMsg) {
+  void _showOptions(
+      String messageId, bool isMe, bool isLastMessage, String? prevMsg) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -207,10 +212,11 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                 ),
               ),
               const Divider(height: 1),
-              if (isMe) 
+              if (isMe)
                 ListTile(
                   leading: const Icon(Icons.delete_outline, color: Colors.red),
-                  title: const Text('Delete Message', style: TextStyle(color: Colors.red)),
+                  title: const Text('Delete Message',
+                      style: TextStyle(color: Colors.red)),
                   onTap: () {
                     Navigator.pop(context);
                     _deleteMessage(messageId, isLastMessage, prevMsg);
@@ -228,8 +234,14 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     );
   }
 
-  Future<void> _sendMessage({String? text, String? imageUrl, String? fileUrl, String? fileName}) async {
-    if ((text == null || text.trim().isEmpty) && imageUrl == null && fileUrl == null) return;
+  Future<void> _sendMessage(
+      {String? text,
+      String? imageUrl,
+      String? fileUrl,
+      String? fileName}) async {
+    if ((text == null || text.trim().isEmpty) &&
+        imageUrl == null &&
+        fileUrl == null) return;
 
     String displayMessage;
     if (fileUrl != null) {
@@ -248,7 +260,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           .get();
       final senderData = senderDoc.data();
       final senderName = senderData != null
-          ? '${senderData['firstName'] ?? ''} ${senderData['lastName'] ?? ''}'.trim()
+          ? '${senderData['firstName'] ?? ''} ${senderData['lastName'] ?? ''}'
+              .trim()
           : 'User';
 
       // Get recipient's ID from chat room
@@ -328,7 +341,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
 
       if (text != null) _messageController.clear();
       if (_scrollController.hasClients) {
-        _scrollController.animateTo(0.0, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+        _scrollController.animateTo(0.0,
+            duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
       }
     } catch (e) {
       debugPrint("Error sending message: $e");
@@ -338,7 +352,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
 
   Future<void> _pickImage() async {
     debugPrint('📸 Picking image...');
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    final XFile? image =
+        await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
     if (image == null) {
       debugPrint('❌ Image picker cancelled');
       return;
@@ -365,15 +380,18 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
       setState(() => _isUploading = true);
       try {
         debugPrint('📤 Uploading image to Cloudinary...');
-        final downloadUrl = await _uploadToCloudinary(_selectedImageBytes!, _selectedImage!.name);
-        
+        final downloadUrl = await _uploadToCloudinary(
+            _selectedImageBytes!, _selectedImage!.name);
+
         debugPrint('✅ Got URL: $downloadUrl');
         debugPrint('📨 Sending message with image...');
         await _sendMessage(
-          text: _messageController.text.trim().isEmpty ? null : _messageController.text.trim(),
+          text: _messageController.text.trim().isEmpty
+              ? null
+              : _messageController.text.trim(),
           imageUrl: downloadUrl,
         );
-        
+
         // Clear selected image after successful send
         _clearSelectedImage();
         debugPrint('✅ Message sent!');
@@ -394,11 +412,12 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     const Color brandGreen = Color(0xFF356966);
     const Color bgGrey = Color(0xFFF7F8FA);
     const Color bubbleGrey = Color(0xFFE9EBEE);
-    
+
     return Scaffold(
       backgroundColor: bgGrey,
       appBar: AppBar(
-        backgroundColor: bgGrey, elevation: 0,
+        backgroundColor: bgGrey,
+        elevation: 0,
         leading: InkWell(
           onTap: () => Navigator.pop(context),
           borderRadius: BorderRadius.circular(24),
@@ -409,20 +428,22 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           onTap: () async {
             // Load and navigate to the other user's profile
             try {
+              LoadingDialog.show(context);
               final userDoc = await FirebaseFirestore.instance
                   .collection('users')
                   .where('fullName', isEqualTo: widget.otherUserName)
                   .limit(1)
                   .get();
-              
+
               if (userDoc.docs.isNotEmpty && mounted) {
                 final userData = userDoc.docs.first.data();
                 final uid = userDoc.docs.first.id;
                 final userRole = (userData['role'] ?? 'mentor').toLowerCase();
-                
+
                 // Navigate to appropriate profile based on user role
                 if (userRole == 'student') {
-                  Navigator.push(
+                  LoadingDialog.hide(context);
+                  await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => StudentProfileView(studentId: uid),
@@ -431,7 +452,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                 } else {
                   // Mentor profile
                   userData['uid'] = uid;
-                  Navigator.push(
+                  LoadingDialog.hide(context);
+                  await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => ProfileScreen(mentorData: userData),
@@ -441,19 +463,42 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
               }
             } catch (e) {
               debugPrint("Error loading profile: $e");
+              if (mounted) LoadingDialog.hide(context);
             }
           },
           child: Row(
             children: [
               CircleAvatar(
-                radius: 20, backgroundColor: brandGreen.withOpacity(0.1),
-                backgroundImage: widget.otherUserProfileImage != null && widget.otherUserProfileImage!.isNotEmpty ? NetworkImage(widget.otherUserProfileImage!) : null,
-                child: widget.otherUserProfileImage == null || widget.otherUserProfileImage!.isEmpty ? Text(widget.otherUserName[0].toUpperCase(), style: const TextStyle(color: brandGreen)) : null,
+                radius: 20,
+                backgroundColor: brandGreen.withOpacity(0.1),
+                backgroundImage: widget.otherUserProfileImage != null &&
+                        widget.otherUserProfileImage!.isNotEmpty
+                    ? NetworkImage(widget.otherUserProfileImage!)
+                    : null,
+                child: widget.otherUserProfileImage == null ||
+                        widget.otherUserProfileImage!.isEmpty
+                    ? Text(widget.otherUserName[0].toUpperCase(),
+                        style: const TextStyle(color: brandGreen))
+                    : null,
               ),
               const SizedBox(width: 12),
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(widget.otherUserName, style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
-              ]),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.otherUserName,
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Text(
+                    "Online",
+                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
@@ -463,21 +508,28 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           if (_isUploading) const LinearProgressIndicator(color: brandGreen),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance.collection('chat_rooms').doc(widget.chatRoomId).collection('messages').snapshots(),
+              stream: FirebaseFirestore.instance
+                  .collection('chat_rooms')
+                  .doc(widget.chatRoomId)
+                  .collection('messages')
+                  .snapshots(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) return const SizedBox();
                 var docs = snapshot.data!.docs;
-                
+
                 // ✅ FIXED: Sort messages by timestamp in descending order (newest first)
                 docs.sort((a, b) {
-                  var aTime = (a['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
-                  var bTime = (b['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
+                  var aTime = (a['timestamp'] as Timestamp?)?.toDate() ??
+                      DateTime.now();
+                  var bTime = (b['timestamp'] as Timestamp?)?.toDate() ??
+                      DateTime.now();
                   return bTime.compareTo(aTime); // Descending - newest first
                 });
 
                 return ListView.builder(
                   controller: _scrollController,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
                   reverse: true, // ✅ Newest message appears at top
                   itemCount: docs.length,
                   itemBuilder: (context, index) {
@@ -488,11 +540,15 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                     bool isImage = messageType == 'image';
                     bool isFile = messageType == 'file';
                     String reaction = data['reaction'] ?? '';
-                    DateTime messageDate = data['timestamp'] != null ? (data['timestamp'] as Timestamp).toDate() : DateTime.now();
+                    DateTime messageDate = data['timestamp'] != null
+                        ? (data['timestamp'] as Timestamp).toDate()
+                        : DateTime.now();
                     String time = DateFormat('hh:mm a').format(messageDate);
 
                     bool isLastMessage = index == 0;
-                    String? nextMessageInList = docs.length > 1 ? (docs[1].data() as Map<String, dynamic>)['text'] : null;
+                    String? nextMessageInList = docs.length > 1
+                        ? (docs[1].data() as Map<String, dynamic>)['text']
+                        : null;
 
                     // Check if we need to show date header
                     bool showDateHeader = false;
@@ -501,7 +557,9 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                     } else {
                       var nextDoc = docs[index + 1];
                       var nextData = nextDoc.data() as Map<String, dynamic>;
-                      DateTime nextMessageDate = nextData['timestamp'] != null ? (nextData['timestamp'] as Timestamp).toDate() : DateTime.now();
+                      DateTime nextMessageDate = nextData['timestamp'] != null
+                          ? (nextData['timestamp'] as Timestamp).toDate()
+                          : DateTime.now();
                       if (!_isSameDay(messageDate, nextMessageDate)) {
                         showDateHeader = true;
                       }
@@ -511,58 +569,103 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                       children: [
                         if (showDateHeader) _buildDateHeader(messageDate),
                         Row(
-                          mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+                          mainAxisAlignment: isMe
+                              ? MainAxisAlignment.end
+                              : MainAxisAlignment.start,
                           children: [
                             GestureDetector(
-                              onLongPress: () => _showOptions(doc.id, isMe, isLastMessage, nextMessageInList),
+                              onLongPress: () => _showOptions(doc.id, isMe,
+                                  isLastMessage, nextMessageInList),
                               child: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 4),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 4),
                                 child: Column(
-                                  crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                                  crossAxisAlignment: isMe
+                                      ? CrossAxisAlignment.end
+                                      : CrossAxisAlignment.start,
                                   children: [
                                     Stack(
                                       clipBehavior: Clip.none,
                                       children: [
                                         Container(
-                                          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
-                                          padding: isImage ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                          constraints: BoxConstraints(
+                                              maxWidth: MediaQuery.of(context)
+                                                      .size
+                                                      .width *
+                                                  0.75),
+                                          padding: isImage
+                                              ? EdgeInsets.zero
+                                              : const EdgeInsets.symmetric(
+                                                  horizontal: 16, vertical: 12),
                                           decoration: BoxDecoration(
-                                            color: isMe ? brandGreen : bubbleGrey,
+                                            color:
+                                                isMe ? brandGreen : bubbleGrey,
                                             borderRadius: BorderRadius.only(
-                                              topLeft: const Radius.circular(20),
-                                              topRight: const Radius.circular(20),
-                                              bottomLeft: Radius.circular(isMe ? 4 : 20),
-                                              bottomRight: Radius.circular(isMe ? 20 : 4),
+                                              topLeft:
+                                                  const Radius.circular(20),
+                                              topRight:
+                                                  const Radius.circular(20),
+                                              bottomLeft: Radius.circular(
+                                                  isMe ? 4 : 20),
+                                              bottomRight: Radius.circular(
+                                                  isMe ? 20 : 4),
                                             ),
                                           ),
                                           child: isImage
                                               ? ClipRRect(
-                                                  borderRadius: BorderRadius.circular(15),
-                                                  child: Image.network(data['imageUrl'], fit: BoxFit.cover),
+                                                  borderRadius:
+                                                      BorderRadius.circular(15),
+                                                  child: Image.network(
+                                                      data['imageUrl'],
+                                                      fit: BoxFit.cover),
                                                 )
                                               : isFile
                                                   ? GestureDetector(
                                                       onTap: () async {
-                                                        final url = (data['fileUrl'] ?? '') as String;
+                                                        final url =
+                                                            (data['fileUrl'] ??
+                                                                '') as String;
                                                         if (url.isEmpty) return;
-                                                        final uri = Uri.parse(url);
-                                                        if (await canLaunchUrl(uri)) {
-                                                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                                        final uri =
+                                                            Uri.parse(url);
+                                                        if (await canLaunchUrl(
+                                                            uri)) {
+                                                          await launchUrl(uri,
+                                                              mode: LaunchMode
+                                                                  .externalApplication);
                                                         }
                                                       },
                                                       child: Row(
-                                                        mainAxisSize: MainAxisSize.min,
+                                                        mainAxisSize:
+                                                            MainAxisSize.min,
                                                         children: [
-                                                          Icon(Icons.insert_drive_file, color: isMe ? Colors.white : Colors.black54),
-                                                          const SizedBox(width: 10),
+                                                          Icon(
+                                                              Icons
+                                                                  .insert_drive_file,
+                                                              color: isMe
+                                                                  ? Colors.white
+                                                                  : Colors
+                                                                      .black54),
+                                                          const SizedBox(
+                                                              width: 10),
                                                           Flexible(
                                                             child: Text(
-                                                              (data['fileName'] ?? 'Attachment') as String,
+                                                              (data['fileName'] ??
+                                                                      'Attachment')
+                                                                  as String,
                                                               style: TextStyle(
-                                                                color: isMe ? Colors.white : Colors.black87,
-                                                                fontWeight: FontWeight.w600,
+                                                                color: isMe
+                                                                    ? Colors
+                                                                        .white
+                                                                    : Colors
+                                                                        .black87,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
                                                               ),
-                                                              overflow: TextOverflow.ellipsis,
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
                                                             ),
                                                           ),
                                                         ],
@@ -570,7 +673,10 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                                                     )
                                                   : Text(
                                                       data['text'] ?? "",
-                                                      style: TextStyle(color: isMe ? Colors.white : Colors.black87),
+                                                      style: TextStyle(
+                                                          color: isMe
+                                                              ? Colors.white
+                                                              : Colors.black87),
                                                     ),
                                         ),
                                         // --- REACTION BADGE ---
@@ -584,15 +690,23 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                                               decoration: BoxDecoration(
                                                 color: Colors.white,
                                                 shape: BoxShape.circle,
-                                                boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))],
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                      color: Colors.black26,
+                                                      blurRadius: 4,
+                                                      offset: Offset(0, 2))
+                                                ],
                                               ),
-                                              child: Text(reaction, style: const TextStyle(fontSize: 12)),
+                                              child: Text(reaction,
+                                                  style: const TextStyle(
+                                                      fontSize: 12)),
                                             ),
                                           ),
                                       ],
                                     ),
                                     Padding(
-                                      padding: const EdgeInsets.only(top: 10, left: 4, right: 4),
+                                      padding: const EdgeInsets.only(
+                                          top: 10, left: 4, right: 4),
                                       child: Text(
                                         time,
                                         style: const TextStyle(
@@ -644,7 +758,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                         const Expanded(
                           child: Text(
                             'Image selected',
-                            style: TextStyle(fontSize: 14, color: Colors.black87),
+                            style:
+                                TextStyle(fontSize: 14, color: Colors.black87),
                           ),
                         ),
                         IconButton(
@@ -659,14 +774,21 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                   child: Row(
                     children: [
-                      IconButton(onPressed: _pickImage, icon: const Icon(Icons.image, color: brandGreen, size: 30)),
+                      IconButton(
+                          onPressed: _pickImage,
+                          icon: const Icon(Icons.image,
+                              color: brandGreen, size: 30)),
                       Expanded(
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 20),
-                          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30)),
+                          decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(30)),
                           child: TextField(
                             controller: _messageController,
-                            decoration: const InputDecoration(hintText: "Write a message...", border: InputBorder.none),
+                            decoration: const InputDecoration(
+                                hintText: "Write a message...",
+                                border: InputBorder.none),
                           ),
                         ),
                       ),
@@ -681,7 +803,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                           ),
                           child: const Padding(
                             padding: EdgeInsets.all(12.0),
-                            child: Icon(Icons.send, color: Colors.white, size: 24),
+                            child:
+                                Icon(Icons.send, color: Colors.white, size: 24),
                           ),
                         ),
                       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
@@ -33,9 +34,12 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Cancel Subscription'),
-        content: const Text(
-          'Are you sure you want to cancel this subscription? You will lose access at the end of your current billing period.',
+        title: Text(
+            kDebugMode ? 'Expire Subscription (Debug)' : 'Cancel Subscription'),
+        content: Text(
+          kDebugMode
+              ? 'This will force-expire your subscription now so you can test the expired flow.'
+              : 'Are you sure you want to cancel this subscription? You will lose access at the end of your current billing period.',
         ),
         actions: [
           TextButton(
@@ -45,7 +49,7 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Yes, Cancel'),
+            child: Text(kDebugMode ? 'Yes, Expire Now' : 'Yes, Cancel'),
           ),
         ],
       ),
@@ -53,16 +57,43 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
 
     if (confirm == true) {
       try {
+        if (kDebugMode) {
+          final result = await _subscriptionService.forceExpireNow(
+            subscriptionId,
+            sendNotification: true,
+          );
+
+          // Keep user's current subscription in sync for UI.
+          final currentUser = FirebaseAuth.instance.currentUser;
+          if (currentUser != null) {
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(currentUser.uid)
+                .update({
+              'currentSubscription.status': 'expired',
+            });
+          }
+
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                  content: Text('Subscription expired for testing ($result)')),
+            );
+          }
+          return;
+        }
+
         // Get subscription data to retrieve mentor ID and plan title
         final subscriptionDoc = await FirebaseFirestore.instance
             .collection('subscriptions')
             .doc(subscriptionId)
             .get();
-        
+
         final subscriptionData = subscriptionDoc.data();
         final mentorId = subscriptionData?['mentorId'];
+        final planKey = subscriptionData?['planKey'];
         final planTitle = subscriptionData?['planTitle'];
-        
+
         // Update subscription status
         await FirebaseFirestore.instance
             .collection('subscriptions')
@@ -70,8 +101,14 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
             .update({'status': 'cancelled'});
 
         // Increment mentor's available slots back for the specific plan
-        if (mentorId != null && planTitle != null) {
-          final slotKey = 'slots_${planTitle}_available';
+        final String? slotPlanKey = (planKey is String && planKey.isNotEmpty)
+            ? planKey
+            : (planTitle is String && planTitle.isNotEmpty)
+                ? planTitle.replaceAll(RegExp(r'\s+'), '_')
+                : null;
+
+        if (mentorId != null && slotPlanKey != null) {
+          final slotKey = 'slots_${slotPlanKey}_available';
           await FirebaseFirestore.instance
               .collection('users')
               .doc(mentorId)
@@ -175,9 +212,14 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
               final doc = snapshot.data!.docs[index];
               final data = doc.data() as Map<String, dynamic>;
               final status = data['status'] ?? 'active';
-              final isActive = status == 'active';
-              final statusInfo = _subscriptionService.getStatusInfo(status);
-              final daysRemaining = _subscriptionService.getDaysRemaining(data['expiresAt']);
+              // For student-facing UI, treat "cancelled" as "expired" so it matches the
+              // expected end-of-access experience.
+              final displayStatus = status == 'cancelled' ? 'expired' : status;
+              final isActive = displayStatus == 'active';
+              final statusInfo =
+                  _subscriptionService.getStatusInfo(displayStatus);
+              final daysRemaining =
+                  _subscriptionService.getDaysRemaining(data['expiresAt']);
 
               return Container(
                 margin: const EdgeInsets.only(bottom: 16),
@@ -185,8 +227,8 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: status == 'active' 
-                        ? const Color(0xFF2D6A65) 
+                    color: status == 'active'
+                        ? const Color(0xFF2D6A65)
                         : Colors.grey[300]!,
                     width: status == 'active' ? 2 : 1,
                   ),
@@ -257,8 +299,8 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: daysRemaining <= 7 
-                                ? const Color(0xFFFFF3E0) 
+                            color: daysRemaining <= 7
+                                ? const Color(0xFFFFF3E0)
                                 : const Color(0xFFE8F5F3),
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -267,8 +309,8 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
                               Icon(
                                 Icons.access_time,
                                 size: 16,
-                                color: daysRemaining <= 7 
-                                    ? const Color(0xFFF57C00) 
+                                color: daysRemaining <= 7
+                                    ? const Color(0xFFF57C00)
                                     : const Color(0xFF2D6A65),
                               ),
                               const SizedBox(width: 8),
@@ -277,8 +319,8 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
-                                  color: daysRemaining <= 7 
-                                      ? const Color(0xFFF57C00) 
+                                  color: daysRemaining <= 7
+                                      ? const Color(0xFFF57C00)
                                       : const Color(0xFF2D6A65),
                                 ),
                               ),

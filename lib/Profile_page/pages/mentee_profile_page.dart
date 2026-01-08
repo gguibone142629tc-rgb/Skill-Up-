@@ -261,7 +261,11 @@ class _MenteeProfilePageState extends State<MenteeProfilePage> {
             Container(
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
               decoration: const BoxDecoration(
-                color: Color(0xFF6B9A91),
+                gradient: LinearGradient(
+                  colors: [Color(0xFF2D6A65), Color(0xFF5D70F3)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
                 borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(20),
                   bottomRight: Radius.circular(20),
@@ -302,16 +306,22 @@ class _MenteeProfilePageState extends State<MenteeProfilePage> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  // Logo/Icon placeholder
+                  // Header avatar
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(3),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.3),
                     ),
-                    child: const Text(
-                      '📚',
-                      style: TextStyle(fontSize: 32),
+                    child: CircleAvatar(
+                      radius: 36,
+                      backgroundColor: Colors.white.withOpacity(0.2),
+                      backgroundImage: ((_profileData?['profileImageUrl'] ?? '') as String).isNotEmpty
+                          ? NetworkImage(_profileData!['profileImageUrl'])
+                          : null,
+                      child: ((_profileData?['profileImageUrl'] ?? '') as String).isEmpty
+                          ? const Text('📚', style: TextStyle(fontSize: 28))
+                          : null,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -319,8 +329,17 @@ class _MenteeProfilePageState extends State<MenteeProfilePage> {
                     fullName,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 26,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    _profileData?['jobTitle'] ?? 'Student',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.85),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
@@ -354,22 +373,35 @@ class _MenteeProfilePageState extends State<MenteeProfilePage> {
                         children: [
                           Stack(
                             children: [
-                              CircleAvatar(
-                                radius: 50,
-                                backgroundColor: Colors.grey[200],
+                              // Avatar with subtle border
+                              Container(
+                                padding: const EdgeInsets.all(3),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: const Color(0xFF2D6A65),
+                                    width: 2,
+                                  ),
+                                ),
+                                child: CircleAvatar(
+                                  radius: 52,
+                                  backgroundColor: Colors.grey[200],
                                 backgroundImage: _newImageBytes != null
                                     ? MemoryImage(_newImageBytes!)
                                     : ((_profileData?['profileImageUrl'] ?? '')
                                             .isNotEmpty
                                         ? NetworkImage(
                                             _profileData!['profileImageUrl'])
-                                        : null) as ImageProvider?,
-                                child: _newImageBytes == null &&
-                                        (_profileData?['profileImageUrl'] ?? '')
-                                            .isEmpty
-                                    ? const Icon(Icons.person, size: 50, color: Colors.grey)
-                                    : null,
+                                          : null) as ImageProvider?,
+                                ),
                               ),
+                              if (_newImageBytes == null &&
+                                  (_profileData?['profileImageUrl'] ?? '').isEmpty)
+                                const Positioned.fill(
+                                  child: Center(
+                                    child: Icon(Icons.person, size: 50, color: Colors.grey),
+                                  ),
+                                ),
                               if (_isEditing)
                                 Positioned(
                                   bottom: 0,
@@ -401,21 +433,32 @@ class _MenteeProfilePageState extends State<MenteeProfilePage> {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          const Text(
-                            'Student',
-                            style: TextStyle(fontSize: 16, color: Colors.grey),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE8F5F3),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Text('Student',
+                                style: TextStyle(fontSize: 12, color: Color(0xFF2D6A65), fontWeight: FontWeight.w600)),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            _profileData?['location'] ?? 'Tagum City',
-                            style: TextStyle(
-                                fontSize: 14, color: Colors.grey[600]),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.place, size: 16, color: Colors.grey),
+                              const SizedBox(width: 4),
+                              Text(
+                                _profileData?['location'] ?? 'Tagum City',
+                                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 20),
                           // Edit Profile Button
                           SizedBox(
                             width: double.infinity,
-                            child: OutlinedButton(
+                            child: ElevatedButton.icon(
                               onPressed: () {
                                 if (_isEditing) {
                                   _saveProfile();
@@ -423,19 +466,19 @@ class _MenteeProfilePageState extends State<MenteeProfilePage> {
                                   setState(() => _isEditing = true);
                                 }
                               },
-                              style: OutlinedButton.styleFrom(
-                                side: const BorderSide(
-                                    color: Color(0xFF2D6A65), width: 1.5),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF2D6A65),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 12),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                elevation: 0,
                               ),
-                              child: Text(
+                              icon: Icon(_isEditing ? Icons.save : Icons.edit, color: Colors.white),
+                              label: Text(
                                 _isEditing ? 'Save Profile' : 'Edit Profile',
                                 style: const TextStyle(
-                                  color: Color(0xFF2D6A65),
+                                  color: Colors.white,
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
                                 ),

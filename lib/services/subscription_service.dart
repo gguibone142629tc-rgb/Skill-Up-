@@ -5,20 +5,36 @@ import 'package:firebase_auth/firebase_auth.dart';
 class SubscriptionService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  String? _getPlanKeyFromSubscription(Map<String, dynamic> data) {
+    final rawPlanKey = (data['planKey'] ?? '').toString().trim();
+    if (rawPlanKey.isNotEmpty) return rawPlanKey;
+
+    final rawPlanTitle = (data['planTitle'] ?? '').toString().trim();
+    if (rawPlanTitle.isEmpty) return null;
+
+    // Best-effort fallback: normalize title to a key-like token.
+    // Example: "Growth Starter" -> "Growth_Starter"
+    return rawPlanTitle.replaceAll(RegExp(r'\s+'), '_');
+  }
+
   /// Check if a subscription has expired and update status
-  Future<String> checkAndUpdateSubscriptionStatus(String subscriptionId, {bool sendNotification = false}) async {
+  Future<String> checkAndUpdateSubscriptionStatus(String subscriptionId,
+      {bool sendNotification = false}) async {
     try {
-      final doc = await _firestore.collection('subscriptions').doc(subscriptionId).get();
-      
+      final doc = await _firestore
+          .collection('subscriptions')
+          .doc(subscriptionId)
+          .get();
+
       if (!doc.exists) return 'not_found';
-      
+
       final data = doc.data()!;
       final currentStatus = data['status'] ?? 'active';
-      
+
       // If already cancelled or expired, return current status
       if (currentStatus == 'cancelled') return 'cancelled';
       if (currentStatus == 'expired') return 'expired';
-      
+
       // Check if subscription has expired
       final expiresAt = data['expiresAt'];
       if (expiresAt != null) {
@@ -30,29 +46,38 @@ class SubscriptionService {
         } else {
           return currentStatus;
         }
-        
+
         // If past expiration date, mark as expired and return slot
         if (DateTime.now().isAfter(expirationDate)) {
-          await _firestore.collection('subscriptions').doc(subscriptionId).update({
-            'status': 'expired',
-            'expiredAt': FieldValue.serverTimestamp(),
-          });
-          
-          // Return slot to mentor
           final mentorId = data['mentorId'];
           final mentorName = data['mentorName'] ?? 'Mentor';
           final planTitle = data['planTitle'];
+          final planKey = _getPlanKeyFromSubscription(data);
           final menteeId = data['menteeId'];
-          
-          if (mentorId != null && planTitle != null) {
-            final slotKey = 'slots_${planTitle}_available';
+          final alreadyNotified = data['expiryNotifiedAt'] != null;
+          final shouldNotifyStudent =
+              sendNotification && menteeId != null && !alreadyNotified;
+
+          await _firestore
+              .collection('subscriptions')
+              .doc(subscriptionId)
+              .update({
+            'status': 'expired',
+            'expiredAt': FieldValue.serverTimestamp(),
+            if (shouldNotifyStudent)
+              'expiryNotifiedAt': FieldValue.serverTimestamp(),
+          });
+
+          // Return slot to mentor
+          if (mentorId != null && planKey != null) {
+            final slotKey = 'slots_${planKey}_available';
             await _firestore.collection('users').doc(mentorId).update({
               slotKey: FieldValue.increment(1),
             });
           }
-          
+
           // Send notification to student about expiration
-          if (sendNotification && menteeId != null) {
+          if (shouldNotifyStudent) {
             await _firestore
                 .collection('users')
                 .doc(menteeId)
@@ -60,7 +85,8 @@ class SubscriptionService {
                 .add({
               'userId': menteeId,
               'title': 'Subscription Expired',
-              'body': 'Your subscription to $mentorName ($planTitle) has expired',
+              'body':
+                  'Your subscription to $mentorName ($planTitle) has expired',
               'type': 'subscription',
               'relatedId': mentorId,
               'isRead': false,
@@ -73,11 +99,11 @@ class SubscriptionService {
               },
             });
           }
-          
+
           return 'expired';
         }
       }
-      
+
       return 'active';
     } catch (e) {
       debugPrint('Error checking subscription status: $e');
@@ -86,7 +112,8 @@ class SubscriptionService {
   }
 
   /// Check all subscriptions for a user and update statuses
-  Future<void> checkUserSubscriptions(String userId, {bool sendNotifications = false}) async {
+  Future<void> checkUserSubscriptions(String userId,
+      {bool sendNotifications = false}) async {
     try {
       final subscriptions = await _firestore
           .collection('subscriptions')
@@ -95,10 +122,30 @@ class SubscriptionService {
           .get();
 
       for (var doc in subscriptions.docs) {
-        await checkAndUpdateSubscriptionStatus(doc.id, sendNotification: sendNotifications);
+        await checkAndUpdateSubscriptionStatus(doc.id,
+            sendNotification: sendNotifications);
       }
     } catch (e) {
       debugPrint('Error checking user subscriptions: $e');
+    }
+  }
+
+  /// Check all subscriptions for a mentor and update statuses.
+  /// This ensures mentors see accurate subscriber lists even if students haven't opened the app.
+  Future<void> checkMentorSubscriptions(String mentorId) async {
+    try {
+      final subscriptions = await _firestore
+          .collection('subscriptions')
+          .where('mentorId', isEqualTo: mentorId)
+          .where('status', isEqualTo: 'active')
+          .get();
+
+      for (final doc in subscriptions.docs) {
+        // If a subscription expires, notify the student (one-time guarded).
+        await checkAndUpdateSubscriptionStatus(doc.id, sendNotification: true);
+      }
+    } catch (e) {
+      debugPrint('Error checking mentor subscriptions: $e');
     }
   }
 
@@ -162,10 +209,30 @@ class SubscriptionService {
     return status == 'active';
   }
 
+  /// DEBUG/QA helper: force a subscription to be expired immediately.
+  /// Sets `expiresAt` into the past (and ensures `status` is active), then re-runs the expiry logic.
+  Future<String> forceExpireNow(String subscriptionId,
+      {bool sendNotification = true}) async {
+    try {
+      await _firestore.collection('subscriptions').doc(subscriptionId).update({
+        'status': 'active',
+        'expiresAt': DateTime.now().subtract(const Duration(minutes: 1)),
+      });
+
+      return checkAndUpdateSubscriptionStatus(
+        subscriptionId,
+        sendNotification: sendNotification,
+      );
+    } catch (e) {
+      debugPrint('Error forcing subscription expiry: $e');
+      return 'error';
+    }
+  }
+
   /// Get days remaining in subscription
   int? getDaysRemaining(dynamic expiresAt) {
     if (expiresAt == null) return null;
-    
+
     DateTime expirationDate;
     if (expiresAt is Timestamp) {
       expirationDate = expiresAt.toDate();
@@ -174,10 +241,10 @@ class SubscriptionService {
     } else {
       return null;
     }
-    
+
     final now = DateTime.now();
     if (expirationDate.isBefore(now)) return 0;
-    
+
     return expirationDate.difference(now).inDays;
   }
 }

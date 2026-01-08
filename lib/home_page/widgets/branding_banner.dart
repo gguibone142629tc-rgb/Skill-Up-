@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 
 class BrandingBanner extends StatelessWidget {
   final VoidCallback onTopRatedTap;
-  
+
   const BrandingBanner({super.key, required this.onTopRatedTap});
 
   @override
@@ -125,18 +125,18 @@ class BrandingBanner extends StatelessWidget {
                 context,
                 Icons.verified_user,
                 'Verified Mentors',
-                () => Navigator.push(
+                () => _navigateWithLoader(
                   context,
-                  MaterialPageRoute(builder: (context) => const FindMentorPage()),
+                  const FindMentorPage(),
                 ),
               ),
               _buildFeatureChip(
                 context,
                 Icons.chat_bubble_outline,
                 'Live Chat',
-                () => Navigator.push(
+                () => _navigateWithLoader(
                   context,
-                  MaterialPageRoute(builder: (context) => const MessagesPage()),
+                  const MessagesPage(),
                 ),
               ),
               _buildFeatureChip(
@@ -152,7 +152,8 @@ class BrandingBanner extends StatelessWidget {
     );
   }
 
-  Widget _buildFeatureChip(BuildContext context, IconData icon, String label, VoidCallback onTap) {
+  Widget _buildFeatureChip(
+      BuildContext context, IconData icon, String label, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
@@ -186,6 +187,27 @@ class BrandingBanner extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _navigateWithLoader(BuildContext context, Widget page) async {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black26,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    // Small delay to ensure the loader renders smoothly before navigation.
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    // Close loader then navigate.
+    Navigator.of(context, rootNavigator: true).pop();
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => page),
     );
   }
 }

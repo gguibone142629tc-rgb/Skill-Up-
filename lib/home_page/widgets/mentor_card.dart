@@ -1,3 +1,4 @@
+import 'package:finaproj/common/loading_dialog.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:finaproj/home_page/model/mentor_model.dart';
 import 'package:finaproj/Profile_page/pages/pofile_page.dart';
@@ -13,7 +14,10 @@ class MentorCard extends StatefulWidget {
   final Mentor mentor;
   final EdgeInsetsGeometry margin;
 
-  const MentorCard({super.key, required this.mentor, this.margin = const EdgeInsets.symmetric(horizontal: 20, vertical: 8)});
+  const MentorCard(
+      {super.key,
+      required this.mentor,
+      this.margin = const EdgeInsets.symmetric(horizontal: 20, vertical: 8)});
 
   @override
   State<MentorCard> createState() => _MentorCardState();
@@ -36,8 +40,10 @@ class _MentorCardState extends State<MentorCard> {
     if (userId != null) {
       String? role;
       try {
-        final userDoc =
-            await FirebaseFirestore.instance.collection('users').doc(userId).get();
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userId)
+            .get();
         role = userDoc.data()?['role'] as String?;
       } catch (_) {
         role = null;
@@ -209,20 +215,22 @@ class _MentorCardState extends State<MentorCard> {
                 children: [
                   Row(
                     children: [
-                      Icon(
-                        Icons.star, 
-                        size: 16, 
-                        color: widget.mentor.rating > 0 ? Colors.amber : Colors.grey[400]
-                      ),
+                      Icon(Icons.star,
+                          size: 16,
+                          color: widget.mentor.rating > 0
+                              ? Colors.amber
+                              : Colors.grey[400]),
                       const SizedBox(width: 4),
                       Text(
-                        widget.mentor.rating > 0 
+                        widget.mentor.rating > 0
                             ? widget.mentor.rating.toStringAsFixed(1)
                             : 'New',
                         style: TextStyle(
-                          fontSize: 14, 
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: widget.mentor.rating > 0 ? Colors.black87 : Colors.grey[600],
+                          color: widget.mentor.rating > 0
+                              ? Colors.black87
+                              : Colors.grey[600],
                         ),
                       ),
                     ],
@@ -251,7 +259,9 @@ class _MentorCardState extends State<MentorCard> {
                               size: 20,
                               color: _isSaved
                                   ? const Color(0xFF2D6A65)
-                                  : (isMentorUser ? Colors.grey[400] : Colors.grey[600]),
+                                  : (isMentorUser
+                                      ? Colors.grey[400]
+                                      : Colors.grey[600]),
                             ),
                           ),
                         ),
@@ -313,23 +323,21 @@ class _MentorCardState extends State<MentorCard> {
                     );
                   } else {
                     // Navigate to other mentor's profile
-                    Navigator.push(
+                    LoadingDialog.navigateWithLoader(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => ProfileScreen(
-                          mentorData: {
-                            'uid': widget.mentor.id,
-                            'firstName': widget.mentor.name.split(' ')[0],
-                            'lastName': widget.mentor.name.contains(' ')
-                                ? widget.mentor.name.split(' ')[1]
-                                : '',
-                            'jobTitle': widget.mentor.jobTitle,
-                            'profileImageUrl': widget.mentor.image,
-                            'rating': widget.mentor.rating,
-                            'skills': widget.mentor.skills,
-                            'price': _displayPrice(widget.mentor),
-                          },
-                        ),
+                      ProfileScreen(
+                        mentorData: {
+                          'uid': widget.mentor.id,
+                          'firstName': widget.mentor.name.split(' ')[0],
+                          'lastName': widget.mentor.name.contains(' ')
+                              ? widget.mentor.name.split(' ')[1]
+                              : '',
+                          'jobTitle': widget.mentor.jobTitle,
+                          'profileImageUrl': widget.mentor.image,
+                          'rating': widget.mentor.rating,
+                          'skills': widget.mentor.skills,
+                          'price': _displayPrice(widget.mentor),
+                        },
                       ),
                     );
                   }

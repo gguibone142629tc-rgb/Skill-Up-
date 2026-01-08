@@ -23,7 +23,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late Map<String, dynamic> _displayData;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final RatingService _ratingService = RatingService();
-  
+
   bool _canRate = false;
   bool _hasRated = false;
   bool _checkingRating = true;
@@ -292,9 +292,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ActionButtons(mentorData: _displayData)
                           else
                             const SizedBox.shrink(),
-                          
+
                           // Rate Mentor Button (only for students who are/were subscribed)
-                          if (!isOwnProfile && !_checkingRating && _canRate && !_hasRated) ...[
+                          if (!isOwnProfile && _checkingRating) ...[
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE8F5F3),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2.2),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    'Checking rating status...',
+                                    style: TextStyle(
+                                      color: Colors.grey[700],
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+
+                          if (!isOwnProfile &&
+                              !_checkingRating &&
+                              _canRate &&
+                              !_hasRated) ...[
                             const SizedBox(height: 12),
                             SizedBox(
                               width: double.infinity,
@@ -308,7 +341,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     color: Color(0xFF2D6A65),
                                     width: 1.5,
                                   ),
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 12),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8),
                                   ),
@@ -316,7 +350,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                             ),
                           ],
-                          
+
                           if (!isOwnProfile && _hasRated) ...[
                             const SizedBox(height: 12),
                             Container(
@@ -345,7 +379,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                             ),
                           ],
-                          
+
                           const SizedBox(height: 12),
                           // Plan Management Button
                           SizedBox(
@@ -498,10 +532,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                     // Ratings Section
                     StreamBuilder<List<MentorRating>>(
-                      stream: _ratingService.getMentorRatings(_displayData['uid'] ?? ''),
+                      stream: _ratingService
+                          .getMentorRatings(_displayData['uid'] ?? ''),
                       builder: (context, snapshot) {
                         // Show loading while waiting for data
-                        if (snapshot.connectionState == ConnectionState.waiting) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
                           return Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
@@ -523,14 +559,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                         // Get ratings data (empty list if no data)
                         final ratings = snapshot.data ?? [];
-                        
+
                         // Calculate average rating from actual reviews
                         double averageRating = 0.0;
                         if (ratings.isNotEmpty) {
-                          double sum = ratings.fold(0, (prev, rating) => prev + rating.rating);
+                          double sum = ratings.fold(
+                              0, (prev, rating) => prev + rating.rating);
                           averageRating = sum / ratings.length;
                         }
-                        
+
                         final totalRatings = ratings.length;
 
                         return RatingsDisplaySection(

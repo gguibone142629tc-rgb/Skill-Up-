@@ -31,8 +31,10 @@ class _ProfileWidgetState extends State<ProfileWidget> {
             .get();
 
         if (userDoc.exists) {
+          final data = userDoc.data();
+          final role = (data?['role'] ?? '').toString().toLowerCase();
           setState(() {
-            isMentor = userDoc.data()?['role'] == 'mentor';
+            isMentor = data?['isMentor'] == true || role == 'mentor';
             isLoading = false;
           });
         } else {
@@ -56,8 +58,7 @@ class _ProfileWidgetState extends State<ProfileWidget> {
     List<ProfileModel> items = [
       ProfileModel(
           iconPath: 'assets/icons/person.svg', title: 'Personal Details'),
-      ProfileModel(
-          iconPath: 'assets/icons/lock.svg', title: 'Change Password'),
+      ProfileModel(iconPath: 'assets/icons/lock.svg', title: 'Change Password'),
     ];
 
     // Add "My Subscription" for students only
@@ -70,6 +71,9 @@ class _ProfileWidgetState extends State<ProfileWidget> {
     if (isMentor) {
       items.add(ProfileModel(
           iconPath: 'assets/icons/favorite.svg', title: 'My Subscribers'));
+
+      items.add(ProfileModel(
+          iconPath: 'assets/icons/history.svg', title: 'Dashboard'));
     }
 
     // Add "Saved Mentors" for students only
@@ -79,9 +83,11 @@ class _ProfileWidgetState extends State<ProfileWidget> {
     }
 
     // Privacy Policy available to all users
-    items.add(ProfileModel(iconPath: 'assets/icons/note.svg', title: 'Privacy Policy'));
+    items.add(ProfileModel(
+        iconPath: 'assets/icons/note.svg', title: 'Privacy Policy'));
 
-    items.add(ProfileModel(iconPath: 'assets/icons/logout.svg', title: 'Log Out'));
+    items.add(
+        ProfileModel(iconPath: 'assets/icons/logout.svg', title: 'Log Out'));
 
     return items;
   }

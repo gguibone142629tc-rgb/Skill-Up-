@@ -1,3 +1,4 @@
+import 'package:finaproj/common/loading_dialog.dart';
 import 'package:finaproj/common/mentor_avatar.dart'; // Shared avatar widget
 import 'package:finaproj/common/responsive_layout.dart';
 import 'package:finaproj/Profile_page/pages/pofile_page.dart'; // Import Profile Page
@@ -15,7 +16,8 @@ class FindMentorList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final side = ResponsiveLayout.horizontalPadding(context);
-    final vertical = ResponsiveLayout.verticalSpacing(context, mobile: 10, tablet: 12, desktop: 14);
+    final vertical = ResponsiveLayout.verticalSpacing(context,
+        mobile: 10, tablet: 12, desktop: 14);
     // Helper to get skills safely
     String skill1 = mentor.skills.isNotEmpty ? mentor.skills[0] : 'Mentoring';
     String? skill2 = mentor.skills.length > 1 ? mentor.skills[1] : null;
@@ -85,19 +87,20 @@ class FindMentorList extends StatelessWidget {
                 // Rating Star
                 Row(
                   children: [
-                    Icon(
-                      Icons.star, 
-                      color: mentor.rating > 0 ? Colors.amber : Colors.grey[400], 
-                      size: 18
-                    ),
+                    Icon(Icons.star,
+                        color:
+                            mentor.rating > 0 ? Colors.amber : Colors.grey[400],
+                        size: 18),
                     const SizedBox(width: 4),
                     Text(
-                      mentor.rating > 0 
+                      mentor.rating > 0
                           ? mentor.rating.toStringAsFixed(1)
                           : 'New',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: mentor.rating > 0 ? Colors.black87 : Colors.grey[600],
+                        color: mentor.rating > 0
+                            ? Colors.black87
+                            : Colors.grey[600],
                       ),
                     ),
                   ],
@@ -150,25 +153,23 @@ class FindMentorList extends StatelessWidget {
                         );
                       } else {
                         // Navigate to other mentor's profile
-                        Navigator.push(
+                        LoadingDialog.navigateWithLoader(
                           context,
-                          MaterialPageRoute(
-                            builder: (context) => ProfileScreen(
-                              mentorData: {
-                                'uid': mentor.id,
-                                'firstName': mentor.name.split(' ')[0],
-                                'lastName': mentor.name.split(' ').length > 1
-                                    ? mentor.name.split(' ')[1]
-                                    : '',
-                                'jobTitle': mentor.jobTitle,
-                                'bio':
-                                    'Experienced mentor ready to help you grow.',
-                                'skills': mentor.skills,
-                                'profileImageUrl': mentor.image,
-                                'price': displayPrice(mentor),
-                                'rating': mentor.rating,
-                              },
-                            ),
+                          ProfileScreen(
+                            mentorData: {
+                              'uid': mentor.id,
+                              'firstName': mentor.name.split(' ')[0],
+                              'lastName': mentor.name.split(' ').length > 1
+                                  ? mentor.name.split(' ')[1]
+                                  : '',
+                              'jobTitle': mentor.jobTitle,
+                              'bio':
+                                  'Experienced mentor ready to help you grow.',
+                              'skills': mentor.skills,
+                              'profileImageUrl': mentor.image,
+                              'price': displayPrice(mentor),
+                              'rating': mentor.rating,
+                            },
                           ),
                         );
                       }

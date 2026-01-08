@@ -11,7 +11,9 @@ import 'package:finaproj/services/rating_model.dart';
 import 'package:finaproj/Profile_page/widgets/ratings_display_section.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
+  final bool focusRatings;
+
+  const ProfilePage({super.key, this.focusRatings = false});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -19,6 +21,15 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   final User? currentUser = FirebaseAuth.instance.currentUser;
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _ratingsKey = GlobalKey();
+  bool _didFocusRatings = false;
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   void _showSettingsMenu() {
     showModalBottomSheet(
@@ -44,7 +55,8 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 const SizedBox(height: 20),
                 const Text("Account Settings",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
                 ProfileWidget(),
                 const SizedBox(height: 20),
@@ -65,6 +77,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
+        controller: _scrollController,
         physics: const BouncingScrollPhysics(),
         child: StreamBuilder<DocumentSnapshot>(
           stream: FirebaseFirestore.instance
@@ -97,361 +110,393 @@ class _ProfilePageState extends State<ProfilePage> {
             final String role =
                 (userData['role'] ?? 'student').toString().toLowerCase();
 
+            // If we arrived from a Rating notification, auto-scroll once to the ratings section.
+            if (widget.focusRatings && !_didFocusRatings) {
+              _didFocusRatings = true;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                final ctx = _ratingsKey.currentContext;
+                if (ctx != null) {
+                  Scrollable.ensureVisible(
+                    ctx,
+                    duration: const Duration(milliseconds: 450),
+                    curve: Curves.easeOut,
+                    alignment: 0.1,
+                  );
+                }
+              });
+            }
+
             return Padding(
               padding: const EdgeInsets.only(bottom: 100),
               child: Column(
-              children: [
-                // Header Card
-                Container(
-                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF6B9A91),
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(20),
-                      bottomRight: Radius.circular(20),
+                children: [
+                  // Header Card
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF6B9A91),
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(20),
+                        bottomRight: Radius.circular(20),
+                      ),
                     ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const SizedBox(width: 24),
-                          Text(
-                            role == 'mentor'
-                                ? 'Mentor Profile'
-                                : 'Student Profile',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const SizedBox(width: 24),
+                            Text(
+                              role == 'mentor'
+                                  ? 'Mentor Profile'
+                                  : 'Student Profile',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.settings_outlined,
-                                color: Colors.white),
-                            onPressed: _showSettingsMenu,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      // Icon placeholder
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(12),
+                            IconButton(
+                              icon: const Icon(Icons.settings_outlined,
+                                  color: Colors.white),
+                              onPressed: _showSettingsMenu,
+                            ),
+                          ],
                         ),
-                        child: Text(
-                          role == 'mentor' ? '👨‍🏫' : '📚',
-                          style: const TextStyle(fontSize: 32),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        fullName,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Profile Content
-                Transform.translate(
-                  offset: const Offset(0, -30),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: SingleChildScrollView(
-                      physics: const NeverScrollableScrollPhysics(),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                        // Avatar and Info Card
-                        Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(15),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 10,
-                                offset: const Offset(0, 5),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              CircleAvatar(
-                                radius: 50,
-                                backgroundColor: Colors.grey[200],
-                                backgroundImage: (userData['profileImageUrl'] ??
-                                            '')
-                                        .isNotEmpty
-                                    ? NetworkImage(userData['profileImageUrl'])
-                                    : null,
-                                child:
-                                    (userData['profileImageUrl'] ?? '').isEmpty
-                                        ? const Icon(Icons.person, size: 50, color: Colors.grey)
-                                        : null,
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                fullName,
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                role == 'mentor' ? 'Mentor' : 'Student',
-                                style: const TextStyle(
-                                    fontSize: 16, color: Colors.grey),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                userData['location'] ?? 'Tagum City',
-                                style: TextStyle(
-                                    fontSize: 14, color: Colors.grey[600]),
-                              ),
-                              const SizedBox(height: 20),
-                              // Edit Profile Button
-                              SizedBox(
-                                width: double.infinity,
-                                child: OutlinedButton(
-                                  onPressed: () {
-                                    if (role == 'mentor') {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) =>
-                                                const MyProfilePage(
-                                                    startEditing: true)),
-                                      );
-                                    } else {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) =>
-                                                const MenteeProfilePage(
-                                                    startEditing: true)),
-                                      );
-                                    }
-                                  },
-                                  style: OutlinedButton.styleFrom(
-                                    side: const BorderSide(
-                                        color: Color(0xFF2D6A65), width: 1.5),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 12),
-                                  ),
-                                  child: const Text(
-                                    'Edit Profile',
-                                    style: TextStyle(
-                                      color: Color(0xFF2D6A65),
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              if (role == 'mentor') ...[
-                                const SizedBox(height: 10),
-                                // View Plan button
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: ElevatedButton(
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => MembershipPage(
-                                            isMentorView: true,
-                                            mentorData: userData,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                          const Color(0xFF2D6A65),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(10),
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 12),
-                                      elevation: 0,
-                                    ),
-                                    child: const Text("View Plan",
-                                        style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w600)),
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-
                         const SizedBox(height: 20),
-
-                        // About Section
-                        _buildInfoCard(
-                          title: 'About',
+                        // Icon placeholder
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           child: Text(
-                            bio,
-                            style: TextStyle(
-                                fontSize: 14, color: Colors.grey[700]),
+                            role == 'mentor' ? '👨‍🏫' : '📚',
+                            style: const TextStyle(fontSize: 32),
                           ),
                         ),
+                        const SizedBox(height: 16),
+                        Text(
+                          fullName,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
 
-                        // Role-specific sections
-                        if (role == 'mentor') ...[
-                          _buildInfoCard(
-                            title: 'Expertise',
-                            child: expertise.isEmpty
-                                ? Text('No expertise added yet.',
-                                    style: TextStyle(
-                                        fontSize: 14, color: Colors.grey[700]))
-                                : Wrap(
-                                    spacing: 8,
-                                    runSpacing: 8,
-                                    children: expertise.map((item) {
-                                      return Chip(
-                                        label: Text(item),
-                                        backgroundColor:
-                                            const Color(0xFFE8F5F3),
-                                        side: BorderSide.none,
-                                      );
-                                    }).toList(),
+                  // Profile Content
+                  Transform.translate(
+                    offset: const Offset(0, -30),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: SingleChildScrollView(
+                        physics: const NeverScrollableScrollPhysics(),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // Avatar and Info Card
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(15),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 5),
                                   ),
-                          ),
-                          _buildInfoCard(
-                            title: 'Skills',
-                            child: skills.isEmpty
-                                ? Text('No skills added yet.',
-                                    style: TextStyle(
-                                        fontSize: 14, color: Colors.grey[700]))
-                                : Wrap(
-                                    spacing: 8,
-                                    runSpacing: 8,
-                                    children: skills.map((item) {
-                                      return Chip(
-                                        label: Text(item),
-                                        backgroundColor:
-                                            const Color(0xFFE8F5F3),
-                                        side: BorderSide.none,
-                                      );
-                                    }).toList(),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  CircleAvatar(
+                                    radius: 50,
+                                    backgroundColor: Colors.grey[200],
+                                    backgroundImage:
+                                        (userData['profileImageUrl'] ?? '')
+                                                .isNotEmpty
+                                            ? NetworkImage(
+                                                userData['profileImageUrl'])
+                                            : null,
+                                    child: (userData['profileImageUrl'] ?? '')
+                                            .isEmpty
+                                        ? const Icon(Icons.person,
+                                            size: 50, color: Colors.grey)
+                                        : null,
                                   ),
-                          ),
-                          _buildInfoCard(
-                            title: 'Languages',
-                            child: (userData['languages'] ?? []).isEmpty
-                                ? Text('No languages added yet.',
-                                    style: TextStyle(
-                                        fontSize: 14, color: Colors.grey[700]))
-                                : Wrap(
-                                    spacing: 8,
-                                    runSpacing: 8,
-                                    children: List<String>.from(
-                                            userData['languages'] ?? [])
-                                        .map((item) {
-                                      return Chip(
-                                        label: Text(item),
-                                        backgroundColor:
-                                            const Color(0xFFE8F5F3),
-                                        side: BorderSide.none,
-                                      );
-                                    }).toList(),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    fullName,
+                                    style: const TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
-                          ),
-                          // Ratings & Reviews Section
-                          _buildRatingsSection(currentUser!.uid),
-                        ] else ...[
-                          _buildInfoCard(
-                            title: 'Interests',
-                            child: (userData['interests'] ?? []).isEmpty
-                                ? Text('No interests added yet.',
-                                    style: TextStyle(
-                                        fontSize: 14, color: Colors.grey[700]))
-                                : Wrap(
-                                    spacing: 8,
-                                    runSpacing: 8,
-                                    children: List<String>.from(
-                                            userData['interests'] ?? [])
-                                        .map((item) {
-                                      return Chip(
-                                        label: Text(item),
-                                        backgroundColor:
-                                            const Color(0xFFE8F5F3),
-                                        side: BorderSide.none,
-                                      );
-                                    }).toList(),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    role == 'mentor' ? 'Mentor' : 'Student',
+                                    style: const TextStyle(
+                                        fontSize: 16, color: Colors.grey),
                                   ),
-                          ),
-                          _buildInfoCard(
-                            title: 'Learning Goals',
-                            child: (userData['goals'] ?? []).isEmpty
-                                ? Text('No learning goals added yet.',
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    userData['location'] ?? 'Tagum City',
                                     style: TextStyle(
-                                        fontSize: 14, color: Colors.grey[700]))
-                                : Wrap(
-                                    spacing: 8,
-                                    runSpacing: 8,
-                                    children: List<String>.from(
-                                            userData['goals'] ?? [])
-                                        .map((item) {
-                                      return Chip(
-                                        label: Text(item),
-                                        backgroundColor:
-                                            const Color(0xFFE8F5F3),
-                                        side: BorderSide.none,
-                                      );
-                                    }).toList(),
+                                        fontSize: 14, color: Colors.grey[600]),
                                   ),
-                          ),
-                          _buildInfoCard(
-                            title: 'Learning Preferences',
-                            child: (userData['learningStyles'] ?? []).isEmpty
-                                ? Text('No learning preferences added yet.',
-                                    style: TextStyle(
-                                        fontSize: 14, color: Colors.grey[700]))
-                                : Wrap(
-                                    spacing: 8,
-                                    runSpacing: 8,
-                                    children: List<String>.from(
-                                            userData['learningStyles'] ?? [])
-                                        .map((item) {
-                                      return Chip(
-                                        label: Text(item),
-                                        backgroundColor:
-                                            const Color(0xFFE8F5F3),
-                                        side: BorderSide.none,
-                                      );
-                                    }).toList(),
+                                  const SizedBox(height: 20),
+                                  // Edit Profile Button
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: OutlinedButton(
+                                      onPressed: () {
+                                        if (role == 'mentor') {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) =>
+                                                    const MyProfilePage(
+                                                        startEditing: true)),
+                                          );
+                                        } else {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) =>
+                                                    const MenteeProfilePage(
+                                                        startEditing: true)),
+                                          );
+                                        }
+                                      },
+                                      style: OutlinedButton.styleFrom(
+                                        side: const BorderSide(
+                                            color: Color(0xFF2D6A65),
+                                            width: 1.5),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 12),
+                                      ),
+                                      child: const Text(
+                                        'Edit Profile',
+                                        style: TextStyle(
+                                          color: Color(0xFF2D6A65),
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
                                   ),
-                          ),
-                        ],
+                                  if (role == 'mentor') ...[
+                                    const SizedBox(height: 10),
+                                    // View Plan button
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: ElevatedButton(
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  MembershipPage(
+                                                isMentorView: true,
+                                                mentorData: userData,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor:
+                                              const Color(0xFF2D6A65),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 12),
+                                          elevation: 0,
+                                        ),
+                                        child: const Text("View Plan",
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w600)),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
 
-                        const SizedBox(height: 40),
-                        ],
+                            const SizedBox(height: 20),
+
+                            // About Section
+                            _buildInfoCard(
+                              title: 'About',
+                              child: Text(
+                                bio,
+                                style: TextStyle(
+                                    fontSize: 14, color: Colors.grey[700]),
+                              ),
+                            ),
+
+                            // Role-specific sections
+                            if (role == 'mentor') ...[
+                              _buildInfoCard(
+                                title: 'Expertise',
+                                child: expertise.isEmpty
+                                    ? Text('No expertise added yet.',
+                                        style: TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.grey[700]))
+                                    : Wrap(
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        children: expertise.map((item) {
+                                          return Chip(
+                                            label: Text(item),
+                                            backgroundColor:
+                                                const Color(0xFFE8F5F3),
+                                            side: BorderSide.none,
+                                          );
+                                        }).toList(),
+                                      ),
+                              ),
+                              _buildInfoCard(
+                                title: 'Skills',
+                                child: skills.isEmpty
+                                    ? Text('No skills added yet.',
+                                        style: TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.grey[700]))
+                                    : Wrap(
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        children: skills.map((item) {
+                                          return Chip(
+                                            label: Text(item),
+                                            backgroundColor:
+                                                const Color(0xFFE8F5F3),
+                                            side: BorderSide.none,
+                                          );
+                                        }).toList(),
+                                      ),
+                              ),
+                              _buildInfoCard(
+                                title: 'Languages',
+                                child: (userData['languages'] ?? []).isEmpty
+                                    ? Text('No languages added yet.',
+                                        style: TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.grey[700]))
+                                    : Wrap(
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        children: List<String>.from(
+                                                userData['languages'] ?? [])
+                                            .map((item) {
+                                          return Chip(
+                                            label: Text(item),
+                                            backgroundColor:
+                                                const Color(0xFFE8F5F3),
+                                            side: BorderSide.none,
+                                          );
+                                        }).toList(),
+                                      ),
+                              ),
+                              // Ratings & Reviews Section
+                              Container(
+                                key: _ratingsKey,
+                                child: _buildRatingsSection(currentUser!.uid),
+                              ),
+                            ] else ...[
+                              _buildInfoCard(
+                                title: 'Interests',
+                                child: (userData['interests'] ?? []).isEmpty
+                                    ? Text('No interests added yet.',
+                                        style: TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.grey[700]))
+                                    : Wrap(
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        children: List<String>.from(
+                                                userData['interests'] ?? [])
+                                            .map((item) {
+                                          return Chip(
+                                            label: Text(item),
+                                            backgroundColor:
+                                                const Color(0xFFE8F5F3),
+                                            side: BorderSide.none,
+                                          );
+                                        }).toList(),
+                                      ),
+                              ),
+                              _buildInfoCard(
+                                title: 'Learning Goals',
+                                child: (userData['goals'] ?? []).isEmpty
+                                    ? Text('No learning goals added yet.',
+                                        style: TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.grey[700]))
+                                    : Wrap(
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        children: List<String>.from(
+                                                userData['goals'] ?? [])
+                                            .map((item) {
+                                          return Chip(
+                                            label: Text(item),
+                                            backgroundColor:
+                                                const Color(0xFFE8F5F3),
+                                            side: BorderSide.none,
+                                          );
+                                        }).toList(),
+                                      ),
+                              ),
+                              _buildInfoCard(
+                                title: 'Learning Preferences',
+                                child: (userData['learningStyles'] ?? [])
+                                        .isEmpty
+                                    ? Text('No learning preferences added yet.',
+                                        style: TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.grey[700]))
+                                    : Wrap(
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        children: List<String>.from(
+                                                userData['learningStyles'] ??
+                                                    [])
+                                            .map((item) {
+                                          return Chip(
+                                            label: Text(item),
+                                            backgroundColor:
+                                                const Color(0xFFE8F5F3),
+                                            side: BorderSide.none,
+                                          );
+                                        }).toList(),
+                                      ),
+                              ),
+                            ],
+
+                            const SizedBox(height: 40),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
               ),
             );
           },
@@ -463,7 +508,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildRatingsSection(String mentorId) {
     final RatingService ratingService = RatingService();
-    
+
     return StreamBuilder<List<MentorRating>>(
       stream: ratingService.getMentorRatings(mentorId),
       builder: (context, snapshot) {
@@ -491,14 +536,14 @@ class _ProfilePageState extends State<ProfilePage> {
 
         // Get ratings data (empty list if no data)
         final ratings = snapshot.data ?? [];
-        
+
         // Calculate average rating from actual reviews
         double averageRating = 0.0;
         if (ratings.isNotEmpty) {
           double sum = ratings.fold(0, (prev, rating) => prev + rating.rating);
           averageRating = sum / ratings.length;
         }
-        
+
         final totalRatings = ratings.length;
 
         return Container(

@@ -123,7 +123,10 @@ class _MySubscriptionPageState extends State<MySubscriptionPage> {
             itemBuilder: (context, index) {
               final doc = docs[index];
               final data = doc.data() as Map<String, dynamic>;
-              final isActive = data['status'] == 'active';
+              final status =
+                  (data['status'] ?? 'active').toString().toLowerCase();
+              final displayStatus = status == 'cancelled' ? 'expired' : status;
+              final isActive = displayStatus == 'active';
               final isFocused = widget.focusMentorId != null &&
                   data['mentorId'] == widget.focusMentorId;
 
@@ -133,7 +136,9 @@ class _MySubscriptionPageState extends State<MySubscriptionPage> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: isFocused ? const Color(0xFF2D6A65) : Colors.transparent,
+                    color: isFocused
+                        ? const Color(0xFF2D6A65)
+                        : Colors.transparent,
                     width: isFocused ? 2 : 0,
                   ),
                   boxShadow: [
@@ -168,7 +173,7 @@ class _MySubscriptionPageState extends State<MySubscriptionPage> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              isActive ? 'ACTIVE SUBSCRIPTION' : 'CANCELLED',
+                              isActive ? 'ACTIVE SUBSCRIPTION' : 'EXPIRED',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
@@ -326,7 +331,7 @@ class _MySubscriptionPageState extends State<MySubscriptionPage> {
                                     : 'N/A',
                                 Icons.calendar_today,
                               ),
-                              if (isActive) ...[ 
+                              if (isActive) ...[
                                 const SizedBox(width: 12),
                                 _buildDateCard(
                                   'Expires',

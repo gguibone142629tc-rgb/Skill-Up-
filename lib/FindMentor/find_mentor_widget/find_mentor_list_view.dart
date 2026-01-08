@@ -1,3 +1,4 @@
+import 'package:finaproj/common/loading_dialog.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:finaproj/FindMentor/find_mentor_decor/find_mentor_list.dart';
 import 'package:finaproj/common/mentor_avatar.dart';
@@ -314,7 +315,8 @@ class StudentSearchCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final side = ResponsiveLayout.horizontalPadding(context);
-    final vertical = ResponsiveLayout.verticalSpacing(context, mobile: 10, tablet: 12, desktop: 14);
+    final vertical = ResponsiveLayout.verticalSpacing(context,
+        mobile: 10, tablet: 12, desktop: 14);
     final firstName = studentData['firstName'] ?? 'Student';
     final lastName = studentData['lastName'] ?? '';
     final fullName = '$firstName $lastName';
@@ -329,170 +331,168 @@ class StudentSearchCard extends StatelessWidget {
 
     return Container(
       margin: EdgeInsets.symmetric(horizontal: side, vertical: vertical),
-        decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(15),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 5,
-                offset: const Offset(0, 5),
-              )
-            ]),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Row 1: Avatar, Name, Rating Badge
-              Row(
+      decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 5,
+              offset: const Offset(0, 5),
+            )
+          ]),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Row 1: Avatar, Name, Rating Badge
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Avatar
+                MentorAvatar(
+                  name: fullName,
+                  image: profileImage,
+                  size: 64,
+                ),
+                const SizedBox(width: 12),
+                // Name & Job
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        fullName,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Student',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        location,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[500],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Row 2: Interests
+            if (interests.isNotEmpty)
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                children: interests.take(2).map((interest) {
+                  return Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      interest,
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  );
+                }).toList(),
+              ),
+            if (interests.isEmpty)
+              Text(
+                'No interests listed',
+                style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+              ),
+            const SizedBox(height: 12),
+            // Row 3: Goals
+            if (goals.isNotEmpty)
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Avatar
-                  MentorAvatar(
-                    name: fullName,
-                    image: profileImage,
-                    size: 64,
-                  ),
-                  const SizedBox(width: 12),
-                  // Name & Job
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          fullName,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Student',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          location,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[500],
-                          ),
-                        ),
-                      ],
+                  Text(
+                    'Learning Goals',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[700],
                     ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    goals.take(2).join(', '),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
+              )
+            else
+              Text(
+                'No goals listed',
+                style: TextStyle(fontSize: 12, color: Colors.grey[500]),
               ),
-              const SizedBox(height: 12),
-              // Row 2: Interests
-              if (interests.isNotEmpty)
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 6,
-                  children: interests.take(2).map((interest) {
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        interest,
-                        style: const TextStyle(fontSize: 12),
+            const SizedBox(height: 16),
+            // View Profile Button
+            Align(
+              alignment: Alignment.centerRight,
+              child: ElevatedButton(
+                onPressed: () {
+                  final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+                  final isOwnProfile = studentId == currentUserId;
+
+                  if (isOwnProfile) {
+                    // Navigate to own profile page (from nav bar)
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ProfilePage(),
                       ),
                     );
-                  }).toList(),
+                  } else {
+                    // Navigate to other student's profile
+                    LoadingDialog.navigateWithLoader(
+                      context,
+                      StudentProfileView(studentId: studentId),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2D6A65),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  elevation: 2,
                 ),
-              if (interests.isEmpty)
-                Text(
-                  'No interests listed',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                ),
-              const SizedBox(height: 12),
-              // Row 3: Goals
-              if (goals.isNotEmpty)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Learning Goals',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey[700],
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      goals.take(2).join(', '),
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                )
-              else
-                Text(
-                  'No goals listed',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                ),
-              const SizedBox(height: 16),
-              // View Profile Button
-              Align(
-                alignment: Alignment.centerRight,
-                child: ElevatedButton(
-                  onPressed: () {
-                    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-                    final isOwnProfile = studentId == currentUserId;
-
-                    if (isOwnProfile) {
-                      // Navigate to own profile page (from nav bar)
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ProfilePage(),
-                        ),
-                      );
-                    } else {
-                      // Navigate to other student's profile
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => StudentProfileView(studentId: studentId),
-                        ),
-                      );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2D6A65),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
-                    elevation: 2,
-                  ),
-                  child: const Text(
-                    "View Profile",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
+                child: const Text(
+                  "View Profile",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
+      ),
     );
   }
 }

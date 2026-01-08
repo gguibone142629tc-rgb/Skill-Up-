@@ -1,4 +1,3 @@
-
 import 'package:finaproj/Service_Category/category_list_decor/category_list_widget.dart';
 import 'package:finaproj/Service_Category/category_model/category_mdel.dart';
 import 'package:flutter/material.dart';
@@ -12,7 +11,6 @@ class CategoryWidget extends StatelessWidget {
       title: 'Graphic Design',
       subtitle: 'Logo & brand identity',
     ),
-
     CategoryModel(
       iconPath: 'assets/icons/micro.svg',
       title: 'Digital Marketing',
@@ -23,7 +21,6 @@ class CategoryWidget extends StatelessWidget {
       title: 'Video & Animation',
       subtitle: 'Video editing & Vide Ads',
     ),
-
     CategoryModel(
       iconPath: 'assets/icons/music.svg',
       title: 'Music & Audio',
@@ -53,9 +50,10 @@ class CategoryWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      padding: EdgeInsets.zero,
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
       itemCount: listCateg.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
         return CategoryListWidget(categoryModel: listCateg[index]);
       },
