@@ -453,7 +453,6 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
               const SizedBox(width: 12),
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(widget.otherUserName, style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
-                const Text("Online", style: TextStyle(color: Colors.grey, fontSize: 12)),
               ]),
             ],
           ),
