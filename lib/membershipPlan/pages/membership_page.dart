@@ -580,7 +580,7 @@ class _MembershipPageState extends State<MembershipPage> {
                         ),
                 ),
                 Padding(
-                  padding: EdgeInsets.fromLTRB(side, gap, side, gap * 1.2),
+                  padding: EdgeInsets.fromLTRB(side, gap, side, 80),
                   child: Center(
                     child: ConstrainedBox(
                       constraints: BoxConstraints(maxWidth: maxCardWidth),
