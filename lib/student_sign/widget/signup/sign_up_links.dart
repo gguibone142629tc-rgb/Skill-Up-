@@ -14,7 +14,7 @@ class SignUpLinks extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    const accent = Color(0xFF7C4DFF);
+    const accent = Color(0xFF2D6A65);
 
     return RichText(
       text: TextSpan(

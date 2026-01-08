@@ -49,7 +49,7 @@ class _RoleItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const accent = Color(0xFF7C4DFF);
+    const accent = Color(0xFF2D6A65);
     final color = selected ? accent : Colors.black87;
     return InkWell(
       onTap: onTap,

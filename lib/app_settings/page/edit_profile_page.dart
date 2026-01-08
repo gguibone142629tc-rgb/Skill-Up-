@@ -130,13 +130,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
             const SizedBox(height: 16),
 
             AuthTextField(
-              label: "Job Title",
-              controller: _jobTitleController,
-              hintText: "e.g. Senior Product Designer",
-            ),
-            const SizedBox(height: 16),
-
-            AuthTextField(
               label: "Location",
               controller: _locationController,
               hintText: "e.g. Manila, Philippines",

@@ -3,6 +3,7 @@ import 'package:finaproj/mentor_sign/pages/mentor_signup_page.dart';
 import 'package:finaproj/student_sign/widget/signup/sign_up_form.dart';
 import 'package:finaproj/student_sign/widget/signup/sign_up_links.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 // Import your services
 import 'package:finaproj/services/auth_service.dart';
@@ -105,7 +106,10 @@ class _SignUpPageState extends State<SignUpPage> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
+            constraints: BoxConstraints(
+              // Allow full-width on web/desktop; keep comfy width on mobile
+              maxWidth: kIsWeb ? double.infinity : 420,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
