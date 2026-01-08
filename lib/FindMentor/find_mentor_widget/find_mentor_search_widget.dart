@@ -63,7 +63,8 @@ class _FindMentorSearchWidgetState extends State<FindMentorSearchWidget> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isStacked = constraints.maxWidth < 520;
+        // Force inline layout so search and filter stay on one row on all devices
+        final isStacked = false;
 
         final searchField = Container(
           height: 52,
@@ -90,6 +91,7 @@ class _FindMentorSearchWidgetState extends State<FindMentorSearchWidget> {
             height: 52,
             width: 52,
             padding: const EdgeInsets.all(12),
+            alignment: Alignment.center,
             decoration: BoxDecoration(
               color: const Color(0xFF2D6A65).withOpacity(0.1),
               borderRadius: BorderRadius.circular(15),

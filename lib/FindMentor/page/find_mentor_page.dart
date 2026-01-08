@@ -92,7 +92,7 @@ class _FindMentorPageState extends State<FindMentorPage> {
     // Title Logic
     final String? displayCategory = _selectedCategory == 'Marketing' ? 'Digital Marketing' : _selectedCategory;
     String title = displayCategory != null 
-        ? '$displayCategory ${_selectedRole}' 
+        ? '$displayCategory $_selectedRole' 
         : 'Search $_selectedRole';
 
     return Scaffold(
