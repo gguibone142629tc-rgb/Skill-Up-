@@ -20,105 +20,125 @@ class ProfileListDecor extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isLogout = profileModel.title.toLowerCase().contains('log');
+    final Color brandGreen = const Color(0xFF2D6A65);
     final Color logoutColor = const Color(0xFFFF3B30);
+    final Color iconBg = isLogout 
+        ? logoutColor.withOpacity(0.1) 
+        : brandGreen.withOpacity(0.08);
+    final Color iconColor = isLogout ? logoutColor : brandGreen;
 
-    return InkWell(
-      onTap: () async {
-        if (isLogout) {
-          // --- LOGOUT LOGIC ---
-          await FirebaseAuth.instance.signOut();
-          if (context.mounted) {
-            Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (context) => const LoginPage()),
-              (route) => false,
-            );
-          }
-        } else {
-          // --- NAVIGATION LOGIC ---
-          Widget? nextPage;
-
-          switch (profileModel.title) {
-            case 'Personal Details':
-              nextPage = const EditProfilePage();
-              break;
-            case 'My Subscription':
-              nextPage = const MySubscriptionPage();
-              break;
-            case 'My Subscribers':
-              nextPage = const MySubscribersPage();
-              break;
-            case 'Dashboard':
-              nextPage = const MentorDashboardPage();
-              break;
-            case 'Saved Mentors':
-              nextPage = const SavedMentorsPage();
-              break;
-            case 'Change Password':
-              nextPage = const ChangePasswordPage();
-              break;
-            case 'Privacy Policy':
-              nextPage = const PrivacyPolicyPage();
-              break;
-            default:
-              // Handle unknown cases or show a "Coming Soon" snackbar
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('${profileModel.title} coming soon!')),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () async {
+          if (isLogout) {
+            // --- LOGOUT LOGIC ---
+            await FirebaseAuth.instance.signOut();
+            if (context.mounted) {
+              Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const LoginPage()),
+                (route) => false,
               );
-          }
+            }
+          } else {
+            // --- NAVIGATION LOGIC ---
+            Widget? nextPage;
 
-          if (nextPage != null && context.mounted) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => nextPage!),
-            );
+            switch (profileModel.title) {
+              case 'Personal Details':
+                nextPage = const EditProfilePage();
+                break;
+              case 'My Subscription':
+                nextPage = const MySubscriptionPage();
+                break;
+              case 'My Subscribers':
+                nextPage = const MySubscribersPage();
+                break;
+              case 'Dashboard':
+                nextPage = const MentorDashboardPage();
+                break;
+              case 'Saved Mentors':
+                nextPage = const SavedMentorsPage();
+                break;
+              case 'Change Password':
+                nextPage = const ChangePasswordPage();
+                break;
+              case 'Privacy Policy':
+                nextPage = const PrivacyPolicyPage();
+                break;
+              default:
+                // Handle unknown cases or show a "Coming Soon" snackbar
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('${profileModel.title} coming soon!')),
+                );
+            }
+
+            if (nextPage != null && context.mounted) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => nextPage!),
+              );
+            }
           }
-        }
-      },
-      child: Container(
-        margin: const EdgeInsets.only(left: 25, right: 25, top: 5),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              offset: const Offset(0, 1.5),
-            )
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
+        },
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Colors.grey[200]!,
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              )
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  margin:
-                      const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: isLogout
-                        ? logoutColor.withOpacity(0.1)
-                        : const Color(0xFFF7F7F7),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: SvgPicture.asset(
-                    profileModel.iconPath,
-                    color: isLogout ? logoutColor : null,
-                    width: 20,
-                  ),
+                Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: iconBg,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Center(
+                        child: SvgPicture.asset(
+                          profileModel.iconPath,
+                          width: 24,
+                          height: 24,
+                          colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Text(
+                      profileModel.title,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                        color: isLogout ? logoutColor : Colors.black87,
+                        letterSpacing: 0.3,
+                      ),
+                    )
+                  ],
                 ),
-                Text(
-                  profileModel.title,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 17,
-                    color: isLogout ? logoutColor : Colors.black,
-                  ),
-                )
+                Icon(Icons.arrow_forward_ios,
+                    size: 16, 
+                    color: isLogout ? logoutColor : Colors.grey[400]),
               ],
             ),
-            Icon(Icons.arrow_forward_ios,
-                size: 18, color: isLogout ? logoutColor : Colors.black45),
-          ],
+          ),
         ),
       ),
     );

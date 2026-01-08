@@ -34,15 +34,15 @@ class _ProfilePageState extends State<ProfilePage> {
   void _showSettingsMenu() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF9F9F9),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
         return SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20),
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 0),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -53,13 +53,36 @@ class _ProfilePageState extends State<ProfilePage> {
                       color: Colors.grey[300],
                       borderRadius: BorderRadius.circular(2)),
                 ),
+                const SizedBox(height: 24),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Account Settings",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black87,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "Manage your account and preferences",
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[600],
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: 20),
-                const Text("Account Settings",
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 10),
                 ProfileWidget(),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
               ],
             ),
           ),

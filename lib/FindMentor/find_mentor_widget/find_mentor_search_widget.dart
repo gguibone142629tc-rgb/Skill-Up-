@@ -9,6 +9,7 @@ class FindMentorSearchWidget extends StatefulWidget {
   final bool showFilter;
   final String sortBy;
   final ValueChanged<String> onSortChanged;
+  final bool showSort; // New parameter to control sort visibility
 
   const FindMentorSearchWidget({
     super.key,
@@ -18,6 +19,7 @@ class FindMentorSearchWidget extends StatefulWidget {
     this.showFilter = true,
     required this.sortBy,
     required this.onSortChanged,
+    this.showSort = true, // Default to true (show sort)
   });
 
   @override
@@ -128,57 +130,58 @@ class _FindMentorSearchWidgetState extends State<FindMentorSearchWidget> {
                       ],
                     ),
             ),
-            // Sort dropdown
-            Container(
-              margin: EdgeInsets.symmetric(horizontal: side),
-              child: Row(
-                children: [
-                  const Icon(Icons.sort, color: Colors.grey, size: 20),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Sort by:',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF3F4F6),
-                        borderRadius: BorderRadius.circular(12),
+            // Sort dropdown - only show if showSort is true
+            if (widget.showSort)
+              Container(
+                margin: EdgeInsets.symmetric(horizontal: side),
+                child: Row(
+                  children: [
+                    const Icon(Icons.sort, color: Colors.grey, size: 20),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Sort by:',
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
                       ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: widget.sortBy,
-                          isExpanded: true,
-                          icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF2D6A65)),
-                          style: const TextStyle(
-                            color: Colors.black87,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF3F4F6),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: widget.sortBy,
+                            isExpanded: true,
+                            icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF2D6A65)),
+                            style: const TextStyle(
+                              color: Colors.black87,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            onChanged: (value) {
+                              if (value != null) {
+                                widget.onSortChanged(value);
+                              }
+                            },
+                            items: const [
+                              DropdownMenuItem(value: 'default', child: Text('Default')),
+                              DropdownMenuItem(value: 'rating', child: Text('Highest Rated')),
+                              DropdownMenuItem(value: 'price_low', child: Text('Price: Low to High')),
+                              DropdownMenuItem(value: 'price_high', child: Text('Price: High to Low')),
+                            ],
                           ),
-                          onChanged: (value) {
-                            if (value != null) {
-                              widget.onSortChanged(value);
-                            }
-                          },
-                          items: const [
-                            DropdownMenuItem(value: 'default', child: Text('Default')),
-                            DropdownMenuItem(value: 'rating', child: Text('Highest Rated')),
-                            DropdownMenuItem(value: 'price_low', child: Text('Price: Low to High')),
-                            DropdownMenuItem(value: 'price_high', child: Text('Price: High to Low')),
-                          ],
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
             SizedBox(height: gap),
           ],
         );

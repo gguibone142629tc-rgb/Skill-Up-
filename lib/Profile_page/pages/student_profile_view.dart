@@ -83,7 +83,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
           children: [
             // Header Card
             Container(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
+              padding: const EdgeInsets.fromLTRB(20, 50, 20, 40),
               decoration: const BoxDecoration(
                 color: Color(0xFF6B9A91),
                 borderRadius: BorderRadius.only(
@@ -97,10 +97,13 @@ class _StudentProfileViewState extends State<StudentProfileView> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      GestureDetector(
+                      InkWell(
                         onTap: () => Navigator.pop(context),
-                        child:
-                            const Icon(Icons.arrow_back, color: Colors.white),
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          child: const Icon(Icons.arrow_back, color: Colors.white),
+                        ),
                       ),
                       const Text(
                         'Student Profile',

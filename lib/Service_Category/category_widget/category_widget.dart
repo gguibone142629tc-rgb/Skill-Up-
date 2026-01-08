@@ -51,9 +51,9 @@ class CategoryWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
       itemCount: listCateg.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 10),
+      separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         return CategoryListWidget(categoryModel: listCateg[index]);
       },

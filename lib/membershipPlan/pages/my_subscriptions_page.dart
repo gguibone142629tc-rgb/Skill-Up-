@@ -245,6 +245,80 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Mentor Info with Picture
+                      StreamBuilder<DocumentSnapshot>(
+                        stream: FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(data['mentorId'])
+                            .snapshots(),
+                        builder: (context, mentorSnapshot) {
+                          String? profileImageUrl;
+                          String mentorName = data['mentorName'] ?? 'Mentor';
+                          
+                          if (mentorSnapshot.hasData && mentorSnapshot.data!.exists) {
+                            final mentorData = mentorSnapshot.data!.data() as Map<String, dynamic>?;
+                            if (mentorData != null) {
+                              // Try to get profile image from various possible field names
+                              profileImageUrl = (mentorData['profileImageUrl'] ?? 
+                                              mentorData['photoUrl'] ?? 
+                                              mentorData['photoURL'] ?? '') as String?;
+                              
+                              if (profileImageUrl != null && profileImageUrl.isEmpty) {
+                                profileImageUrl = null;
+                              }
+                            }
+                          }
+
+                          return Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 36,
+                                backgroundColor: const Color(0xFF2D6A65).withOpacity(0.15),
+                                backgroundImage: profileImageUrl != null && profileImageUrl.isNotEmpty
+                                    ? NetworkImage(profileImageUrl)
+                                    : null,
+                                child: profileImageUrl == null || profileImageUrl.isEmpty
+                                    ? const Icon(Icons.person, size: 36, color: Color(0xFF2D6A65))
+                                    : null,
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      mentorName,
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.black87,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      data['planTitle'] ?? 'Plan',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.grey[600],
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+
+                      const SizedBox(height: 16),
+                      const Divider(height: 1),
+                      const SizedBox(height: 16),
+
                       // Status Badge and Price
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -334,30 +408,13 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
                       Text(
                         data['planTitle'] ?? 'N/A',
                         style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
                         ),
                       ),
 
-                      const SizedBox(height: 8),
-
-                      // Mentor Name
-                      Row(
-                        children: [
-                          const Icon(Icons.person,
-                              size: 16, color: Colors.grey),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Mentor: ${data['mentorName'] ?? 'N/A'}',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[700],
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
 
                       // Call Details
                       Row(

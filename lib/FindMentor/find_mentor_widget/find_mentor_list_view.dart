@@ -6,6 +6,7 @@ import 'package:finaproj/common/responsive_layout.dart';
 import 'package:finaproj/Profile_page/pages/student_profile_view.dart';
 import 'package:finaproj/app_settings/page/profile_page.dart';
 import 'package:finaproj/home_page/model/mentor_model.dart';
+import 'package:finaproj/membershipPlan/model/membership_plan.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -24,6 +25,25 @@ class FindMentorListView extends StatelessWidget {
     this.hideMentors = false,
     this.sortBy = 'default',
   });
+
+  // Helper function to get actual price for sorting (same priority as display)
+  int _getMentorPrice(Mentor mentor) {
+    if (mentor.plan1Price != null && mentor.plan1Price! > 0) {
+      return mentor.plan1Price!;
+    }
+    if (mentor.planPrice != null && mentor.planPrice! > 0) {
+      return mentor.planPrice!;
+    }
+    if (mentor.planTitle != null && mentor.planTitle!.isNotEmpty) {
+      return MembershipPlan.getPriceForTitle(mentor.planTitle);
+    }
+    final parsed =
+        int.tryParse(mentor.pricePerMonth.replaceAll(RegExp(r'[^0-9]'), ''));
+    if (parsed != null && parsed > 0) {
+      return parsed;
+    }
+    return MembershipPlan.defaultStartingPrice;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -242,15 +262,15 @@ class FindMentorListView extends StatelessWidget {
             break;
           case 'price_low':
             filteredMentors.sort((a, b) {
-              final aPrice = a.planPrice ?? 0;
-              final bPrice = b.planPrice ?? 0;
+              final aPrice = _getMentorPrice(a);
+              final bPrice = _getMentorPrice(b);
               return aPrice.compareTo(bPrice);
             });
             break;
           case 'price_high':
             filteredMentors.sort((a, b) {
-              final aPrice = a.planPrice ?? 0;
-              final bPrice = b.planPrice ?? 0;
+              final aPrice = _getMentorPrice(a);
+              final bPrice = _getMentorPrice(b);
               return bPrice.compareTo(aPrice);
             });
             break;

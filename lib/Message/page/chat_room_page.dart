@@ -34,6 +34,9 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   final ScrollController _scrollController = ScrollController();
   final ImagePicker _picker = ImagePicker();
   bool _isUploading = false;
+  
+  // Subscription status
+  String? _subscriptionStatus; // "Subscribed", "Subscriber", or null
 
   // Selected image state
   XFile? _selectedImage;
@@ -42,6 +45,52 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   // Cloudinary config (same as profile uploads)
   final String cloudName = 'dagnamipk';
   final String uploadPreset = 'skillup_preset';
+
+  @override
+  void initState() {
+    super.initState();
+    _checkSubscriptionStatus();
+    // Mark chat room as read using the service
+    Future.delayed(const Duration(milliseconds: 100), () {
+      UnreadMessagesService().markChatRoomAsRead(widget.chatRoomId);
+      debugPrint('Marked chat room as read via service');
+    });
+  }
+
+  Future<void> _checkSubscriptionStatus() async {
+    try {
+      final otherUserId = widget.chatRoomId.replaceAll(widget.currentUserId, '').replaceAll('_', '');
+      
+      // Check if current user is subscribed to the other user (other user is mentor)
+      final asStudentSub = await FirebaseFirestore.instance
+          .collection('subscriptions')
+          .where('menteeId', isEqualTo: widget.currentUserId)
+          .where('mentorId', isEqualTo: otherUserId)
+          .where('status', isEqualTo: 'active')
+          .limit(1)
+          .get();
+      
+      if (asStudentSub.docs.isNotEmpty) {
+        setState(() => _subscriptionStatus = 'Subscribed');
+        return;
+      }
+      
+      // Check if other user is subscribed to current user (current user is mentor)
+      final asMentorSub = await FirebaseFirestore.instance
+          .collection('subscriptions')
+          .where('menteeId', isEqualTo: otherUserId)
+          .where('mentorId', isEqualTo: widget.currentUserId)
+          .where('status', isEqualTo: 'active')
+          .limit(1)
+          .get();
+      
+      if (asMentorSub.docs.isNotEmpty) {
+        setState(() => _subscriptionStatus = 'Subscriber');
+      }
+    } catch (e) {
+      debugPrint('Error checking subscription: $e');
+    }
+  }
 
   void _showError(String message) {
     if (!mounted) return;
@@ -125,16 +174,6 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    // Mark chat room as read using the service
-    Future.delayed(const Duration(milliseconds: 100), () {
-      UnreadMessagesService().markChatRoomAsRead(widget.chatRoomId);
-      debugPrint('Marked chat room as read via service');
-    });
-  }
-
-  @override
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
@@ -142,14 +181,16 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   }
 
   // --- NEW: REACTION FUNCTION ---
-  void _reactToMessage(String messageId, String emoji) async {
+  void _reactToMessage(String messageId, String emoji, String currentReaction) async {
     try {
+      // If tapping the same emoji, remove it (undo)
+      final newReaction = currentReaction == emoji ? '' : emoji;
       await FirebaseFirestore.instance
           .collection('chat_rooms')
           .doc(widget.chatRoomId)
           .collection('messages')
           .doc(messageId)
-          .update({'reaction': emoji});
+          .update({'reaction': newReaction});
     } catch (e) {
       debugPrint("Error reacting: $e");
     }
@@ -182,7 +223,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
 
   // --- UPDATED: SHOW OPTIONS DIALOG (EMOJIS + DELETE) ---
   void _showOptions(
-      String messageId, bool isMe, bool isLastMessage, String? prevMsg) {
+      String messageId, bool isMe, bool isLastMessage, String? prevMsg, String currentReaction) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -203,7 +244,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                   children: ['❤️', '👍', '😂', '😮', '😢', '🔥'].map((emoji) {
                     return GestureDetector(
                       onTap: () {
-                        _reactToMessage(messageId, emoji);
+                        _reactToMessage(messageId, emoji, currentReaction);
                         Navigator.pop(context);
                       },
                       child: Text(emoji, style: const TextStyle(fontSize: 30)),
@@ -493,6 +534,27 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                  if (_subscriptionStatus != null)
+                    Container(
+                      margin: const EdgeInsets.only(top: 2),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: _subscriptionStatus == 'Subscribed' 
+                            ? const Color(0xFF4CAF50).withOpacity(0.15)
+                            : const Color(0xFF2196F3).withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        _subscriptionStatus!,
+                        style: TextStyle(
+                          color: _subscriptionStatus == 'Subscribed'
+                              ? const Color(0xFF4CAF50)
+                              : const Color(0xFF2196F3),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ],
@@ -571,7 +633,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                           children: [
                             GestureDetector(
                               onLongPress: () => _showOptions(doc.id, isMe,
-                                  isLastMessage, nextMessageInList),
+                                  isLastMessage, nextMessageInList, reaction),
                               child: Container(
                                 padding:
                                     const EdgeInsets.symmetric(vertical: 4),

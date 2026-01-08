@@ -178,6 +178,7 @@ class _FindMentorPageState extends State<FindMentorPage> {
               },
               onFilterTap: _showFilterModal,
               showFilter: _selectedRole == 'Mentors', // Hide filter when viewing students
+              showSort: _selectedRole == 'Mentors', // Hide sort when viewing students
               sortBy: _sortBy,
               onSortChanged: (value) {
                 setState(() {
