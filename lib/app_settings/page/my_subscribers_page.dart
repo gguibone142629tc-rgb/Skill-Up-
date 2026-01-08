@@ -207,9 +207,11 @@ class _MySubscribersPageState extends State<MySubscribersPage> {
                                           Text(
                                             menteeName,
                                             style: const TextStyle(
-                                              fontSize: 18,
+                                              fontSize: 15,
                                               fontWeight: FontWeight.bold,
                                             ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
@@ -251,17 +253,15 @@ class _MySubscribersPageState extends State<MySubscribersPage> {
                                         ],
                                       ),
                                     ),
-                                    if (kDebugMode) ...[
-                                      const SizedBox(width: 8),
-                                      IconButton(
-                                        tooltip: 'Force expire (debug)',
-                                        icon: const Icon(
-                                            Icons.bug_report_outlined,
-                                            size: 20),
-                                        onPressed: () => _debugForceExpire(
-                                            context, subscriptionId),
-                                      ),
-                                    ],
+                                    const SizedBox(width: 8),
+                                    IconButton(
+                                      tooltip: 'Force expire',
+                                      icon: const Icon(
+                                          Icons.bug_report_outlined,
+                                          size: 20),
+                                      onPressed: () => _debugForceExpire(
+                                          context, subscriptionId),
+                                    ),
                                   ],
                                 ),
 

@@ -417,34 +417,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ),
                                     ),
                                   )
-                                : ElevatedButton(
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => MembershipPage(
-                                            isMentorView: false,
-                                            mentorData: _displayData,
+                                : FutureBuilder<DocumentSnapshot>(
+                                    future: FirebaseFirestore.instance
+                                        .collection('users')
+                                        .doc(currentUserId)
+                                        .get(),
+                                    builder: (context, snapshot) {
+                                      bool isCurrentUserMentor = false;
+                                      
+                                      if (snapshot.hasData && snapshot.data != null) {
+                                        final data = snapshot.data!.data() as Map<String, dynamic>?;
+                                        if (data != null) {
+                                          isCurrentUserMentor = data['isMentor'] == true ||
+                                              data['role']?.toString().toLowerCase() == 'mentor';
+                                        }
+                                      }
+
+                                      return ElevatedButton(
+                                        onPressed: isCurrentUserMentor
+                                            ? null
+                                            : () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        MembershipPage(
+                                                      isMentorView: false,
+                                                      mentorData: _displayData,
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: isCurrentUserMentor
+                                              ? Colors.grey[300]
+                                              : const Color(0xFF2D6A65),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 12,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          isCurrentUserMentor
+                                              ? 'Mentors cannot subscribe'
+                                              : 'View Plans & Subscribe',
+                                          style: TextStyle(
+                                            color: isCurrentUserMentor
+                                                ? Colors.grey[600]
+                                                : Colors.white,
+                                            fontWeight: FontWeight.w600,
                                           ),
                                         ),
                                       );
                                     },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF2D6A65),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 12,
-                                      ),
-                                    ),
-                                    child: const Text(
-                                      'View Plans & Subscribe',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
                                   ),
                           ),
                         ],

@@ -38,6 +38,22 @@ class _CheckoutPageState extends State<CheckoutPage> {
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser == null) throw 'User not logged in';
 
+      // Prevent mentors from subscribing to other mentors
+      final currentUserDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser.uid)
+          .get();
+      
+      if (currentUserDoc.exists) {
+        final userData = currentUserDoc.data() as Map<String, dynamic>;
+        final isMentor = userData['isMentor'] == true || 
+                         userData['role']?.toString().toLowerCase() == 'mentor';
+        
+        if (isMentor) {
+          throw 'Mentors cannot subscribe to other mentors';
+        }
+      }
+
       // Check if student already has an active subscription to this specific plan
       final existingSubscription = await FirebaseFirestore.instance
           .collection('subscriptions')

@@ -228,7 +228,7 @@ class _ActionButtonsState extends State<ActionButtons> {
                           : (isMentorUser
                               ? Colors.grey[200]
                               : const Color(0xFFF5F5F5)),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
                       shape: const StadiumBorder(),
                       elevation: 0,
                     ),
